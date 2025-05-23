@@ -1,6 +1,5 @@
 <template>
     <div class="folders-view">
-        <h1>Folders</h1>
         <ul v-if="folders.length">
             <li v-for="folder in folders" :key="folder.id">
                 {{ folder.name }}
