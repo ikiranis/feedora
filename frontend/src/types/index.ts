@@ -35,4 +35,9 @@ export interface Feed {
     folderName?: string;
 }
 
+export interface FolderType {
+    id: string;
+    name: string;
+}
+
 

@@ -61,4 +61,14 @@
         <language code="el">Λίστα ροών RSS</language>
     </entry>
 
+    <entry id="Folders">
+        <language code="en">Folders</language>
+        <language code="el">Φάκελοι</language>
+    </entry>
+
+    <entry id="List of folders">
+        <language code="en">List of folders</language>
+        <language code="el">Λίστα φακέλων</language>
+    </entry>
+
 </root>

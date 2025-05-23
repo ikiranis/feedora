@@ -6,6 +6,7 @@ import Home from "@/views/Home.vue"
 import Settings from "@/views/setting/Settings.vue"
 import Setting from "@/views/setting/Setting.vue"
 import Feed from "@/views/Feed.vue"
+import Folder from "@/views/Folder.vue"
 
 const routes : RouteRecordRaw[] = [
     {
@@ -28,6 +29,11 @@ const routes : RouteRecordRaw[] = [
         name: 'Setting',
         component: Setting,
         props: true
+    },
+    {
+        path: '/folders',
+        name: 'Folders',
+        component: Folder
     },
 ]
 

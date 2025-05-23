@@ -5,6 +5,33 @@ import { language } from "@/functions/languageStore.ts";
 <template>
     <div class="container-fluid mt-5 text-center">
         <div class="d-lg-flex flex-lg-wrap justify-content-center">
+            <router-link class="btn p-0 m-3" :to="{ name: 'Feeds' }">
+                <div class="card">
+                    <div class="card-img-top">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-rss" viewBox="0 0 16 16">
+                            <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z" />
+                            <path d="M5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m-3-8.5a1 1 0 0 1 1-1c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1-1-1m0 4a1 1 0 0 1 1-1 6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1-1-1" />
+                        </svg>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ language.get('Feeds') }}</h5>
+                        <p class="card-text">{{ language.get('List of RSS feeds') }}</p>
+                    </div>
+                </div>
+            </router-link>
+            <router-link class="btn p-0 m-3" :to="{ name: 'Folders' }">
+                <div class="card">
+                    <div class="card-img-top">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-folder" viewBox="0 0 16 16">
+                            <path d="M9.828 4a.5.5 0 0 1 .354.146l.646.647H14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h4.172a.5.5 0 0 1 .354.146l1.328 1.328A.5.5 0 0 0 8.828 3H14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h4.172a.5.5 0 0 1 .354.146l1.328 1.328A.5.5 0 0 0 8.828 3z"/>
+                        </svg>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ language.get('Folders') }}</h5>
+                        <p class="card-text">{{ language.get('List of folders') }}</p>
+                    </div>
+                </div>
+            </router-link>
             <router-link class="btn p-0 m-3" :to="{ name: 'Settings' }">
                 <div class="card">
                     <div class="card-img-top">
@@ -19,20 +46,6 @@ import { language } from "@/functions/languageStore.ts";
                         <h5 class="card-title">{{ language.get("Settings") }}</h5>
 
                         <p class="card-text">{{ language.get("App Settings") }}</p>
-                    </div>
-                </div>
-            </router-link>
-            <router-link class="btn p-0 m-3" :to="{ name: 'Feeds' }">
-                <div class="card">
-                    <div class="card-img-top">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-rss" viewBox="0 0 16 16">
-                            <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2z" />
-                            <path d="M5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0m-3-8.5a1 1 0 0 1 1-1c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1-1-1m0 4a1 1 0 0 1 1-1 6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1-1-1" />
-                        </svg>
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">{{ language.get('Feeds') }}</h5>
-                        <p class="card-text">{{ language.get('List of RSS feeds') }}</p>
                     </div>
                 </div>
             </router-link>
