@@ -32,6 +32,19 @@ import { language } from "@/functions/languageStore.ts";
                     </div>
                 </div>
             </router-link>
+            <router-link class="btn p-0 m-3" :to="{ name: 'Users' }">
+                <div class="card">
+                    <div class="card-img-top">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
+                            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm4-3a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM2 14s-1 0-1-1 1-4 7-4 7 3 7 4-1 1-1 1H2zm13-1c0-1-4-3-7-3s-7 2-7 3 4 1 7 1 7-0 7-1z"/>
+                        </svg>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ language.get('Users') }}</h5>
+                        <p class="card-text">{{ language.get('List of users') }}</p>
+                    </div>
+                </div>
+            </router-link>
             <router-link class="btn p-0 m-3" :to="{ name: 'Settings' }">
                 <div class="card">
                     <div class="card-img-top">

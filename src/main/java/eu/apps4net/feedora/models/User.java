@@ -1,5 +1,6 @@
 package eu.apps4net.feedora.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.List;
 import java.util.UUID;
@@ -16,12 +17,15 @@ public class User {
     private String password;
 
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<Folder> folders;
 
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<Feed> feeds;
 
     @OneToMany(mappedBy = "user")
+    @JsonIgnore
     private List<Post> posts;
 
     public User() {}

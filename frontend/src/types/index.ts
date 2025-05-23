@@ -40,4 +40,10 @@ export interface FolderType {
     name: string;
 }
 
+export interface UserType {
+    id: string;
+    username: string;
+    email: string;
+}
+
 

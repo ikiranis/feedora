@@ -71,4 +71,14 @@
         <language code="el">Λίστα φακέλων</language>
     </entry>
 
+    <entry id="Users">
+        <language code="en">Users</language>
+        <language code="el">Χρήστες</language>
+    </entry>
+
+    <entry id="List of users">
+        <language code="en">List of users</language>
+        <language code="el">Λίστα χρηστών</language>
+    </entry>
+
 </root>

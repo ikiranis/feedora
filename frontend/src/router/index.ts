@@ -7,6 +7,7 @@ import Settings from "@/views/setting/Settings.vue"
 import Setting from "@/views/setting/Setting.vue"
 import Feed from "@/views/Feed.vue"
 import Folder from "@/views/Folder.vue"
+import User from "@/views/User.vue"
 
 const routes : RouteRecordRaw[] = [
     {
@@ -34,6 +35,11 @@ const routes : RouteRecordRaw[] = [
         path: '/folders',
         name: 'Folders',
         component: Folder
+    },
+    {
+        path: '/users',
+        name: 'Users',
+        component: User
     },
 ]
 
