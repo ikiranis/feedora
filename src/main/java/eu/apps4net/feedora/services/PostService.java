@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class PostService {
@@ -28,40 +31,48 @@ public class PostService {
      * @param user The user whose feeds to parse
      */
     public void parseFeeds(User user) {
+        long startTime = System.currentTimeMillis();
         List<Feed> feeds = feedRepository.findByUser(user);
+        ExecutorService executor = Executors.newFixedThreadPool(Math.min(feeds.size(), 8)); // up to 8 threads
         for (Feed feed : feeds) {
-            int postsBefore = postRepository.findByFeedAndUser(feed, user).size();
-            System.out.println("Parsing feed: " + feed.getTitle() + " (" + feed.getXmlUrl() + ")");
-            
-            try {
-                List<SyndEntry> entries = RssFetcher.fetch(feed.getXmlUrl());
-
-                for (SyndEntry entry : entries) {
-                    // Check if post already exists for this feed/user/link
-                    if (postRepository.findByFeedAndUserAndLink(feed, user, entry.getLink()).isEmpty()) {
-                        Post post = new Post(
-                            entry.getTitle(),
-                            entry.getLink(),
-                            entry.getDescription() != null ? entry.getDescription().getValue() : null,
-                            entry.getPublishedDate() != null ? ZonedDateTime.ofInstant(entry.getPublishedDate().toInstant(), ZoneId.systemDefault()) : null,
-                            entry.getAuthor(),
-                            false, // unread
-                            feed,
-                            user
-                        );
-
-                        postRepository.save(post);
+            executor.submit(() -> {
+                int postsBefore = postRepository.findByFeedAndUser(feed, user).size();
+                System.out.println("Parsing feed: " + feed.getTitle() + " (" + feed.getXmlUrl() + ")");
+                try {
+                    List<SyndEntry> entries = RssFetcher.fetch(feed.getXmlUrl());
+                    for (SyndEntry entry : entries) {
+                        if (postRepository.findByFeedAndUserAndLink(feed, user, entry.getLink()).isEmpty()) {
+                            Post post = new Post(
+                                entry.getTitle(),
+                                entry.getLink(),
+                                entry.getDescription() != null ? entry.getDescription().getValue() : null,
+                                entry.getPublishedDate() != null ? ZonedDateTime.ofInstant(entry.getPublishedDate().toInstant(), ZoneId.systemDefault()) : null,
+                                entry.getAuthor(),
+                                false, // unread
+                                feed,
+                                user
+                            );
+                            postRepository.save(post);
+                        }
                     }
+                    int postsAfter = postRepository.findByFeedAndUser(feed, user).size();
+                    System.out.println("Feed parsed: " + feed.getTitle() + " - Total posts: " + postsAfter + " (added " + (postsAfter - postsBefore) + ")");
+                } catch (Exception e) {
+                    System.err.println("Error parsing feed: " + feed.getTitle() + " (" + feed.getXmlUrl() + ") - " + e.getMessage());
+                    e.printStackTrace();
                 }
-                
-                int postsAfter = postRepository.findByFeedAndUser(feed, user).size();
-                System.out.println("Feed parsed: " + feed.getTitle() + " - Total posts: " + postsAfter + " (added " + (postsAfter - postsBefore) + ")");
-            } catch (Exception e) {
-                // Log or handle error for this feed
-                System.err.println("Error parsing feed: " + feed.getTitle() + " (" + feed.getXmlUrl() + ") - " + e.getMessage());
-                e.printStackTrace();
-            }
+            });
         }
+        executor.shutdown();
+        try {
+            executor.awaitTermination(30, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            System.err.println("Feed parsing interrupted");
+        }
+        long endTime = System.currentTimeMillis();
+        double seconds = (endTime - startTime) / 1000.0;
+        System.out.println("All feeds parsed in " + seconds + " seconds");
     }
 
     /**
