@@ -76,12 +76,19 @@ public class PostService {
     }
 
     /**
-     * Returns all posts for a given user.
+     * Returns all posts for a given user, sorted by pubDate descending.
      * @param user The user
      * @return List of posts
      */
     public List<Post> getAllPostsForUser(User user) {
-        return postRepository.findByUser(user);
+        List<Post> posts = postRepository.findByUser(user);
+        posts.sort((a, b) -> {
+            if (a.getPubDate() == null && b.getPubDate() == null) return 0;
+            if (a.getPubDate() == null) return 1;
+            if (b.getPubDate() == null) return -1;
+            return b.getPubDate().compareTo(a.getPubDate());
+        });
+        return posts;
     }
 
     /**
