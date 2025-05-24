@@ -30,6 +30,9 @@ public class PostService {
     public void parseFeeds(User user) {
         List<Feed> feeds = feedRepository.findByUser(user);
         for (Feed feed : feeds) {
+            int postsBefore = postRepository.findByFeedAndUser(feed, user).size();
+            System.out.println("Parsing feed: " + feed.getTitle() + " (" + feed.getXmlUrl() + ")");
+            
             try {
                 List<SyndEntry> entries = RssFetcher.fetch(feed.getXmlUrl());
 
@@ -50,8 +53,12 @@ public class PostService {
                         postRepository.save(post);
                     }
                 }
+                
+                int postsAfter = postRepository.findByFeedAndUser(feed, user).size();
+                System.out.println("Feed parsed: " + feed.getTitle() + " - Total posts: " + postsAfter + " (added " + (postsAfter - postsBefore) + ")");
             } catch (Exception e) {
                 // Log or handle error for this feed
+                System.err.println("Error parsing feed: " + feed.getTitle() + " (" + feed.getXmlUrl() + ") - " + e.getMessage());
                 e.printStackTrace();
             }
         }

@@ -12,6 +12,7 @@ public class Post {
     @GeneratedValue
     private UUID id;
 
+    @Column(length = 1000)
     private String title;
     private String link;
     
