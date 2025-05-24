@@ -15,7 +15,7 @@
         </div>
         <div v-if="error" class="alert alert-danger text-center mt-3">{{ error }}</div>
         <div v-if="posts.length > 0" class="row g-4">
-            <div v-for="post in posts" :key="post.id" class="col-12 col-md-6 col-lg-4">
+            <div v-for="post in posts" :key="post.id" :data-post-id="post.id" class="col-12 col-md-6 col-lg-4">
                 <div class="card h-100 shadow-sm">
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">
@@ -37,9 +37,6 @@
                     </div>
                 </div>
             </div>
-            <div v-if="loading" class="text-center w-100 my-4">
-                <div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div>
-            </div>
             <div v-if="allLoaded && posts.length > 0" class="text-center w-100 text-muted my-4">
                 {{ language.get('No more posts') || 'No more posts' }}
             </div>
@@ -47,6 +44,14 @@
         <div v-else-if="!error" class="text-center text-muted mt-5">
             {{ language.get('No posts found') }}
         </div>
+
+        <!-- Fixed bottom-right loading spinner -->
+        <div v-if="loading" class="loading-spinner-fixed">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+
     </div>
 </template>
 
@@ -81,14 +86,15 @@ const removeImgSizeAttrsFromHtml = (html: string): string => {
 };
 
 const fetchPosts = async (reset = false) => {
+    // Assumes loading.value is true, set by the caller.
     try {
         error.value = '';
-        loading.value = true;
         if (reset) {
             posts.value = [];
             page.value = 1;
             allLoaded.value = false;
         }
+
         const data = await getPosts();
         // Remove width/height from images in post.description
         data.forEach((post: PostType) => {
@@ -96,42 +102,62 @@ const fetchPosts = async (reset = false) => {
                 post.description = removeImgSizeAttrsFromHtml(post.description);
             }
         });
-        // Simulate backend pagination: slice client-side for now
+
         const start = (page.value - 1) * pageSize;
         const end = start + pageSize;
         const newPosts = data.slice(start, end);
-        if (newPosts.length < pageSize) allLoaded.value = true;
-        posts.value = reset ? newPosts : posts.value.concat(newPosts);
-        loading.value = false;
-        await nextTick();
+
+        if (newPosts.length < pageSize) {
+            allLoaded.value = true;
+        }
+
+        if (reset) {
+            posts.value = newPosts;
+        } else {
+            posts.value = posts.value.concat(newPosts);
+        }
+
+        loading.value = false; // Set loading false
+
+        if (!reset && newPosts.length > 0) {
+            await nextTick(); // Wait for DOM to update
+            // Scroll up slightly to prevent immediate re-trigger
+            window.scrollBy(0, -1);
+        }
     } catch (e) {
         error.value = 'Failed to fetch posts.';
         loading.value = false;
     }
+    // No finally block for loading.value
 };
 
-// Also run after parse/delete actions
 const handleParseFeeds = async () => {
     try {
         error.value = '';
+        loading.value = true; // Set loading before operation
         const result = await parseFeeds();
+        // fetchPosts(true) will set loading.value to false
         await fetchPosts(true);
         alert(result);
-        await nextTick();
+        // await nextTick(); // nextTick is handled within fetchPosts if needed for scrolling - REMOVED
     } catch (e) {
         error.value = 'Failed to parse feeds.';
+        loading.value = false; // Ensure loading is reset on error
     }
 };
 
 const handleDeleteAllPosts = async () => {
     try {
         error.value = '';
+        loading.value = true; // Set loading before operation
         const result = await deleteAllPosts();
+        // fetchPosts(true) will set loading.value to false
         await fetchPosts(true);
         alert(result);
-        await nextTick();
+        // await nextTick(); - REMOVED
     } catch (e) {
         error.value = 'Failed to delete posts.';
+        loading.value = false; // Ensure loading is reset on error
     }
 };
 
@@ -141,12 +167,14 @@ const handleScroll = () => {
     const visible = window.innerHeight;
     const pageHeight = document.documentElement.scrollHeight;
     if (scrollY + visible + 200 >= pageHeight) {
+        loading.value = true; // Set loading true to prevent multiple triggers
         page.value++;
-        fetchPosts();
+        fetchPosts(); // fetchPosts will set loading.value to false
     }
 };
 
 onMounted(() => {
+    loading.value = true; // Set loading true for initial fetch
     fetchPosts(true);
     window.addEventListener('scroll', handleScroll);
 });
@@ -162,5 +190,13 @@ onUnmounted(() => {
     max-width: 100% !important;
     width: 100% !important;
     height: auto !important;
+}
+
+/* Fixed bottom-right loading spinner */
+.loading-spinner-fixed {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000; /* Ensure it's above other content */
 }
 </style>
