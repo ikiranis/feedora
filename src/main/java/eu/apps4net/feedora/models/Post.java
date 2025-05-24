@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 public class Post {
     @Id
@@ -12,17 +14,24 @@ public class Post {
 
     private String title;
     private String link;
+    
+    @Lob
     private String description;
+    
     private ZonedDateTime pubDate;
     private String author;
+
+    @Column(name = "is_read")
     private boolean read;
 
     @ManyToOne
     @JoinColumn(name = "feed_id")
+    @JsonIgnore
     private Feed feed;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 
     public Post() {}

@@ -90,6 +90,16 @@ const getIconSize: ComputedRef<number> = computed(() => {
                 </span>
                 <span class="mx-2" v-if="!collapsed">{{ language.get('Users') }}</span>
             </router-link>
+            <router-link :to="{ name: 'Posts' }" :title="language.get('Posts')"
+                :class="checkCurrentPage('Posts') + ' ' + menuItemClasses">
+                <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" :width="getIconSize" fill="currentColor" class="bi bi-file-earmark-text" viewBox="0 0 16 16">
+                        <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5L14 4.5zm-3-.5a.5.5 0 0 1-.5-.5V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V5h-2.5A1.5 1.5 0 0 1 11 4z"/>
+                        <path d="M5 7h6v1H5V7zm0 2h6v1H5V9zm0 2h4v1H5v-1z"/>
+                    </svg>
+                </span>
+                <span class="mx-2" v-if="!collapsed">{{ language.get('Posts') }}</span>
+            </router-link>
             <router-link :to="{ name: 'Settings' }" :class="checkCurrentPage('Settings') + ' ' + menuItemClasses"
                 :title="language.get('Settings')">
                 <span>

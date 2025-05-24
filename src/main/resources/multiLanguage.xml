@@ -81,4 +81,45 @@
         <language code="el">Λίστα χρηστών</language>
     </entry>
 
+    <entry id="Posts">
+        <language code="en">Posts</language>
+        <language code="el">Άρθρα</language>
+    </entry>
+    <entry id="Parse RSS Feeds">
+        <language code="en">Parse RSS Feeds</language>
+        <language code="el">Ανάκτηση RSS</language>
+    </entry>
+    <entry id="Feed">
+        <language code="en">Feed</language>
+        <language code="el">Ροή</language>
+    </entry>
+    <entry id="Read">
+        <language code="en">Read</language>
+        <language code="el">Αναγνώστηκε</language>
+    </entry>
+    <entry id="Yes">
+        <language code="en">Yes</language>
+        <language code="el">Ναι</language>
+    </entry>
+    <entry id="No">
+        <language code="en">No</language>
+        <language code="el">Όχι</language>
+    </entry>
+    <entry id="No posts found">
+        <language code="en">No posts found</language>
+        <language code="el">Δεν βρέθηκαν άρθρα</language>
+    </entry>
+    <entry id="Title">
+        <language code="en">Title</language>
+        <language code="el">Τίτλος</language>
+    </entry>
+    <entry id="Author">
+        <language code="en">Author</language>
+        <language code="el">Συντάκτης</language>
+    </entry>
+    <entry id="Delete All Posts">
+        <language code="en">Delete All Posts</language>
+        <language code="el">Διαγραφή όλων των άρθρων</language>
+    </entry>
+
 </root>

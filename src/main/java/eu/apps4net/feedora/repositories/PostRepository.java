@@ -12,4 +12,5 @@ import java.util.UUID;
 public interface PostRepository extends JpaRepository<Post, UUID> {
     List<Post> findByFeedAndUser(Feed feed, User user);
     Optional<Post> findByFeedAndUserAndLink(Feed feed, User user, String link);
+    List<Post> findByUser(User user);
 }

@@ -46,4 +46,16 @@ export interface UserType {
     email: string;
 }
 
+export interface PostType {
+    id: string;
+    title: string;
+    link: string;
+    description: string | null;
+    pubDate: string | null;
+    author: string | null;
+    read: boolean;
+    feed: Feed;
+    user: UserType;
+}
+
 

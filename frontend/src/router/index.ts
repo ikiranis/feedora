@@ -8,6 +8,7 @@ import Setting from "@/views/setting/Setting.vue"
 import Feed from "@/views/Feed.vue"
 import Folder from "@/views/Folder.vue"
 import User from "@/views/User.vue"
+import Post from "@/views/Post.vue"
 
 const routes : RouteRecordRaw[] = [
     {
@@ -40,6 +41,11 @@ const routes : RouteRecordRaw[] = [
         path: '/users',
         name: 'Users',
         component: User
+    },
+    {
+        path: '/posts',
+        name: 'Posts',
+        component: Post
     },
 ]
 

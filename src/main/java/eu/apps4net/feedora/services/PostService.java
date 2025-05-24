@@ -29,7 +29,6 @@ public class PostService {
      */
     public void parseFeeds(User user) {
         List<Feed> feeds = feedRepository.findByUser(user);
-
         for (Feed feed : feeds) {
             try {
                 List<SyndEntry> entries = RssFetcher.fetch(feed.getXmlUrl());
@@ -56,5 +55,21 @@ public class PostService {
                 e.printStackTrace();
             }
         }
+    }
+
+    /**
+     * Returns all posts for a given user.
+     * @param user The user
+     * @return List of posts
+     */
+    public List<Post> getAllPostsForUser(User user) {
+        return postRepository.findByUser(user);
+    }
+
+    /**
+     * Delete all posts from the database.
+     */
+    public void deleteAllPosts() {
+        postRepository.deleteAll();
     }
 }
