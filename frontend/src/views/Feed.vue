@@ -35,6 +35,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { getFeeds, importOPML as importOPMLApi } from '@/api/feed';
+import { Feed } from '@/types';
 
 const feeds = ref<Feed[]>([]);
 const error = ref('');
