@@ -28,7 +28,7 @@
         </div>
         <div class="summary-meta text-muted mt-1" style="font-size:0.95em;">
             <span v-if="post.feed?.title">{{ post.feed.title }}</span>
-            <span v-if="post.feed?.folderName">&mdash; {{ post.feed.folderName }}</span>
+            <span v-if="post.feed?.folderName"> &mdash; {{ post.feed.folderName }}</span>
         </div>
     </div>
 </template>
