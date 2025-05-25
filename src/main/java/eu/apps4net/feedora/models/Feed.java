@@ -15,7 +15,9 @@ public class Feed {
     private UUID id;
 
     private String title;
+    @Column(length = 1000)
     private String xmlUrl;
+    @Column(length = 1000)
     private String htmlUrl;
     private String type;
 

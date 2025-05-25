@@ -37,7 +37,13 @@ public class PostService {
     public void parseFeeds(User user) {
         long startTime = System.currentTimeMillis();
         List<Feed> feeds = feedRepository.findByUser(user);
-        ExecutorService executor = Executors.newFixedThreadPool(Math.min(feeds.size(), 8)); // up to 8 threads
+        if (feeds.isEmpty()) {
+            System.out.println("[Feedora] No feeds found in database. Skipping feed parsing task.");
+            return;
+        }
+        int threadCount = Math.min(feeds.size(), 8);
+        if (threadCount == 0) threadCount = 1;
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount); // up to 8 threads, at least 1
 
         int postsBefore = postRepository.findByUser(user).size();
         final int[] failedFeeds = {0};
