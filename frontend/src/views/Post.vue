@@ -1,10 +1,16 @@
 <template>
     <div class="container py-4">
-        <div class="row justify-content-between mb-4">
+        <div class="row justify-content-between mb-4 align-items-center">
             <div class="col-auto">
                 <h2>{{ language.get('Posts') }}</h2>
             </div>
-            <div class="col-auto">
+            <div class="col-auto d-flex align-items-center">
+                <div class="form-check me-3">
+                    <input class="form-check-input" type="checkbox" v-model="showDetails" id="showDetailsCheck">
+                    <label class="form-check-label" for="showDetailsCheck">
+                        {{ language.get('Show Details') }}
+                    </label>
+                </div>
                 <button @click="handleParseFeeds" class="btn btn-primary me-2">
                     {{ language.get('Parse RSS Feeds') }}
                 </button>
@@ -15,27 +21,9 @@
         </div>
         <div v-if="error" class="alert alert-danger text-center mt-3">{{ error }}</div>
         <div v-if="posts.length > 0" class="row g-4">
-            <div v-for="post in posts" :key="post.id" :data-post-id="post.id" class="col-12 col-md-6 col-lg-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">
-                            <a :href="post.link" target="_blank">{{ post.title }}</a>
-                        </h5>
-                        <h6 class="card-subtitle mb-2 text-muted">{{ post.feed?.title }}</h6>
-                        <div class="mb-2">
-                            <span class="badge bg-secondary me-2">{{ post.author }}</span>
-                            <span class="badge bg-light text-dark">{{ post.pubDate ? new
-                                Date(post.pubDate).toLocaleString() : '' }}</span>
-                        </div>
-                        <div class="mb-2" v-if="post.description">
-                            <div v-html="post.description"></div>
-                        </div>
-                        <div class="mt-auto">
-                            <span v-if="post.read" class="badge bg-success">{{ language.get('Yes') }}</span>
-                            <span v-else class="badge bg-secondary">{{ language.get('No') }}</span>
-                        </div>
-                    </div>
-                </div>
+            <div v-for="post in posts" :key="post.id" :data-post-id="post.id" 
+                 :class="showDetails ? 'col-12 col-md-6 col-lg-4' : 'col-12'">
+                <PostElement :post="post" :show-details="showDetails" />
             </div>
             <div v-if="allLoaded && posts.length > 0" class="text-center w-100 text-muted my-4">
                 {{ language.get('No more posts') || 'No more posts' }}
@@ -60,6 +48,7 @@ import { ref, onMounted, onUnmounted, nextTick } from 'vue';
 import { getPosts, parseFeeds, deleteAllPosts } from '@/api/post';
 import { PostType } from '@/types';
 import { language } from '@/functions/languageStore';
+import PostElement from '@/components/PostElement.vue';
 
 const posts = ref<PostType[]>([]);
 const error = ref('');
@@ -67,6 +56,7 @@ const page = ref(1);
 const pageSize = 15;
 const loading = ref(false);
 const allLoaded = ref(false);
+const showDetails = ref(true); // Added for checkbox
 
 // Remove all size-related attributes (width, height, srcset, sizes, style with width/height) from <img> tags in HTML string and add a class for styling
 const removeImgSizeAttrsFromHtml = (html: string): string => {
