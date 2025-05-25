@@ -17,14 +17,14 @@ public class RssFetcher {
      * @return List of SyndEntry (feed posts)
      * @throws Exception if fetching or parsing fails
      */
-    public static List<SyndEntry> fetch(String feedUrl) {
+    public static List<SyndEntry> fetch(String feedUrl) throws Exception {
         List<SyndEntry> entries = new ArrayList<>();
         try (XmlReader reader = new XmlReader(new URL(feedUrl))) {
             SyndFeed feed = new SyndFeedInput().build(reader);
             entries.addAll(feed.getEntries());
         } catch (Exception e) {
-            // Log and skip feeds with DOCTYPE or other parse errors
-            System.err.println("Failed to parse feed: " + feedUrl + " - " + e.getMessage());
+            // Do not log here, just rethrow
+            throw e;
         }
         return entries;
     }

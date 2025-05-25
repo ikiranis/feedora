@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>eu.apps4net</groupId>
-    <artifactId>GenericJavaApp</artifactId>
+    <artifactId>Feedora</artifactId>
     <version>0.0.1</version>
-    <name>GenericJavaApp</name>
-    <description>Generic structure for a Java App</description>
+    <name>Feedora</name>
+    <description>RSS feeder app</description>
     <url/>
     <licenses>
         <license/>

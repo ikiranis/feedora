@@ -38,12 +38,25 @@ public class PostService {
         long startTime = System.currentTimeMillis();
         List<Feed> feeds = feedRepository.findByUser(user);
         ExecutorService executor = Executors.newFixedThreadPool(Math.min(feeds.size(), 8)); // up to 8 threads
+
+        int postsBefore = postRepository.findByUser(user).size();
+        final int[] failedFeeds = {0};
+        final int[] succeededFeeds = {0};
+
         for (Feed feed : feeds) {
             executor.submit(() -> {
-                int postsBefore = postRepository.findByFeedAndUser(feed, user).size();
-                System.out.println("Parsing feed: " + feed.getTitle() + " (" + feed.getXmlUrl() + ")");
+                boolean success = false;
+                List<SyndEntry> entries = null;
+
                 try {
-                    List<SyndEntry> entries = RssFetcher.fetch(feed.getXmlUrl());
+                    entries = RssFetcher.fetch(feed.getXmlUrl());
+                    success = true;
+                } catch (Exception e) {
+                    synchronized (failedFeeds) { failedFeeds[0]++; }
+                    System.err.println("Error parsing feed: " + feed.getTitle() + " (" + feed.getXmlUrl() + ") - " + e.getMessage());
+                }
+
+                if (success && entries != null) {
                     for (SyndEntry entry : entries) {
                         if (postRepository.findByFeedAndUserAndLink(feed, user, entry.getLink()).isEmpty()) {
                             Post post = new Post(
@@ -61,24 +74,27 @@ public class PostService {
                             postRepository.save(post);
                         }
                     }
-                    int postsAfter = postRepository.findByFeedAndUser(feed, user).size();
-                    System.out.println("Feed parsed: " + feed.getTitle() + " - Total posts: " + postsAfter + " (added " + (postsAfter - postsBefore) + ")");
-                } catch (Exception e) {
-                    System.err.println("Error parsing feed: " + feed.getTitle() + " (" + feed.getXmlUrl() + ") - " + e.getMessage());
-                    e.printStackTrace();
+                    synchronized (succeededFeeds) { succeededFeeds[0]++; }
                 }
             });
         }
+
         executor.shutdown();
+
         try {
             executor.awaitTermination(30, TimeUnit.MINUTES);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             System.err.println("Feed parsing interrupted");
         }
+
         long endTime = System.currentTimeMillis();
         double seconds = (endTime - startTime) / 1000.0;
-        System.out.println("All feeds parsed in " + seconds + " seconds");
+        int postsAfter = postRepository.findByUser(user).size();
+        int newPosts = postsAfter - postsBefore;
+        int totalFeedsParsed = succeededFeeds[0] + failedFeeds[0];
+
+        System.out.println("[Feedora] Parsed " + totalFeedsParsed + " feeds in " + seconds + " seconds. Succeeded: " + succeededFeeds[0] + ", Failed: " + failedFeeds[0] + ". Total posts: " + postsAfter + ". New posts added: " + newPosts);
     }
 
     /**
