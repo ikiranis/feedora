@@ -122,4 +122,14 @@
         <language code="el">Διαγραφή όλων των άρθρων</language>
     </entry>
 
+    <entry id="Show Details">
+        <language code="en">Show Details</language>
+        <language code="el">Εμφάνιση Λεπτομερειών</language>
+    </entry>
+
+    <entry id="Show Summary">
+        <language code="en">Show Summary</language>
+        <language code="el">Εμφάνιση Περίληψης</language>
+    </entry>
+
 </root>
