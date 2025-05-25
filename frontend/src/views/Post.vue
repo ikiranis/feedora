@@ -117,12 +117,6 @@ const fetchPosts = async (reset = false) => {
         }
 
         loading.value = false; // Set loading false
-
-        if (!reset && newPosts.length > 0 && scrollableContainerRef.value) {
-            await nextTick(); // Wait for DOM to update
-            // Scroll up slightly to prevent immediate re-trigger within the new container
-            scrollableContainerRef.value.scrollTop -= 1;
-        }
     } catch (e) {
         error.value = 'Failed to fetch posts.';
         loading.value = false;
@@ -194,8 +188,7 @@ onUnmounted(() => {
 /* Make the main view scrollable instead of the whole page */
 .scrollable-post-view {
     height: 90vh; /* Adjust as needed, e.g., calc(100vh - headerHeight) */
-    overflow-y: auto; /* Hide the scrollbar */
-    /* position: relative; /* If needed for absolutely positioned children within this container */
+    overflow-y: auto; 
 }
 
 /* Ensure the body does not scroll if the .scrollable-post-view takes full viewport height */
