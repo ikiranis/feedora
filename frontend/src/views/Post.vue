@@ -74,28 +74,6 @@ const showDetails = ref(true);
 const scrollableContainerRef = ref<HTMLElement | null>(null); // Ref for the scrollable container
 
 /**
- * Removes size-related attributes (width, height, srcset, sizes) and inline styles for width/height
- * from <img> tags in an HTML string. It also adds a 'post-img' class to each <img> tag for styling.
- * @param {string} html - The HTML string to process.
- * @returns {string} The cleaned HTML string.
- */
-const removeImgSizeAttrsFromHtml = (html: string): string => {
-    // Remove size-related attributes
-    let cleaned = html
-        .replace(/\s(width|height|srcset|sizes)="[^"]*"/gi, '')
-        .replace(/\sstyle="[^"]*(width|height)[^"]*"/gi, '');
-    // Add class to all <img> tags (preserve existing classes)
-    cleaned = cleaned.replace(/<img(\s[^>]*?)?>/gi, (match) => {
-        if (/class\s*=/.test(match)) {
-            return match.replace(/class\s*=\s*"([^"]*)"/i, 'class="$1 post-img"');
-        } else {
-            return match.replace('<img', '<img class="post-img"');
-        }
-    });
-    return cleaned;
-};
-
-/**
  * Fetches posts from the API. It supports pagination and resetting the post list.
  * It also processes post descriptions to remove image size attributes.
  * @param {boolean} [reset=false] - If true, clears existing posts and resets pagination.
@@ -122,9 +100,20 @@ const fetchPosts = async (reset = false) => {
 
         page.value++; // Increment page for the next fetch
     } catch (e) {
-        console.error("Error fetching posts:", e);
-        if (e.response && e.response.data && e.response.data.message && typeof e.response.data.status === 'number') {
-            errorStore.set(true, e.response.data.message, e.response.data.status);
+        if (
+            typeof e === 'object' &&
+            e !== null &&
+            'response' in e &&
+            typeof (e as any).response === 'object' &&
+            (e as any).response !== null &&
+            'data' in (e as any).response &&
+            typeof (e as any).response.data === 'object' &&
+            (e as any).response.data !== null &&
+            'message' in (e as any).response.data &&
+            'status' in (e as any).response.data &&
+            typeof (e as any).response.data.status === 'number'
+        ) {
+            errorStore.set(true, (e as any).response.data.message, (e as any).response.data.status);
         } else {
             errorStore.set(true, language.get('Failed to fetch posts') || 'Failed to fetch posts.', 500);
         }
