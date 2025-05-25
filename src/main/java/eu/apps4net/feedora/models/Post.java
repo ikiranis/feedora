@@ -38,15 +38,13 @@ public class Post {
 
     public Post() {}
 
-    public Post(String title, String link, String description, LocalDateTime pubDate, String author, boolean read, Feed feed, User user) {
+    public Post(String title, String link, String description, LocalDateTime pubDate, String author, boolean read) {
         this.title = title;
         this.link = link;
         this.description = description;
         this.pubDate = pubDate;
         this.author = author;
         this.read = read;
-        this.feed = feed;
-        this.user = user;
     }
 
     public UUID getId() { return id; }

@@ -27,6 +27,8 @@ public class PostService {
     private FeedRepository feedRepository;
     @Autowired
     private PostRepository postRepository;
+    @Autowired
+    private FeedService feedService;
 
     /**
      * Iterates over the current user's RSS feeds, fetches recent unread posts, and adds them as Posts in the database.
@@ -45,7 +47,8 @@ public class PostService {
         if (threadCount == 0) threadCount = 1;
         ExecutorService executor = Executors.newFixedThreadPool(threadCount); // up to 8 threads, at least 1
 
-        int postsBefore = postRepository.findByUser(user).size();
+        // Use countByUser to avoid CLOB issues
+        long postsBefore = postRepository.countByUser(user);
         final int[] failedFeeds = {0};
         final int[] succeededFeeds = {0};
 
@@ -55,30 +58,33 @@ public class PostService {
                 List<SyndEntry> entries = null;
 
                 try {
-                    entries = RssFetcher.fetch(feed.getXmlUrl());
+                    entries = RssFetcher.fetch(feed, feedService);
                     success = true;
                 } catch (Exception e) {
                     synchronized (failedFeeds) { failedFeeds[0]++; }
-                    System.err.println("Error parsing feed: " + feed.getTitle() + " (" + feed.getXmlUrl() + ") - " + e.getMessage());
+                    System.err.println("Error parsing feed: " + (feed.getTitle() != null ? feed.getTitle() : feed.getId()) + " - " + e.getMessage());
                 }
 
                 if (success && entries != null) {
                     for (SyndEntry entry : entries) {
-                        if (postRepository.findByFeedAndUserAndLink(feed, user, entry.getLink()).isEmpty()) {
-                            Post post = new Post(
-                                entry.getTitle(),
-                                entry.getLink(),
-                                entry.getDescription() != null ? entry.getDescription().getValue() : null,
-                                entry.getPublishedDate() != null
-                                    ? ZonedDateTime.ofInstant(entry.getPublishedDate().toInstant(), ZoneId.systemDefault()).toLocalDateTime()
-                                    : LocalDateTime.now(),
-                                entry.getAuthor(),
-                                false, // unread
-                                feed,
-                                user
-                            );
-                            postRepository.save(post);
+                        // Modify the query to fetch only necessary fields to avoid CLOB issues
+                        if (postRepository.existsByFeedAndUserAndLink(feed, user, entry.getLink())) {
+                            continue;
                         }
+
+                        Post post = new Post(
+                            entry.getTitle(),
+                            entry.getLink(),
+                            entry.getDescription() != null ? entry.getDescription().getValue() : null,
+                            entry.getPublishedDate() != null
+                                ? ZonedDateTime.ofInstant(entry.getPublishedDate().toInstant(), ZoneId.systemDefault()).toLocalDateTime()
+                                : LocalDateTime.now(),
+                            entry.getAuthor(),
+                            false
+                        );
+                        post.setFeed(feed);
+                        post.setUser(user);
+                        postRepository.save(post);
                     }
                     synchronized (succeededFeeds) { succeededFeeds[0]++; }
                 }
@@ -96,8 +102,8 @@ public class PostService {
 
         long endTime = System.currentTimeMillis();
         double seconds = (endTime - startTime) / 1000.0;
-        int postsAfter = postRepository.findByUser(user).size();
-        int newPosts = postsAfter - postsBefore;
+        long postsAfter = postRepository.countByUser(user);
+        long newPosts = postsAfter - postsBefore;
         int totalFeedsParsed = succeededFeeds[0] + failedFeeds[0];
 
         System.out.println("[Feedora] Parsed " + totalFeedsParsed + " feeds in " + seconds + " seconds. Succeeded: " + succeededFeeds[0] + ", Failed: " + failedFeeds[0] + ". Total posts: " + postsAfter + ". New posts added: " + newPosts);

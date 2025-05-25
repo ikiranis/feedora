@@ -84,4 +84,20 @@ public class FeedService {
     public List<Feed> getAllFeeds() {
         return feedRepository.findAll();
     }
+
+    public void removeFeedByXmlUrlAndUser(String xmlUrl, User user) {
+        Feed feed = feedRepository.findByUser(user).stream()
+            .filter(f -> f.getXmlUrl().equals(xmlUrl))
+            .findFirst()
+            .orElse(null);
+        if (feed != null) {
+            feedRepository.delete(feed);
+            System.out.println("[Feedora] Removed feed due to invalid (HTML) response: " + xmlUrl);
+        }
+    }
+
+    public void removeFeedById(UUID id) {
+        feedRepository.deleteById(id);
+        System.out.println("[Feedora] Removed feed due to invalid (HTML) response: " + id);
+    }
 }
