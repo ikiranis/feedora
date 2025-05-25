@@ -16,7 +16,7 @@ public class Post {
     @Column(length = 1000)
     private String title;
     
-    @Column(length = 1000)
+    @Column(length = 2048)
     private String link;
     
     @Lob
