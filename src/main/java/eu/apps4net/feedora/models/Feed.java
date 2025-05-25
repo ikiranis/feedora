@@ -4,7 +4,11 @@ import jakarta.persistence.*;
 import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @Entity
+@JsonIgnoreProperties({"posts"})
 public class Feed {
     @Id
     @GeneratedValue
@@ -17,13 +21,16 @@ public class Feed {
 
     @ManyToOne
     @JoinColumn(name = "folder_id")
+    @JsonIgnore
     private Folder folder;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 
     @OneToMany(mappedBy = "feed")
+    @JsonIgnore
     private List<Post> posts;
 
     public Feed() {}

@@ -8,7 +8,10 @@ import eu.apps4net.feedora.repositories.PostRepository;
 import eu.apps4net.feedora.utilities.RssFetcher;
 import com.rometools.rome.feed.synd.SyndEntry;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -16,6 +19,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.time.LocalDateTime;
 
 @Service
 public class PostService {
@@ -46,7 +50,9 @@ public class PostService {
                                 entry.getTitle(),
                                 entry.getLink(),
                                 entry.getDescription() != null ? entry.getDescription().getValue() : null,
-                                entry.getPublishedDate() != null ? ZonedDateTime.ofInstant(entry.getPublishedDate().toInstant(), ZoneId.systemDefault()) : null,
+                                entry.getPublishedDate() != null
+                                    ? ZonedDateTime.ofInstant(entry.getPublishedDate().toInstant(), ZoneId.systemDefault()).toLocalDateTime()
+                                    : LocalDateTime.now(),
                                 entry.getAuthor(),
                                 false, // unread
                                 feed,
@@ -89,6 +95,18 @@ public class PostService {
             return b.getPubDate().compareTo(a.getPubDate());
         });
         return posts;
+    }
+
+    /**
+     * Returns paginated posts for a given user.
+     * @param user The user
+     * @param page The page number (0-indexed)
+     * @param pageSize The number of posts per page
+     * @return List of posts
+     */
+    public List<Post> getPostsForUser(User user, int page, int pageSize) {
+        Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "pubDate")); // Sorting included in Pageable
+        return postRepository.findByUser(user, pageable);
     }
 
     /**

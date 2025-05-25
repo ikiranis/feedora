@@ -6,9 +6,10 @@ import config from "@/functions/config.ts";
  * @returns {Promise<any>} List of posts
  * @throws Error if the request fails
  */
-export const getPosts = async () => {
+export const getPosts = async (page: number, pageSize: number) => {
     try {
-        const response = await axios.get(config.defaultServer() + '/api/posts/getAllPosts', {
+        const response = await axios.get(config.defaultServer() + '/api/posts/getPosts', {
+            params: { page, pageSize },
             headers: { 'Accept': 'application/json' }
         });
         if (response.status === 200) {

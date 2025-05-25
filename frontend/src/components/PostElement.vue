@@ -7,7 +7,8 @@
             <h6 class="card-subtitle mb-2 text-muted">{{ post.feed?.title }}</h6>
             <div class="mb-2">
                 <span class="badge bg-secondary me-2">{{ post.author }}</span>
-                <span class="badge bg-light text-dark">{{ post.pubDate ? new Date(post.pubDate).toLocaleString() : '' }}</span>
+                <span class="badge bg-light text-dark">{{ post.pubDate ? new Date(post.pubDate).toLocaleString() : ''
+                }}</span>
             </div>
             <div class="mb-2" v-if="post.description">
                 <div class="description-content-limiter" v-html="post.description"></div>
@@ -19,8 +20,16 @@
         </div>
     </div>
     <div v-else class="post-summary">
-        <a :href="post.link" target="_blank" class="post-title-link">{{ post.title }}</a>
-        <span class="post-date ms-2 text-muted">{{ post.pubDate ? new Date(post.pubDate).toLocaleString() : '' }}</span>
+        <div class="d-flex w-100 justify-content-between align-items-center">
+            <a :href="post.link" target="_blank" class="post-title-link">{{ post.title }}</a>
+            <span class="post-date ms-2 text-muted" v-if="post.pubDate">
+                {{ new Date(post.pubDate).toLocaleString() }}
+            </span>
+        </div>
+        <div class="summary-meta text-muted mt-1" style="font-size:0.95em;">
+            <span v-if="post.feed?.title">{{ post.feed.title }}</span>
+            <span v-if="post.feed?.folderName">&mdash; {{ post.feed.folderName }}</span>
+        </div>
     </div>
 </template>
 
@@ -40,10 +49,8 @@ defineProps<{
     border: 1px solid #eee;
     border-radius: 0.25rem;
     background-color: #f9f9f9;
-    margin-bottom: 0.5rem; /* Add some space between one-line items */
-    display: flex; /* Align title and date on one line */
-    justify-content: space-between; /* Push title and date to opposite ends */
-    align-items: center; /* Vertically align items */
+    margin-bottom: 0.5rem;
+    /* Remove flex to allow second line to break naturally */
 }
 
 .post-title-link {
@@ -61,13 +68,16 @@ defineProps<{
 }
 
 .description-content-limiter {
-  max-height: 6em; /* Adjust as needed, roughly 3-4 lines depending on line-height */
-  overflow: hidden;
-  /* The following properties can help with how text breaks and is truncated,
+    max-height: 6em;
+    /* Adjust as needed, roughly 3-4 lines depending on line-height */
+    overflow: hidden;
+    /* The following properties can help with how text breaks and is truncated,
      but true ellipsis on multi-line v-html is complex.
      This primarily "cuts" the content. */
-  display: block; /* Ensure it behaves as a block for overflow to work reliably */
-  word-break: break-word; /* Helps break long words to prevent them from overflowing */
+    display: block;
+    /* Ensure it behaves as a block for overflow to work reliably */
+    word-break: break-word;
+    /* Helps break long words to prevent them from overflowing */
 }
 
 /* Ensure images in post descriptions fit the card width if details are shown */

@@ -1,12 +1,13 @@
 package eu.apps4net.feedora.models;
 
 import jakarta.persistence.*;
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
+@JsonIgnoreProperties({"user"}) // Only ignore user, not feed
 public class Post {
     @Id
     @GeneratedValue
@@ -19,7 +20,7 @@ public class Post {
     @Lob
     private String description;
     
-    private ZonedDateTime pubDate;
+    private LocalDateTime pubDate;
     private String author;
 
     @Column(name = "is_read")
@@ -27,17 +28,15 @@ public class Post {
 
     @ManyToOne
     @JoinColumn(name = "feed_id")
-    @JsonIgnore
     private Feed feed;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    @JsonIgnore
     private User user;
 
     public Post() {}
 
-    public Post(String title, String link, String description, ZonedDateTime pubDate, String author, boolean read, Feed feed, User user) {
+    public Post(String title, String link, String description, LocalDateTime pubDate, String author, boolean read, Feed feed, User user) {
         this.title = title;
         this.link = link;
         this.description = description;
@@ -60,8 +59,8 @@ public class Post {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public ZonedDateTime getPubDate() { return pubDate; }
-    public void setPubDate(ZonedDateTime pubDate) { this.pubDate = pubDate; }
+    public LocalDateTime getPubDate() { return pubDate; }
+    public void setPubDate(LocalDateTime pubDate) { this.pubDate = pubDate; }
 
     public String getAuthor() { return author; }
     public void setAuthor(String author) { this.author = author; }

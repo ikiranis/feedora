@@ -108,28 +108,20 @@ const fetchPosts = async (reset = false) => {
             allLoaded.value = false;
         }
 
-        const data = await getPosts();
-        data.forEach((post: PostType) => {
-            if (post.description) {
-                post.description = removeImgSizeAttrsFromHtml(post.description);
-            }
-        });
+        const data = await getPosts(page.value, pageSize);
 
-        const start = (page.value - 1) * pageSize;
-        const end = start + pageSize;
-        const newPosts = data.slice(start, end);
-
-        if (newPosts.length < pageSize) {
+        if (data.length < pageSize) {
             allLoaded.value = true;
         }
 
         if (reset) {
-            posts.value = newPosts;
+            posts.value = data;
         } else {
-            posts.value = posts.value.concat(newPosts);
+            posts.value = posts.value.concat(data);
         }
 
-    } catch (e: any) { // Added :any to e for response access
+        page.value++; // Increment page for the next fetch
+    } catch (e) {
         console.error("Error fetching posts:", e);
         if (e.response && e.response.data && e.response.data.message && typeof e.response.data.status === 'number') {
             errorStore.set(true, e.response.data.message, e.response.data.status);
