@@ -1,51 +1,53 @@
 <template>
-    <div class="container py-4">
-        <div class="row justify-content-between mb-4 align-items-center">
-            <div class="col-auto">
-                <h2>{{ language.get('Posts') }}</h2>
+    <div class="scrollable-post-view" ref="scrollableContainerRef">
+        <div class="container py-4">
+            <div class="row justify-content-between mb-4 align-items-center">
+                <div class="col-auto">
+                    <h2>{{ language.get('Posts') }}</h2>
+                </div>
+                <div class="col-auto d-flex align-items-center">
+                    <button @click="showDetails = !showDetails" class="btn btn-outline-secondary me-3" 
+                            :title="showDetails ? language.get('Show Summary') : language.get('Show Details')">
+                        <svg v-if="showDetails" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+                            <title>{{ language.get('Show Summary') }}</title>
+                            <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+                        </svg>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-card-text" viewBox="0 0 16 16">
+                            <title>{{ language.get('Show Details') }}</title>
+                            <path d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z"/>
+                            <path d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z"/>
+                        </svg>
+                    </button>
+                    <button @click="handleParseFeeds" class="btn btn-primary me-2">
+                        {{ language.get('Parse RSS Feeds') }}
+                    </button>
+                    <button @click="handleDeleteAllPosts" class="btn btn-danger">
+                        {{ language.get('Delete All Posts') }}
+                    </button>
+                </div>
             </div>
-            <div class="col-auto d-flex align-items-center">
-                <button @click="showDetails = !showDetails" class="btn btn-outline-secondary me-3" 
-                        :title="showDetails ? language.get('Show Summary') : language.get('Show Details')">
-                    <svg v-if="showDetails" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
-                        <title>{{ language.get('Show Summary') }}</title>
-                        <path fill-rule="evenodd" d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-                    </svg>
-                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-card-text" viewBox="0 0 16 16">
-                        <title>{{ language.get('Show Details') }}</title>
-                        <path d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z"/>
-                        <path d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z"/>
-                    </svg>
-                </button>
-                <button @click="handleParseFeeds" class="btn btn-primary me-2">
-                    {{ language.get('Parse RSS Feeds') }}
-                </button>
-                <button @click="handleDeleteAllPosts" class="btn btn-danger">
-                    {{ language.get('Delete All Posts') }}
-                </button>
+            <div v-if="error" class="alert alert-danger text-center mt-3">{{ error }}</div>
+            <div v-if="posts.length > 0" class="row g-4">
+                <div v-for="post in posts" :key="post.id" :data-post-id="post.id" 
+                     :class="showDetails ? 'col-12 col-md-6 col-lg-4' : 'col-12'">
+                    <PostElement :post="post" :show-details="showDetails" />
+                </div>
+                <div v-if="allLoaded && posts.length > 0" class="text-center w-100 text-muted my-4">
+                    {{ language.get('No more posts') || 'No more posts' }}
+                </div>
             </div>
-        </div>
-        <div v-if="error" class="alert alert-danger text-center mt-3">{{ error }}</div>
-        <div v-if="posts.length > 0" class="row g-4">
-            <div v-for="post in posts" :key="post.id" :data-post-id="post.id" 
-                 :class="showDetails ? 'col-12 col-md-6 col-lg-4' : 'col-12'">
-                <PostElement :post="post" :show-details="showDetails" />
+            <div v-else-if="!error" class="text-center text-muted mt-5">
+                {{ language.get('No posts found') }}
             </div>
-            <div v-if="allLoaded && posts.length > 0" class="text-center w-100 text-muted my-4">
-                {{ language.get('No more posts') || 'No more posts' }}
-            </div>
-        </div>
-        <div v-else-if="!error" class="text-center text-muted mt-5">
-            {{ language.get('No posts found') }}
-        </div>
 
-        <!-- Fixed bottom-right loading spinner -->
-        <div v-if="loading" class="loading-spinner-fixed">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
+            <!-- Fixed bottom-right loading spinner -->
+            <div v-if="loading" class="loading-spinner-fixed">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
             </div>
-        </div>
 
+        </div>
     </div>
 </template>
 
@@ -62,7 +64,8 @@ const page = ref(1);
 const pageSize = 15;
 const loading = ref(false);
 const allLoaded = ref(false);
-const showDetails = ref(true); // Added for checkbox
+const showDetails = ref(true);
+const scrollableContainerRef = ref<HTMLElement | null>(null); // Ref for the scrollable container
 
 // Remove all size-related attributes (width, height, srcset, sizes, style with width/height) from <img> tags in HTML string and add a class for styling
 const removeImgSizeAttrsFromHtml = (html: string): string => {
@@ -115,10 +118,10 @@ const fetchPosts = async (reset = false) => {
 
         loading.value = false; // Set loading false
 
-        if (!reset && newPosts.length > 0) {
+        if (!reset && newPosts.length > 0 && scrollableContainerRef.value) {
             await nextTick(); // Wait for DOM to update
-            // Scroll up slightly to prevent immediate re-trigger
-            window.scrollBy(0, -1);
+            // Scroll up slightly to prevent immediate re-trigger within the new container
+            scrollableContainerRef.value.scrollTop -= 1;
         }
     } catch (e) {
         error.value = 'Failed to fetch posts.';
@@ -158,11 +161,14 @@ const handleDeleteAllPosts = async () => {
 };
 
 const handleScroll = () => {
-    if (loading.value || allLoaded.value) return;
-    const scrollY = window.scrollY || window.pageYOffset;
-    const visible = window.innerHeight;
-    const pageHeight = document.documentElement.scrollHeight;
-    if (scrollY + visible + 200 >= pageHeight) {
+    if (loading.value || allLoaded.value || !scrollableContainerRef.value) return;
+
+    const container = scrollableContainerRef.value;
+    const scrollTop = container.scrollTop;
+    const clientHeight = container.clientHeight;
+    const scrollHeight = container.scrollHeight;
+
+    if (scrollTop + clientHeight + 200 >= scrollHeight) {
         loading.value = true; // Set loading true to prevent multiple triggers
         page.value++;
         fetchPosts(); // fetchPosts will set loading.value to false
@@ -172,15 +178,31 @@ const handleScroll = () => {
 onMounted(() => {
     loading.value = true; // Set loading true for initial fetch
     fetchPosts(true);
-    window.addEventListener('scroll', handleScroll);
+    if (scrollableContainerRef.value) {
+        scrollableContainerRef.value.addEventListener('scroll', handleScroll);
+    }
 });
 
 onUnmounted(() => {
-    window.removeEventListener('scroll', handleScroll);
+    if (scrollableContainerRef.value) {
+        scrollableContainerRef.value.removeEventListener('scroll', handleScroll);
+    }
 });
 </script>
 
 <style>
+/* Make the main view scrollable instead of the whole page */
+.scrollable-post-view {
+    height: 90vh; /* Adjust as needed, e.g., calc(100vh - headerHeight) */
+    overflow-y: auto; /* Hide the scrollbar */
+    /* position: relative; /* If needed for absolutely positioned children within this container */
+}
+
+/* Ensure the body does not scroll if the .scrollable-post-view takes full viewport height */
+body {
+    overflow: hidden; /* This might be too aggressive, consider if it affects modals or other global elements */
+}
+
 /* Ensure images in post descriptions fit the card width */
 .post-img {
     max-width: 100% !important;
