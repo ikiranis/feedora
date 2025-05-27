@@ -1,72 +1,97 @@
 <template>
-    <div class="container py-4">
-        <div v-if="feeds.length > 0" class="table-responsive">
-            <table class="table table-bordered table-hover align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>{{ language.get('Title') }}</th>
-                        <th>{{ language.get('XML URL') }}</th>
-                        <th>{{ language.get('HTML URL') }}</th>
-                        <th>{{ language.get('Type') }}</th>
-                        <th>{{ language.get('Folder') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="feed in feeds" :key="feed.id">
-                        <td>{{ feed.title }}</td>
-                        <td>{{ feed.xmlUrl }}</td>
-                        <td>{{ feed.htmlUrl }}</td>
-                        <td>{{ feed.type }}</td>
-                        <td>{{ feed.folderName }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div v-if="error" class="alert alert-danger text-center mt-3">{{ error }}</div>
-        
-        <!-- OPML Import Section -->
-        <div class="row justify-content-center mt-4">
-            <div class="col-auto">
-                <div class="d-flex align-items-center gap-3">
-                    <input 
-                        ref="fileInput"
-                        type="file" 
-                        accept=".opml,.xml" 
-                        @change="handleFileSelect"
-                        class="form-control"
-                        style="width: 300px;"
-                    />
-                    <button 
-                        @click="importOPML" 
-                        :disabled="!selectedFile"
-                        class="btn btn-success"
-                        style="white-space: nowrap;"
-                    >
-                        {{ language.get('Import OPML') }}
-                    </button>
+    <div class="scrollable-feed-view" ref="scrollableContainerRef">
+        <div class="container py-4">
+            <div v-if="feeds.length > 0" class="table-responsive">
+                <table class="table table-bordered table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>{{ language.get('Title') }}</th>
+                            <th>{{ language.get('XML URL') }}</th>
+                            <th>{{ language.get('HTML URL') }}</th>
+                            <th>{{ language.get('Type') }}</th>
+                            <th>{{ language.get('Folder') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="feed in feeds" :key="feed.id">
+                            <td>{{ feed.title }}</td>
+                            <td>{{ feed.xmlUrl }}</td>
+                            <td>{{ feed.htmlUrl }}</td>
+                            <td>{{ feed.type }}</td>
+                            <td>{{ feed.folderName }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div v-else-if="!loading" class="text-center text-muted mt-5">
+                {{ language.get('No feeds found') }}
+            </div>
+            
+            <!-- OPML Import Section -->
+            <div class="row justify-content-center mt-4">
+                <div class="col-auto">
+                    <div class="d-flex align-items-center gap-3">
+                        <input 
+                            ref="fileInput"
+                            type="file" 
+                            accept=".opml,.xml" 
+                            @change="handleFileSelect"
+                            class="form-control"
+                            style="width: 300px;"
+                            :disabled="importing"
+                        />
+                        <button 
+                            @click="importOPML" 
+                            :disabled="!selectedFile || importing"
+                            class="btn btn-success"
+                            style="white-space: nowrap;"
+                        >
+                            {{ language.get('Import OPML') }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fixed loading spinner -->
+            <div v-if="loading || importing" class="loading-spinner-fixed">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
         </div>
     </div>
+
+    <Error class="error-fixed-bottom" />
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { getFeeds, importOPML as importOPMLApi } from '@/api/feed';
 import { Feed } from '@/types';
 import { language } from '@/functions/languageStore';
+import Error from '@/components/error/Error.vue';
+import { errorStore } from '@/components/error/errorStore';
 
 const feeds = ref<Feed[]>([]);
-const error = ref('');
 const selectedFile = ref<File | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
+const scrollableContainerRef = ref<HTMLElement | null>(null); // Ref for the scrollable container
+const loading = ref(false);
+const importing = ref(false);
 
 const fetchFeeds = async () => {
     try {
+        loading.value = true;
         const data = await getFeeds();
         feeds.value = data;
-    } catch (e) {
-        error.value = language.get('Failed to fetch feeds');
+    } catch (e: any) {
+        if (e.response && e.response.data && e.response.data.message && typeof e.response.data.status === 'number') {
+            errorStore.set(true, e.response.data.message, e.response.data.status);
+        } else {
+            errorStore.set(true, language.get('Failed to fetch feeds') || 'Failed to fetch feeds.', 500);
+        }
+    } finally {
+        loading.value = false;
     }
 };
 
@@ -79,7 +104,7 @@ const handleFileSelect = (event: Event) => {
 
 const importOPML = async () => {
     if (!selectedFile.value) {
-        error.value = language.get('Please select an OPML file first');
+        errorStore.set(true, language.get('Please select an OPML file first') || 'Please select an OPML file first.', 400);
         return;
     }
     
@@ -99,23 +124,61 @@ const importOPML = async () => {
     }
     
     try {
-        error.value = '';
+        importing.value = true;
         const result = await importOPMLApi(selectedFile.value);
         await fetchFeeds();
-        alert(result);
+        errorStore.set(true, result, 200); // Use errorStore for success message
         // Reset file input
         selectedFile.value = null;
         if (fileInput.value) {
             fileInput.value.value = '';
         }
-    } catch (e) {
-        error.value = language.get('Failed to import OPML');
+    } catch (e: any) {
+        if (e.response && e.response.data && e.response.data.message && typeof e.response.data.status === 'number') {
+            errorStore.set(true, e.response.data.message, e.response.data.status);
+        } else {
+            errorStore.set(true, language.get('Failed to import OPML') || 'Failed to import OPML.', 500);
+        }
+    } finally {
+        importing.value = false;
     }
 };
 
-onMounted(fetchFeeds);
+onMounted(() => {
+    loading.value = true;
+    fetchFeeds();
+    // Ensure body overflow is hidden when this component is active
+    document.body.style.overflow = 'hidden';
+});
+
+onUnmounted(() => {
+    // Restore body overflow when this component is destroyed
+    document.body.style.overflow = 'auto';
+});
 </script>
 
 <style scoped>
-/* No custom styles needed, using Bootstrap classes */
+/* Make the main view scrollable instead of the whole page */
+.scrollable-feed-view {
+    height: 90vh; /* Adjust height as needed */
+    overflow-y: auto;
+}
+
+/* Fixed loading spinner */
+.loading-spinner-fixed {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    /* Ensure it's above other content */
+}
+
+/* Centered error component */
+.error-fixed-bottom {
+    position: fixed;
+    bottom: 5em;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000; /* Same z-index as spinner, or adjust as needed */
+}
 </style>
