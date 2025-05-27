@@ -17,6 +17,8 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     Optional<Post> findByFeedAndUserAndLink(Feed feed, User user, String link);
     List<Post> findByUser(User user);
     List<Post> findByUser(User user, Pageable pageable);
+    List<Post> findByUserAndReadFalse(User user);
+    List<Post> findByUserAndReadFalse(User user, Pageable pageable);
     long countByUser(User user);
     boolean existsByFeedAndUserAndLink(Feed feed, User user, String link);
     

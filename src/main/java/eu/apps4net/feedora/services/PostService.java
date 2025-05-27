@@ -125,12 +125,12 @@ public class PostService {
     }
 
     /**
-     * Returns all posts for a given user, sorted by pubDate descending.
+     * Returns all unread posts for a given user, sorted by pubDate descending.
      * @param user The user
-     * @return List of posts
+     * @return List of unread posts
      */
     public List<Post> getAllPostsForUser(User user) {
-        List<Post> posts = postRepository.findByUser(user);
+        List<Post> posts = postRepository.findByUserAndReadFalse(user);
         posts.sort((a, b) -> {
             if (a.getPubDate() == null && b.getPubDate() == null) return 0;
             if (a.getPubDate() == null) return 1;
@@ -141,15 +141,15 @@ public class PostService {
     }
 
     /**
-     * Returns paginated posts for a given user.
+     * Returns paginated unread posts for a given user.
      * @param user The user
      * @param page The page number (0-indexed)
      * @param pageSize The number of posts per page
-     * @return List of posts
+     * @return List of unread posts
      */
     public List<Post> getPostsForUser(User user, int page, int pageSize) {
         Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "pubDate")); // Sorting included in Pageable
-        return postRepository.findByUser(user, pageable);
+        return postRepository.findByUserAndReadFalse(user, pageable);
     }
 
     /**
