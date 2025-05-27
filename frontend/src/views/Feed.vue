@@ -48,6 +48,7 @@
                             <th>{{ language.get('HTML URL') }}</th>
                             <th>{{ language.get('Type') }}</th>
                             <th>{{ language.get('Folder') }}</th>
+                            <th>{{ language.get('Actions') }}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -57,6 +58,18 @@
                             <td>{{ feed.htmlUrl }}</td>
                             <td>{{ feed.type }}</td>
                             <td>{{ feed.folderName }}</td>
+                            <td>
+                                <button 
+                                    class="btn btn-danger btn-sm"
+                                    @click="deleteFeed(feed)"
+                                    :title="language.get('Delete this feed')"
+                                >
+                                    <svg width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/>
+                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z"/>
+                                    </svg>
+                                </button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -85,7 +98,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import { getFeedsPaginated, importOPML as importOPMLApi, getFeedOperationStatus } from '@/api/feed';
+import { getFeedsPaginated, importOPML as importOPMLApi, getFeedOperationStatus, deleteFeed as deleteFeedApi } from '@/api/feed';
 import { Feed } from '@/types';
 import { language } from '@/functions/languageStore';
 import Error from '@/components/error/Error.vue';
@@ -196,6 +209,35 @@ const importOPML = async () => {
         }
     } finally {
         importing.value = false;
+    }
+};
+
+/**
+ * Deletes a feed after user confirmation
+ */
+const deleteFeed = async (feed: Feed) => {
+    const confirmed = confirm(
+        `${language.get('Are you sure you want to delete this feed')}\n\n` +
+        `${feed.title || 'Untitled Feed'}`
+    );
+    
+    if (!confirmed) {
+        return;
+    }
+    
+    try {
+        loading.value = true;
+        const result = await deleteFeedApi(feed.id);
+        await fetchFeeds(true); // Refresh feeds with reset
+        errorStore.set(true, result, 200); // Show success message
+    } catch (e: any) {
+        if (e.response && e.response.data) {
+            errorStore.set(true, e.response.data, e.response.status || 500);
+        } else {
+            errorStore.set(true, language.get('Failed to delete feed') || 'Failed to delete feed.', 500);
+        }
+    } finally {
+        loading.value = false;
     }
 };
 

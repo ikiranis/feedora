@@ -473,4 +473,49 @@
         <language code="el">Αποτυχία ανάκτησης πληροφοριών ροής: {0}</language>
     </entry>
 
+    <entry id="Actions">
+        <language code="en">Actions</language>
+        <language code="el">Ενέργειες</language>
+    </entry>
+
+    <entry id="Delete this feed">
+        <language code="en">Delete this feed</language>
+        <language code="el">Διαγραφή αυτής της ροής</language>
+    </entry>
+
+    <entry id="Error deleting feed">
+        <language code="en">Error deleting feed: {0}</language>
+        <language code="el">Σφάλμα κατά τη διαγραφή της ροής: {0}</language>
+    </entry>
+
+    <entry id="Invalid feed ID">
+        <language code="en">Invalid feed ID</language>
+        <language code="el">Μη έγκυρο ID ροής</language>
+    </entry>
+
+    <entry id="Feed not found">
+        <language code="en">Feed not found</language>
+        <language code="el">Η ροή δεν βρέθηκε</language>
+    </entry>
+
+    <entry id="Feed doesn't belong to user">
+        <language code="en">Feed doesn't belong to user</language>
+        <language code="el">Η ροή δεν ανήκει στον χρήστη</language>
+    </entry>
+
+    <entry id="Feed deleted successfully">
+        <language code="en">Feed deleted successfully</language>
+        <language code="el">Η ροή διαγράφηκε επιτυχώς</language>
+    </entry>
+
+    <entry id="Are you sure you want to delete this feed">
+        <language code="en">Are you sure you want to delete this feed?</language>
+        <language code="el">Είστε βέβαιοι ότι θέλετε να διαγράψετε αυτή την ροή;</language>
+    </entry>
+
+    <entry id="Failed to delete feed">
+        <language code="en">Failed to delete feed</language>
+        <language code="el">Αποτυχία διαγραφής ροής</language>
+    </entry>
+
 </root>

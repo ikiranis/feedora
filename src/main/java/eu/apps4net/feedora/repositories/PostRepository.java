@@ -25,4 +25,8 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     @Modifying
     @Transactional
     void deleteByUser(User user);
+    
+    @Modifying
+    @Transactional
+    void deleteByFeed(Feed feed);
 }

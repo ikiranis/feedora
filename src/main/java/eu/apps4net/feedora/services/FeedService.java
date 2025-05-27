@@ -265,4 +265,39 @@ public class FeedService {
         
         return feedInfo;
     }
+
+    /**
+     * Deletes a single feed for a specific user.
+     *
+     * @param feedId The UUID of the feed to delete
+     * @param user The user who owns the feed
+     * @return Success message
+     * @throws Exception if the feed is not found or doesn't belong to the user
+     */
+    @Transactional
+    public String deleteFeed(String feedId, User user) throws Exception {
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(feedId);
+        } catch (IllegalArgumentException e) {
+            throw new Exception(Language.getActionString("Invalid feed ID"));
+        }
+
+        Optional<Feed> feedOpt = feedRepository.findById(uuid);
+        if (!feedOpt.isPresent()) {
+            throw new Exception(Language.getActionString("Feed not found"));
+        }
+
+        Feed feed = feedOpt.get();
+        if (!feed.getUser().equals(user)) {
+            throw new Exception(Language.getActionString("Feed doesn't belong to user"));
+        }
+
+        // Delete posts first (due to foreign key constraints)
+        postRepository.deleteByFeed(feed);
+        
+        // Then delete the feed
+        feedRepository.delete(feed);
+        return Language.getActionString("Feed deleted successfully");
+    }
 }

@@ -108,3 +108,21 @@ export const fetchFeedInfo = async (url: string) => {
         throw error;
     }
 };
+
+/**
+ * Delete a feed by ID
+ * @param feedId - The ID of the feed to delete
+ */
+export const deleteFeed = async (feedId: string) => {
+    try {
+        const response = await axios.post(config.defaultServer() + '/api/deleteFeed', null, {
+            params: { feedId },
+            headers: { 'Content-Type': 'application/json' }
+        });
+        if (response.status === 200) {
+            return response.data;
+        }
+    } catch (error: any) {
+        throw error;
+    }
+};

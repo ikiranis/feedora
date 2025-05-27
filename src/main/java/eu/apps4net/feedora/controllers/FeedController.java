@@ -112,6 +112,24 @@ public class FeedController {
     }
 
     /**
+     * Deletes a single feed from the database.
+     *
+     * @param feedId The ID of the feed to delete
+     * @return Success message or error message
+     */
+    @PostMapping("/deleteFeed")
+    public ResponseEntity<String> deleteFeed(@RequestParam String feedId) {
+        try {
+            User adminUser = userService.getOrCreateAdminUser();
+            String result = feedService.deleteFeed(feedId, adminUser);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            String errorMessage = Language.getActionString("Error deleting feed").replace("{0}", e.getMessage());
+            return ResponseEntity.badRequest().body(errorMessage);
+        }
+    }
+
+    /**
      * Fetches feed information from a URL to get title and metadata.
      *
      * @param url The RSS feed URL
