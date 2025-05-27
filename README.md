@@ -108,9 +108,23 @@ npm run dev
 
 **Frontend will be available on:** `http://localhost:8080` (or as shown in terminal)
 
+### 🚀 Running the Built JAR (Production)
+
+After building the project, you can run the application directly using the generated JAR file:
+
+```bash
+# Build the project first
+./mvnw clean package
+
+# Run the JAR file (includes embedded frontend)
+java -jar target/Feedora-0.0.1.jar
+```
+
+**Note:** The JAR file includes the embedded server and will start on `http://localhost:9999`. The frontend should be built separately and served by a web server or included in the JAR if configured.
+
 ### 🌐 Application Access
 
-1. **Frontend Interface:** http://localhost:8080
+1. **Frontend Interface:** http://localhost:8080 (development) or http://localhost:9999 (if served by backend)
 2. **Backend API:** http://localhost:9999/api
 3. **Default Admin User:**
    - Email: `rocean@error.gr`
@@ -164,16 +178,25 @@ npm run dev
 
 ### Building for Production
 ```bash
-# Build backend
+# Build backend JAR
 ./mvnw clean package
 
-# Build frontend
+# Build frontend (optional - for separate deployment)
 cd frontend
 npm run build
 
-# The built frontend will be in frontend/dist/
-# The backend JAR will be in target/
+# Run the production JAR
+java -jar target/Feedora-0.0.1.jar
 ```
+
+**Output Files:**
+- **Backend JAR:** `target/Feedora-0.0.1.jar` (executable Spring Boot JAR)
+- **Frontend Build:** `frontend/dist/` (static files for web server deployment)
+
+**Deployment Options:**
+1. **Standalone JAR:** Run `java -jar target/Feedora-0.0.1.jar` (backend only)
+2. **Full Stack:** Serve frontend from `frontend/dist/` with a web server (nginx, Apache)
+3. **Docker:** Create Docker containers for both backend and frontend
 
 ---
 
