@@ -66,7 +66,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import { getFeeds, importOPML as importOPMLApi } from '@/api/feed';
+import { getFeeds, importOPML as importOPMLApi, getFeedOperationStatus } from '@/api/feed';
 import { Feed } from '@/types';
 import { language } from '@/functions/languageStore';
 import Error from '@/components/error/Error.vue';
@@ -106,6 +106,18 @@ const importOPML = async () => {
     if (!selectedFile.value) {
         errorStore.set(true, language.get('Please select an OPML file first') || 'Please select an OPML file first.', 400);
         return;
+    }
+    
+    try {
+        // Check if a feed operation is already running
+        const statusResponse = await getFeedOperationStatus();
+        if (statusResponse.isRunning) {
+            errorStore.set(true, language.get('Cannot import OPML: Feed parsing operation is currently in progress. Please try again in a few moments.') || 'Cannot import OPML: Feed parsing operation is currently in progress. Please try again in a few moments.', 409);
+            return;
+        }
+    } catch (e: any) {
+        console.warn('Could not check feed operation status:', e);
+        // Continue with import attempt even if status check fails
     }
     
     // Show confirmation dialog

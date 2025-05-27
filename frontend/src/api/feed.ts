@@ -38,3 +38,19 @@ export const importOPML = async (file: File) => {
         throw error;
     }
 };
+
+/**
+ * Check if a feed operation (parsing or OPML import) is currently running
+ */
+export const getFeedOperationStatus = async () => {
+    try {
+        const response = await axios.get(config.defaultServer() + '/api/feedOperationStatus', {
+            headers: { 'Accept': 'application/json' }
+        });
+        if (response.status === 200) {
+            return response.data;
+        }
+    } catch (error: any) {
+        throw error;
+    }
+};

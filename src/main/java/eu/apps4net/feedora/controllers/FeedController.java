@@ -4,6 +4,7 @@ import eu.apps4net.feedora.configurations.Language;
 import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.services.FeedService;
 import eu.apps4net.feedora.services.UserService;
+import eu.apps4net.feedora.services.OperationLockService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import eu.apps4net.feedora.models.FeedDTO;
 
@@ -22,6 +25,8 @@ public class FeedController {
     private FeedService feedService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private OperationLockService operationLockService;
 
     /**
      * Imports feeds and folders from an uploaded OPML file.
@@ -59,5 +64,17 @@ public class FeedController {
     @GetMapping("/getAllFeeds")
     public List<FeedDTO> getAll() {
         return feedService.getAllFeeds().stream().map(FeedDTO::fromFeed).toList();
+    }
+
+    /**
+     * Checks if a feed operation (parsing or OPML import) is currently running.
+     *
+     * @return JSON object with status information
+     */
+    @GetMapping("/feedOperationStatus")
+    public Map<String, Object> getFeedOperationStatus() {
+        Map<String, Object> status = new HashMap<>();
+        status.put("isRunning", operationLockService.isFeedOperationRunning());
+        return status;
     }
 }

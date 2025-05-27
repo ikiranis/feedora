@@ -24,6 +24,8 @@ public class FeedService {
     private FolderRepository folderRepository;
     @Autowired
     private PostRepository postRepository;
+    @Autowired
+    private OperationLockService operationLockService;
 
     /**
      * Imports feeds and folders from an OPML file and saves them to the database.
@@ -36,17 +38,23 @@ public class FeedService {
      */
     @Transactional
     public int importOPML(InputStream opmlInputStream, User user) throws Exception {
-        // Clear existing feeds, folders, and posts for the user
-        clearUserFeeds(user);
-        
-        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-        Document doc = dBuilder.parse(opmlInputStream);
-        doc.getDocumentElement().normalize();
+        // Try to acquire lock to prevent conflicts with feed parsing
+        if (!operationLockService.tryLockFeedOperation()) {
+            throw new Exception("Cannot import OPML: Feed parsing operation is currently in progress. Please try again in a few moments.");
+        }
 
-        NodeList folderNodes = doc.getElementsByTagName("outline");
-        Map<String, Folder> folderMap = new HashMap<>();
-        int feedsAdded = 0;
+        try {
+            // Clear existing feeds, folders, and posts for the user
+            clearUserFeeds(user);
+            
+            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+            Document doc = dBuilder.parse(opmlInputStream);
+            doc.getDocumentElement().normalize();
+
+            NodeList folderNodes = doc.getElementsByTagName("outline");
+            Map<String, Folder> folderMap = new HashMap<>();
+            int feedsAdded = 0;
 
         for (int i = 0; i < folderNodes.getLength(); i++) {
             Node node = folderNodes.item(i);
@@ -81,6 +89,10 @@ public class FeedService {
             }
         }
         return feedsAdded;
+        } finally {
+            // Always release the lock
+            operationLockService.unlockFeedOperation();
+        }
     }
 
     /**

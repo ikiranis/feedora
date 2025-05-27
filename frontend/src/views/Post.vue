@@ -59,6 +59,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { getPosts, parseFeeds, deleteAllPosts } from '@/api/post';
+import { getFeedOperationStatus } from '@/api/feed';
 import { PostType } from '@/types';
 import { language } from '@/functions/languageStore';
 import PostElement from '@/components/PostElement.vue';
@@ -127,6 +128,18 @@ const fetchPosts = async (reset = false) => {
  * then refreshes the post list and shows an alert with the result.
  */
 const handleParseFeeds = async () => {
+    try {
+        // Check if a feed operation is already running
+        const statusResponse = await getFeedOperationStatus();
+        if (statusResponse.isRunning) {
+            errorStore.set(true, language.get('Cannot parse feeds: Another feed operation is currently in progress. Please try again in a few moments.') || 'Cannot parse feeds: Another feed operation is currently in progress. Please try again in a few moments.', 409);
+            return;
+        }
+    } catch (e: any) {
+        console.warn('Could not check feed operation status:', e);
+        // Continue with parse attempt even if status check fails
+    }
+
     try {
         loading.value = true;
         const result = await parseFeeds();

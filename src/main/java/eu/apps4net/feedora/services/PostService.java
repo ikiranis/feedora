@@ -29,6 +29,8 @@ public class PostService {
     private PostRepository postRepository;
     @Autowired
     private FeedService feedService;
+    @Autowired
+    private OperationLockService operationLockService;
 
     /**
      * Iterates over the current user's RSS feeds, fetches recent unread posts, and adds them as Posts in the database.
@@ -37,18 +39,25 @@ public class PostService {
      * @param user The user whose feeds to parse
      */
     public void parseFeeds(User user) {
-        long startTime = System.currentTimeMillis();
-        List<Feed> feeds = feedRepository.findByUser(user);
-        if (feeds.isEmpty()) {
-            System.out.println("[Feedora] No feeds found in database. Skipping feed parsing task.");
+        // Try to acquire lock to prevent conflicts with OPML import
+        if (!operationLockService.tryLockFeedOperation()) {
+            System.out.println("[Feedora] Skipping feed parsing - another feed operation is in progress (likely OPML import).");
             return;
         }
-        int threadCount = Math.min(feeds.size(), 8);
-        if (threadCount == 0) threadCount = 1;
-        ExecutorService executor = Executors.newFixedThreadPool(threadCount); // up to 8 threads, at least 1
 
-        // Use countByUser to avoid CLOB issues
-        long postsBefore = postRepository.countByUser(user);
+        try {
+            long startTime = System.currentTimeMillis();
+            List<Feed> feeds = feedRepository.findByUser(user);
+            if (feeds.isEmpty()) {
+                System.out.println("[Feedora] No feeds found in database. Skipping feed parsing task.");
+                return;
+            }
+            int threadCount = Math.min(feeds.size(), 8);
+            if (threadCount == 0) threadCount = 1;
+            ExecutorService executor = Executors.newFixedThreadPool(threadCount); // up to 8 threads, at least 1
+
+            // Use countByUser to avoid CLOB issues
+            long postsBefore = postRepository.countByUser(user);
         final int[] failedFeeds = {0};
         final int[] succeededFeeds = {0};
 
@@ -107,6 +116,10 @@ public class PostService {
         int totalFeedsParsed = succeededFeeds[0] + failedFeeds[0];
 
         System.out.println("[Feedora] Parsed " + totalFeedsParsed + " feeds in " + seconds + " seconds. Succeeded: " + succeededFeeds[0] + ", Failed: " + failedFeeds[0] + ". Total posts: " + postsAfter + ". New posts added: " + newPosts);
+        } finally {
+            // Always release the lock
+            operationLockService.unlockFeedOperation();
+        }
     }
 
     /**
