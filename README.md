@@ -2,7 +2,7 @@
 
 Feedora is a modern, full-stack RSS reader application that provides a seamless experience for managing and reading RSS feeds. Built with enterprise-grade technologies, it features a robust Java Spring Boot backend and a responsive Vue.js frontend.
 
-![feedora screenshot](https://github.com/user-attachments/assets/3ae2cbbb-2817-47fe-b62f-955138fbfd22)
+![28-05--2025_00-45](https://github.com/user-attachments/assets/2fd9f8f7-6266-4f0d-81cc-6983d307d637)
 
 ## ✨ Key Features
 
