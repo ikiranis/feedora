@@ -7,9 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.io.File;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 import eu.apps4net.feedora.models.FeedDTO;
@@ -23,16 +23,26 @@ public class FeedController {
     private UserService userService;
 
     /**
-     * Imports feeds and folders from the OPML file (feeds.xml in the root folder).
+     * Imports feeds and folders from an uploaded OPML file.
      * Creates folders and feeds in the database, relating them to the admin user.
      *
+     * @param file The OPML file uploaded by the user
      * @return A message indicating the number of feeds imported or an error message.
      */
     @PostMapping("/importOPML")
-    public String importOPML() {
+    public String importOPML(@RequestParam("file") MultipartFile file) {
         try {
+            if (file.isEmpty()) {
+                return "Error: No file uploaded";
+            }
+            
+            if (!file.getOriginalFilename().toLowerCase().endsWith(".opml") && 
+                !file.getOriginalFilename().toLowerCase().endsWith(".xml")) {
+                return "Error: File must be an OPML (.opml) or XML (.xml) file";
+            }
+            
             User adminUser = userService.getOrCreateAdminUser();
-            int feedsAdded = feedService.importOPML(new File("feeds.xml"), adminUser);
+            int feedsAdded = feedService.importOPML(file.getInputStream(), adminUser);
             return "Imported " + feedsAdded + " feeds.";
         } catch (Exception e) {
             e.printStackTrace();

@@ -11,7 +11,7 @@ import org.w3c.dom.*;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.File;
+import java.io.InputStream;
 import java.util.*;
 
 @Service
@@ -25,15 +25,15 @@ public class FeedService {
      * Imports feeds and folders from an OPML file and saves them to the database.
      * If a folder or feed already exists for the user, it will not be duplicated.
      *
-     * @param opmlFile The OPML file to import (e.g., feeds.xml)
+     * @param opmlInputStream The OPML file input stream to import
      * @param user The user to relate the feeds and folders to
      * @return The number of feeds added
      * @throws Exception if there is an error reading or parsing the OPML file
      */
-    public int importOPML(File opmlFile, User user) throws Exception {
+    public int importOPML(InputStream opmlInputStream, User user) throws Exception {
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-        Document doc = dBuilder.parse(opmlFile);
+        Document doc = dBuilder.parse(opmlInputStream);
         doc.getDocumentElement().normalize();
 
         NodeList folderNodes = doc.getElementsByTagName("outline");

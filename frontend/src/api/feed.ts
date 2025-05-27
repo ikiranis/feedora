@@ -18,11 +18,19 @@ export const getFeeds = async () => {
 };
 
 /**
- * Import feeds from OPML file (feeds.xml on backend)
+ * Import feeds from uploaded OPML file
+ * @param file - The OPML file to upload
  */
-export const importOPML = async () => {
+export const importOPML = async (file: File) => {
     try {
-        const response = await axios.post(config.defaultServer() + '/api/importOPML');
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await axios.post(config.defaultServer() + '/api/importOPML', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
         if (response.status === 200) {
             return response.data;
         }

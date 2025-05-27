@@ -2,8 +2,24 @@
     <div class="container py-4">
         <div class="row justify-content-center mb-4">
             <div class="col-auto">
-                <button v-if="feeds.length === 0" @click="importOPML" class="btn btn-success btn-lg">Import
-                    OPML</button>
+                <div v-if="feeds.length === 0" class="text-center">
+                    <input 
+                        ref="fileInput"
+                        type="file" 
+                        accept=".opml,.xml" 
+                        @change="handleFileSelect"
+                        class="form-control mb-3"
+                        style="max-width: 300px; display: inline-block;"
+                    />
+                    <br>
+                    <button 
+                        @click="importOPML" 
+                        :disabled="!selectedFile"
+                        class="btn btn-success btn-lg"
+                    >
+                        Import OPML
+                    </button>
+                </div>
             </div>
         </div>
         <div v-if="feeds.length > 0" class="table-responsive">
@@ -39,6 +55,8 @@ import { Feed } from '@/types';
 
 const feeds = ref<Feed[]>([]);
 const error = ref('');
+const selectedFile = ref<File | null>(null);
+const fileInput = ref<HTMLInputElement | null>(null);
 
 const fetchFeeds = async () => {
     try {
@@ -49,12 +67,29 @@ const fetchFeeds = async () => {
     }
 };
 
+const handleFileSelect = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files.length > 0) {
+        selectedFile.value = target.files[0];
+    }
+};
+
 const importOPML = async () => {
+    if (!selectedFile.value) {
+        error.value = 'Please select an OPML file first.';
+        return;
+    }
+    
     try {
         error.value = '';
-        const result = await importOPMLApi();
+        const result = await importOPMLApi(selectedFile.value);
         await fetchFeeds();
         alert(result);
+        // Reset file input
+        selectedFile.value = null;
+        if (fileInput.value) {
+            fileInput.value.value = '';
+        }
     } catch (e) {
         error.value = 'Failed to import OPML.';
     }
