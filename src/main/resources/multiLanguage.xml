@@ -358,4 +358,119 @@
         <language code="el">Ανανέωση Άρθρων</language>
     </entry>
 
+    <entry id="Add Feed">
+        <language code="en">Add Feed</language>
+        <language code="el">Προσθήκη Ροής</language>
+    </entry>
+
+    <entry id="Add a new RSS feed to your collection">
+        <language code="en">Add a new RSS feed to your collection</language>
+        <language code="el">Προσθέστε μια νέα RSS ροή στη συλλογή σας</language>
+    </entry>
+
+    <entry id="Select an OPML file to import feeds">
+        <language code="en">Select an OPML file to import feeds</language>
+        <language code="el">Επιλέξτε ένα αρχείο OPML για εισαγωγή ροών</language>
+    </entry>
+
+    <entry id="Import feeds from the selected OPML file">
+        <language code="en">Import feeds from the selected OPML file</language>
+        <language code="el">Εισαγωγή ροών από το επιλεγμένο αρχείο OPML</language>
+    </entry>
+
+    <entry id="Feed URL">
+        <language code="en">Feed URL</language>
+        <language code="el">URL Ροής</language>
+    </entry>
+
+    <entry id="Enter the RSS feed URL">
+        <language code="en">Enter the RSS feed URL</language>
+        <language code="el">Εισάγετε την URL της RSS ροής</language>
+    </entry>
+
+    <entry id="Select Folder">
+        <language code="en">Select Folder</language>
+        <language code="el">Επιλογή Φακέλου</language>
+    </entry>
+
+    <entry id="Choose a folder for this feed">
+        <language code="en">Choose a folder for this feed</language>
+        <language code="el">Επιλέξτε έναν φάκελο για αυτή τη ροή</language>
+    </entry>
+
+    <entry id="Feed Title">
+        <language code="en">Feed Title</language>
+        <language code="el">Τίτλος Ροής</language>
+    </entry>
+
+    <entry id="Auto-detected title">
+        <language code="en">Auto-detected title</language>
+        <language code="el">Αυτόματα ανιχνευμένος τίτλος</language>
+    </entry>
+
+    <entry id="Add">
+        <language code="en">Add</language>
+        <language code="el">Προσθήκη</language>
+    </entry>
+
+    <entry id="Close">
+        <language code="en">Close</language>
+        <language code="el">Κλείσιμο</language>
+    </entry>
+
+    <entry id="Please enter a valid feed URL">
+        <language code="en">Please enter a valid feed URL</language>
+        <language code="el">Παρακαλώ εισάγετε μια έγκυρη URL ροής</language>
+    </entry>
+
+    <entry id="Please select a folder">
+        <language code="en">Please select a folder</language>
+        <language code="el">Παρακαλώ επιλέξτε έναν φάκελο</language>
+    </entry>
+
+    <entry id="Feed added successfully">
+        <language code="en">Feed added successfully</language>
+        <language code="el">Η ροή προστέθηκε επιτυχώς</language>
+    </entry>
+
+    <entry id="Failed to add feed">
+        <language code="en">Failed to add feed</language>
+        <language code="el">Αποτυχία προσθήκης ροής</language>
+    </entry>
+
+    <entry id="Failed to fetch feed title">
+        <language code="en">Failed to fetch feed title</language>
+        <language code="el">Αποτυχία ανάκτησης τίτλου ροής</language>
+    </entry>
+
+    <entry id="Fetching feed title...">
+        <language code="en">Fetching feed title...</language>
+        <language code="el">Ανάκτηση τίτλου ροής...</language>
+    </entry>
+
+    <entry id="Default">
+        <language code="en">Default</language>
+        <language code="el">Προεπιλογή</language>
+    </entry>
+
+    <entry id="Error adding feed">
+        <language code="en">Error adding feed: {0}</language>
+        <language code="el">Σφάλμα προσθήκης ροής: {0}</language>
+    </entry>
+
+    <entry id="Feed already exists">
+        <language code="en">Feed already exists</language>
+        <language code="el">Η ροή υπάρχει ήδη</language>
+    </entry>
+
+    <entry id="Folder not found or doesn't belong to user">
+        <language code="en">Folder not found or doesn't belong to user</language>
+        <language code="el">Ο φάκελος δεν βρέθηκε ή δεν ανήκει στον χρήστη</language>
+    </entry>
+
+    <entry id="Failed to fetch feed info">
+        <language code="en">Failed to fetch feed info: {0}</language>
+        <language code="el">Αποτυχία ανάκτησης πληροφοριών ροής: {0}</language>
+    </entry>
+
 </root>

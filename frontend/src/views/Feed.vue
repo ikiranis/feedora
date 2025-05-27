@@ -1,9 +1,18 @@
 <template>
-    <!-- OPML Import Section - Fixed at top, always visible -->
+    <!-- Actions Section - Fixed at top, always visible -->
     <div class="container py-3">
         <div class="row justify-content-center">
             <div class="col-auto">
                 <div class="d-flex align-items-center gap-3">
+                    <button 
+                        class="btn btn-primary"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#addFeedModal"
+                        style="white-space: nowrap;"
+                        :title="language.get('Add a new RSS feed to your collection')"
+                    >
+                        {{ language.get('Add Feed') }}
+                    </button>
                     <input 
                         ref="fileInput"
                         type="file" 
@@ -12,12 +21,14 @@
                         class="form-control"
                         style="width: 300px;"
                         :disabled="importing"
+                        :title="language.get('Select an OPML file to import feeds')"
                     />
                     <button 
                         @click="importOPML" 
                         :disabled="!selectedFile || importing"
                         class="btn btn-success"
                         style="white-space: nowrap;"
+                        :title="language.get('Import feeds from the selected OPML file')"
                     >
                         {{ language.get('Import OPML') }}
                     </button>
@@ -66,6 +77,9 @@
         </div>
     </div>
 
+    <!-- Add Feed Modal -->
+    <AddFeedModal @feed-added="handleFeedAdded" />
+
     <Error class="error-fixed-bottom" />
 </template>
 
@@ -75,6 +89,7 @@ import { getFeedsPaginated, importOPML as importOPMLApi, getFeedOperationStatus 
 import { Feed } from '@/types';
 import { language } from '@/functions/languageStore';
 import Error from '@/components/error/Error.vue';
+import AddFeedModal from '@/components/AddFeedModal.vue';
 import { errorStore } from '@/components/error/errorStore';
 
 const feeds = ref<Feed[]>([]);
@@ -201,6 +216,15 @@ const handleScroll = () => {
         loading.value = true;
         fetchFeeds();
     }
+};
+
+/**
+ * Handles when a new feed is added via the modal.
+ * Refreshes the feeds list to show the new feed.
+ */
+const handleFeedAdded = async () => {
+    loading.value = true;
+    await fetchFeeds(true); // Refresh feeds
 };
 
 onMounted(() => {

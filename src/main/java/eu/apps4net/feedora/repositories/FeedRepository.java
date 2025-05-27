@@ -8,10 +8,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface FeedRepository extends JpaRepository<Feed, UUID> {
     boolean existsByXmlUrlAndUser(String xmlUrl, User user);
+    Optional<Feed> findByXmlUrlAndUser(String xmlUrl, User user);
     List<Feed> findByUser(User user);
     List<Feed> findByUser(User user, Pageable pageable);
     

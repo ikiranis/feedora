@@ -73,3 +73,38 @@ export const getFeedOperationStatus = async () => {
         throw error;
     }
 };
+
+/**
+ * Add a single feed
+ * @param feedData - Object containing url, folderId, and optional title
+ */
+export const addFeed = async (feedData: { url: string; folderId: string | null; title?: string }) => {
+    try {
+        const response = await axios.post(config.defaultServer() + '/api/addFeed', feedData, {
+            headers: { 'Content-Type': 'application/json' }
+        });
+        if (response.status === 200) {
+            return response.data;
+        }
+    } catch (error: any) {
+        throw error;
+    }
+};
+
+/**
+ * Fetch feed information from a URL to get title and other metadata
+ * @param url - The RSS feed URL
+ */
+export const fetchFeedInfo = async (url: string) => {
+    try {
+        const response = await axios.get(config.defaultServer() + '/api/fetchFeedInfo', {
+            params: { url },
+            headers: { 'Accept': 'application/json' }
+        });
+        if (response.status === 200) {
+            return response.data;
+        }
+    } catch (error: any) {
+        throw error;
+    }
+};
