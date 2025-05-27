@@ -34,7 +34,7 @@
             <div v-if="posts.length > 0" class="row g-4">
                 <div v-for="post in posts" :key="post.id" :data-post-id="post.id"
                     :class="showDetails ? 'col-12 col-md-6 col-lg-4' : 'col-12'">
-                    <PostElement :post="post" :show-details="showDetails" />
+                    <PostElement :post="post" :show-details="showDetails" @post-read="handlePostRead" />
                 </div>
                 <div v-if="allLoaded && posts.length > 0" class="text-center w-100 text-muted my-4">
                     {{ language.get('No more posts') || 'No more posts' }}
@@ -131,13 +131,13 @@ const handleParseFeeds = async () => {
     try {
         // Check if a feed operation is already running
         const statusResponse = await getFeedOperationStatus();
+        
         if (statusResponse.isRunning) {
             errorStore.set(true, language.get('Cannot parse feeds: Another feed operation is currently in progress. Please try again in a few moments.') || 'Cannot parse feeds: Another feed operation is currently in progress. Please try again in a few moments.', 409);
             return;
         }
     } catch (e: any) {
         console.warn('Could not check feed operation status:', e);
-        // Continue with parse attempt even if status check fails
     }
 
     try {
@@ -146,7 +146,6 @@ const handleParseFeeds = async () => {
         await fetchPosts(true); // Refresh posts
         errorStore.set(true, result, 200); // Use errorStore for success
     } catch (e: any) { // Added :any to e for response access
-        console.error("Error parsing feeds:", e);
         if (e.response && e.response.data && e.response.data.message && typeof e.response.data.status === 'number') {
             errorStore.set(true, e.response.data.message, e.response.data.status);
         } else {
@@ -176,6 +175,17 @@ const handleDeleteAllPosts = async () => {
         }
     } finally {
         loading.value = false;
+    }
+};
+
+/**
+ * Handles when a post is marked as read.
+ * Updates the local state to reflect the change immediately.
+ */
+const handlePostRead = (postId: string) => {
+    const postIndex = posts.value.findIndex(post => post.id === postId);
+    if (postIndex !== -1) {
+        posts.value[postIndex].read = true;
     }
 };
 

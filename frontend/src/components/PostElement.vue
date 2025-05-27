@@ -1,27 +1,21 @@
 <template>
-    <div v-if="showDetails" class="card h-100 shadow-sm">
+    <div v-if="showDetails" class="card h-100 shadow-sm custom-card" :class="{ 'unread-post': !post.read, 'read-post': post.read }" @click="handleCardClick">
         <div class="card-body d-flex flex-column">
             <h5 class="card-title">
-                <a :href="post.link" target="_blank">{{ post.title }}</a>
+                <a :href="post.link" target="_blank" class="post-title" @click.stop>{{ post.title }}</a>
             </h5>
-            <h6 class="card-subtitle mb-2 text-muted">{{ post.feed?.title }}</h6>
-            <div class="mb-2">
-                <span class="badge bg-secondary me-2">{{ post.author }}</span>
-                <span class="badge bg-light text-dark">{{ post.pubDate ? new Date(post.pubDate).toLocaleString() : ''
-                }}</span>
-            </div>
+            <h6 class="badge bg-dark mb-2 text-light p-1">{{ post.feed?.title }}</h6>
             <div class="mb-2" v-if="post.description">
                 <div class="description-content-limiter" v-html="post.description"></div>
             </div>
             <div class="mt-auto">
-                <span v-if="post.read" class="badge bg-success">{{ language.get('Yes') }}</span>
-                <span v-else class="badge bg-secondary">{{ language.get('No') }}</span>
+                <span class="badge bg-light text-dark" v-if="post.pubDate">{{ new Date(post.pubDate).toLocaleString() }}</span>
             </div>
         </div>
     </div>
-    <div v-else class="post-summary">
+    <div v-else class="post-summary custom-summary" :class="{ 'unread-post': !post.read, 'read-post': post.read }" @click="handleCardClick">
         <div class="d-flex w-100 justify-content-between align-items-center">
-            <a :href="post.link" target="_blank" class="post-title-link">{{ post.title }}</a>
+            <a :href="post.link" target="_blank" class="post-title-link" @click.stop>{{ post.title }}</a>
             <span class="post-date ms-2 text-muted" v-if="post.pubDate">
                 {{ new Date(post.pubDate).toLocaleString() }}
             </span>
@@ -35,15 +29,88 @@
 
 <script setup lang="ts">
 import { PostType } from '@/types';
-import { language } from '@/functions/languageStore';
+import { markAsRead } from '@/api/post';
 
-defineProps<{
+const props = defineProps<{
     post: PostType;
     showDetails: boolean;
 }>();
+
+const emit = defineEmits<{
+    'post-read': [postId: string]
+}>();
+
+const handleCardClick = async () => {
+    // Only mark as read if it's currently unread
+    if (!props.post.read) {
+        try {
+            await markAsRead(props.post.id);
+            // Emit event to notify parent component that the post has been marked as read
+            emit('post-read', props.post.id);
+        } catch (error) {
+            console.error('Failed to mark post as read:', error);
+        }
+    }
+};
 </script>
 
 <style scoped>
+.custom-card {
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
+    background-color: #fff;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.custom-card.unread-post {
+    border: 2px solid #333;
+    font-weight: bold;
+}
+
+.custom-card.read-post {
+    border: 1px solid #e9ecef;
+}
+
+.custom-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.post-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
+}
+
+.post-title:hover {
+    color: #007bff;
+    text-decoration: underline;
+}
+
+.custom-summary {
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 0.5rem;
+    background-color: #f8f9fa;
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.custom-summary.unread-post {
+    border: 2px solid #333;
+    font-weight: bold;
+}
+
+.custom-summary.read-post {
+    border: 1px solid #e9ecef;
+}
+
+.custom-summary:hover {
+    background-color: #e9ecef;
+}
+
 .post-summary {
     padding: 0.5rem 0.75rem;
     border: 1px solid #eee;
@@ -65,6 +132,8 @@ defineProps<{
 
 .post-date {
     font-size: 0.85em;
+    text-align: right;
+    white-space: nowrap;
 }
 
 .description-content-limiter {

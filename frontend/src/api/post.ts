@@ -51,3 +51,20 @@ export const deleteAllPosts = async () => {
         throw error;
     }
 };
+
+/**
+ * Mark a specific post as read.
+ * @param {string} postId - The UUID of the post to mark as read
+ * @returns {Promise<any>} Result message from backend
+ * @throws Error if the request fails
+ */
+export const markAsRead = async (postId: string) => {
+    try {
+        const response = await axios.put(config.defaultServer() + `/api/posts/markAsRead/${postId}`);
+        if (response.status === 200) {
+            return response.data;
+        }
+    } catch (error: any) {
+        throw error;
+    }
+};

@@ -20,6 +20,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.time.LocalDateTime;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 public class PostService {
@@ -155,5 +157,25 @@ public class PostService {
      */
     public void deleteAllPosts() {
         postRepository.deleteAll();
+    }
+
+    /**
+     * Mark a post as read for a specific user.
+     * @param postId The UUID of the post to mark as read
+     * @param user The user who is marking the post as read
+     * @return true if the post was found and updated, false otherwise
+     */
+    public boolean markPostAsRead(UUID postId, User user) {
+        Optional<Post> postOptional = postRepository.findById(postId);
+        if (postOptional.isPresent()) {
+            Post post = postOptional.get();
+            // Verify that the post belongs to the specified user
+            if (post.getUser().getId().equals(user.getId())) {
+                post.setRead(true);
+                postRepository.save(post);
+                return true;
+            }
+        }
+        return false;
     }
 }
