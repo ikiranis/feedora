@@ -67,8 +67,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
-import { getPosts, parseFeeds, deleteAllPosts } from '@/api/post';
+import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { getPosts, parseFeeds, deleteAllPosts, markAsRead } from '@/api/post';
 import { getFeedOperationStatus } from '@/api/feed';
 import { PostType } from '@/types';
 import { language } from '@/functions/languageStore';
@@ -83,6 +83,9 @@ const loading = ref(false);
 const allLoaded = ref(false);
 const showDetails = ref(true);
 const scrollableContainerRef = ref<HTMLElement | null>(null); // Ref for the scrollable container
+const intersectionObserver = ref<IntersectionObserver | null>(null);
+const observedPosts = ref<Set<string>>(new Set()); // Track which posts are being observed
+const lastScrollTop = ref(0); // Track scroll position to determine scroll direction
 
 /**
  * Fetches posts from the API. It supports pagination and resetting the post list.
@@ -110,6 +113,11 @@ const fetchPosts = async (reset = false) => {
         }
 
         page.value++; // Increment page for the next fetch
+
+        // Re-observe post elements after posts are loaded
+        nextTick(() => {
+            observePostElements();
+        });
     } catch (e) {
         if (
             typeof e === 'object' &&
@@ -193,7 +201,13 @@ const handleDeleteAllPosts = async () => {
  */
 const handleRefreshPosts = async () => {
     loading.value = true;
+    // Clean up current intersection observer
+    cleanupIntersectionObserver();
     await fetchPosts(true); // Reset and fetch fresh posts
+    // Re-setup intersection observer after posts are loaded
+    nextTick(() => {
+        setupIntersectionObserver();
+    });
 };
 
 /**
@@ -204,7 +218,107 @@ const handlePostRead = (postId: string) => {
     const postIndex = posts.value.findIndex(post => post.id === postId);
     if (postIndex !== -1) {
         posts.value[postIndex].read = true;
+        // Remove from observed posts since it's now read
+        observedPosts.value.delete(postId);
+        
+        // Stop observing this post element since it's now read
+        if (intersectionObserver.value && scrollableContainerRef.value) {
+            const postElement = scrollableContainerRef.value.querySelector(`[data-post-id="${postId}"]`);
+            if (postElement) {
+                intersectionObserver.value.unobserve(postElement);
+            }
+        }
     }
+};
+
+/**
+ * Marks a post as read via API call.
+ * Used when posts are scrolled past.
+ */
+const markPostAsReadAPI = async (postId: string) => {
+    try {
+        await markAsRead(postId);
+        handlePostRead(postId); // Update local state
+    } catch (error) {
+        console.error('Failed to mark post as read:', error);
+    }
+};
+
+/**
+ * Sets up intersection observer to track when posts are scrolled past.
+ * Posts that completely disappear from the viewport are marked as read only when scrolling down.
+ */
+const setupIntersectionObserver = () => {
+    if (!scrollableContainerRef.value) return;
+
+    intersectionObserver.value = new IntersectionObserver(
+        (entries) => {
+            // Get current scroll position to determine direction
+            const currentScrollTop = scrollableContainerRef.value?.scrollTop || 0;
+            const isScrollingDown = currentScrollTop > lastScrollTop.value;
+            lastScrollTop.value = currentScrollTop;
+
+            entries.forEach((entry) => {
+                const postElement = entry.target as HTMLElement;
+                const postId = postElement.getAttribute('data-post-id');
+                
+                if (!postId) return;
+
+                const post = posts.value.find(p => p.id === postId);
+                if (!post || post.read) return;
+
+                if (entry.isIntersecting) {
+                    // Post is visible - track it
+                    observedPosts.value.add(postId);
+                } else {
+                    // Post is no longer visible - mark as read only if scrolling down and it was previously observed
+                    if (observedPosts.value.has(postId) && isScrollingDown) {
+                        observedPosts.value.delete(postId);
+                        markPostAsReadAPI(postId);
+                    }
+                }
+            });
+        },
+        {
+            root: scrollableContainerRef.value,
+            rootMargin: '0px',
+            threshold: 0 // Trigger when post is completely out of view
+        }
+    );
+
+    // Observe all current post elements
+    observePostElements();
+};
+
+/**
+ * Observes all unread post elements for intersection changes.
+ */
+const observePostElements = () => {
+    if (!intersectionObserver.value || !scrollableContainerRef.value) return;
+
+    const postElements = scrollableContainerRef.value.querySelectorAll('[data-post-id]');
+    postElements.forEach((element) => {
+        const postId = element.getAttribute('data-post-id');
+        if (postId) {
+            const post = posts.value.find(p => p.id === postId);
+            // Only observe unread posts
+            if (post && !post.read) {
+                intersectionObserver.value!.observe(element);
+            }
+        }
+    });
+};
+
+/**
+ * Cleans up intersection observer.
+ */
+const cleanupIntersectionObserver = () => {
+    if (intersectionObserver.value) {
+        intersectionObserver.value.disconnect();
+        intersectionObserver.value = null;
+    }
+    observedPosts.value.clear();
+    lastScrollTop.value = 0;
 };
 
 /**
@@ -233,7 +347,13 @@ onMounted(() => {
     fetchPosts(true); // Initial fetch
     if (scrollableContainerRef.value) {
         scrollableContainerRef.value.addEventListener('scroll', handleScroll);
+        // Initialize scroll position
+        lastScrollTop.value = scrollableContainerRef.value.scrollTop;
     }
+    // Setup intersection observer for marking posts as read when scrolled past
+    nextTick(() => {
+        setupIntersectionObserver();
+    });
     // Ensure body overflow is hidden when this component is active
     document.body.style.overflow = 'hidden';
 });
@@ -242,6 +362,8 @@ onUnmounted(() => {
     if (scrollableContainerRef.value) {
         scrollableContainerRef.value.removeEventListener('scroll', handleScroll);
     }
+    // Cleanup intersection observer
+    cleanupIntersectionObserver();
     // Restore body overflow when this component is destroyed
     document.body.style.overflow = 'auto';
 });
