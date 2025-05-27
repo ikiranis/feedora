@@ -6,7 +6,7 @@
             </li>
         </ul>
         <div v-else>
-            No folders found.
+            {{ language.get('No folders found') }}
         </div>
     </div>
 </template>
@@ -15,6 +15,7 @@
 import { ref, onMounted } from 'vue';
 import { getFolders } from '@/api/folder';
 import type { FolderType } from '@/types';
+import { language } from '@/functions/languageStore';
 
 const folders = ref<FolderType[]>([]);
 

@@ -1,5 +1,6 @@
 package eu.apps4net.feedora.controllers;
 
+import eu.apps4net.feedora.configurations.Language;
 import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.services.FeedService;
 import eu.apps4net.feedora.services.UserService;
@@ -33,20 +34,20 @@ public class FeedController {
     public String importOPML(@RequestParam("file") MultipartFile file) {
         try {
             if (file.isEmpty()) {
-                return "Error: No file uploaded";
+                return Language.getActionString("No file uploaded");
             }
             
             if (!file.getOriginalFilename().toLowerCase().endsWith(".opml") && 
                 !file.getOriginalFilename().toLowerCase().endsWith(".xml")) {
-                return "Error: File must be an OPML (.opml) or XML (.xml) file";
+                return Language.getActionString("File must be OPML or XML");
             }
             
             User adminUser = userService.getOrCreateAdminUser();
             int feedsAdded = feedService.importOPML(file.getInputStream(), adminUser);
-            return "Successfully replaced existing feeds. Imported " + feedsAdded + " new feeds.";
+            return Language.getActionString("Successfully replaced existing feeds").replace("{0}", String.valueOf(feedsAdded));
         } catch (Exception e) {
             e.printStackTrace();
-            return "Error importing OPML: " + e.getMessage();
+            return Language.getActionString("Error importing OPML").replace("{0}", e.getMessage());
         }
     }
 

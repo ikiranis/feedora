@@ -79,8 +79,8 @@ const collapse = () => {
     </div>
 
     <Page404 v-else
-             title="Server Is Offline"
-             text="Can't connect to the API service" />
+             :title="language.get('Server Is Offline')"
+             :text="language.get('Can\'t connect to the API service')" />
 </template>
 
 <style scoped lang="scss">

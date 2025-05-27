@@ -1,5 +1,6 @@
 package eu.apps4net.feedora.controllers;
 
+import eu.apps4net.feedora.configurations.Language;
 import eu.apps4net.feedora.models.Post;
 import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.services.PostService;
@@ -33,10 +34,10 @@ public class PostController {
         try {
             User adminUser = userService.getOrCreateAdminUser();
             postService.parseFeeds(adminUser);
-            return "Feeds parsed and posts updated.";
+            return Language.getActionString("Feeds parsed and posts updated");
         } catch (Exception e) {
             e.printStackTrace();
-            return "Error parsing feeds: " + e.getMessage();
+            return Language.getActionString("Error parsing feeds").replace("{0}", e.getMessage());
         }
     }
 
@@ -44,10 +45,10 @@ public class PostController {
     public String deleteAllPosts() {
         try {
             postService.deleteAllPosts();
-            return "All posts deleted.";
+            return Language.getActionString("All posts deleted");
         } catch (Exception e) {
             e.printStackTrace();
-            return "Error deleting posts: " + e.getMessage();
+            return Language.getActionString("Error deleting posts").replace("{0}", e.getMessage());
         }
     }
 

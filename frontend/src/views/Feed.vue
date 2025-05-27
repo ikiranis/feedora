@@ -4,11 +4,11 @@
             <table class="table table-bordered table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th>Title</th>
-                        <th>XML URL</th>
-                        <th>HTML URL</th>
-                        <th>Type</th>
-                        <th>Folder</th>
+                        <th>{{ language.get('Title') }}</th>
+                        <th>{{ language.get('XML URL') }}</th>
+                        <th>{{ language.get('HTML URL') }}</th>
+                        <th>{{ language.get('Type') }}</th>
+                        <th>{{ language.get('Folder') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -42,7 +42,7 @@
                         class="btn btn-success"
                         style="white-space: nowrap;"
                     >
-                        Import OPML
+                        {{ language.get('Import OPML') }}
                     </button>
                 </div>
             </div>
@@ -54,6 +54,7 @@
 import { ref, onMounted } from 'vue';
 import { getFeeds, importOPML as importOPMLApi } from '@/api/feed';
 import { Feed } from '@/types';
+import { language } from '@/functions/languageStore';
 
 const feeds = ref<Feed[]>([]);
 const error = ref('');
@@ -65,7 +66,7 @@ const fetchFeeds = async () => {
         const data = await getFeeds();
         feeds.value = data;
     } catch (e) {
-        error.value = 'Failed to fetch feeds.';
+        error.value = language.get('Failed to fetch feeds');
     }
 };
 
@@ -78,19 +79,19 @@ const handleFileSelect = (event: Event) => {
 
 const importOPML = async () => {
     if (!selectedFile.value) {
-        error.value = 'Please select an OPML file first.';
+        error.value = language.get('Please select an OPML file first');
         return;
     }
     
     // Show confirmation dialog
     const confirmed = confirm(
-        `⚠️ IMPORTANT WARNING ⚠️\n\n` +
-        `Importing this OPML file will:\n` +
-        `• DELETE all your existing feeds\n` +
-        `• DELETE all your existing folders\n` +
-        `• DELETE all your existing posts\n\n` +
-        `This action CANNOT be undone!\n\n` +
-        `Are you sure you want to continue and replace all your current data?`
+        `⚠️ ${language.get('IMPORTANT WARNING')} ⚠️\n\n` +
+        `${language.get('Importing this OPML file will')}\n` +
+        `• ${language.get('DELETE all your existing feeds')}\n` +
+        `• ${language.get('DELETE all your existing folders')}\n` +
+        `• ${language.get('DELETE all your existing posts')}\n\n` +
+        `${language.get('This action CANNOT be undone')}\n\n` +
+        `${language.get('Are you sure you want to continue')}`
     );
     
     if (!confirmed) {
@@ -108,7 +109,7 @@ const importOPML = async () => {
             fileInput.value.value = '';
         }
     } catch (e) {
-        error.value = 'Failed to import OPML.';
+        error.value = language.get('Failed to import OPML');
     }
 };
 

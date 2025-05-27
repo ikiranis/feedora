@@ -6,7 +6,7 @@
             </li>
         </ul>
         <div v-else>
-            No users found.
+            {{ language.get('No users found') }}
         </div>
     </div>
 </template>
@@ -15,6 +15,7 @@
 import { ref, onMounted } from 'vue';
 import { getUsers } from '@/api/user';
 import type { UserType } from '@/types';
+import { language } from '@/functions/languageStore';
 
 const users = ref<UserType[]>([]);
 

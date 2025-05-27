@@ -132,4 +132,225 @@
         <language code="el">Εμφάνιση Περίληψης</language>
     </entry>
 
+    <!-- New entries for internationalization -->
+    <entry id="XML URL">
+        <language code="en">XML URL</language>
+        <language code="el">XML URL</language>
+    </entry>
+
+    <entry id="HTML URL">
+        <language code="en">HTML URL</language>
+        <language code="el">HTML URL</language>
+    </entry>
+
+    <entry id="Type">
+        <language code="en">Type</language>
+        <language code="el">Τύπος</language>
+    </entry>
+
+    <entry id="Folder">
+        <language code="en">Folder</language>
+        <language code="el">Φάκελος</language>
+    </entry>
+
+    <entry id="Import OPML">
+        <language code="en">Import OPML</language>
+        <language code="el">Εισαγωγή OPML</language>
+    </entry>
+
+    <entry id="No users found">
+        <language code="en">No users found</language>
+        <language code="el">Δεν βρέθηκαν χρήστες</language>
+    </entry>
+
+    <entry id="Failed to fetch feeds">
+        <language code="en">Failed to fetch feeds</language>
+        <language code="el">Αποτυχία φόρτωσης ροών</language>
+    </entry>
+
+    <entry id="Failed to fetch posts">
+        <language code="en">Failed to fetch posts</language>
+        <language code="el">Αποτυχία φόρτωσης άρθρων</language>
+    </entry>
+
+    <entry id="Failed to parse feeds">
+        <language code="en">Failed to parse feeds</language>
+        <language code="el">Αποτυχία ανάκτησης ροών</language>
+    </entry>
+
+    <entry id="Failed to delete posts">
+        <language code="en">Failed to delete posts</language>
+        <language code="el">Αποτυχία διαγραφής άρθρων</language>
+    </entry>
+
+    <entry id="Failed to import OPML">
+        <language code="en">Failed to import OPML</language>
+        <language code="el">Αποτυχία εισαγωγής OPML</language>
+    </entry>
+
+    <entry id="Please select an OPML file first">
+        <language code="en">Please select an OPML file first</language>
+        <language code="el">Παρακαλώ επιλέξτε πρώτα ένα αρχείο OPML</language>
+    </entry>
+
+    <entry id="No more posts">
+        <language code="en">No more posts</language>
+        <language code="el">Δεν υπάρχουν άλλα άρθρα</language>
+    </entry>
+
+    <entry id="Loading">
+        <language code="en">Loading</language>
+        <language code="el">Φόρτωση</language>
+    </entry>
+
+    <entry id="Server Is Offline">
+        <language code="en">Server Is Offline</language>
+        <language code="el">Ο διακομιστής είναι εκτός σύνδεσης</language>
+    </entry>
+
+    <entry id="Can't connect to the API service">
+        <language code="en">Can't connect to the API service</language>
+        <language code="el">Αδυναμία σύνδεσης με την υπηρεσία API</language>
+    </entry>
+
+    <entry id="Expand">
+        <language code="en">Expand</language>
+        <language code="el">Επέκταση</language>
+    </entry>
+
+    <entry id="Collapse">
+        <language code="en">Collapse</language>
+        <language code="el">Σύμπτυξη</language>
+    </entry>
+
+    <entry id="Previous">
+        <language code="en">Previous</language>
+        <language code="el">Προηγούμενο</language>
+    </entry>
+
+    <entry id="Next">
+        <language code="en">Next</language>
+        <language code="el">Επόμενο</language>
+    </entry>
+
+    <entry id="of">
+        <language code="en">of</language>
+        <language code="el">από</language>
+    </entry>
+
+    <entry id="pages">
+        <language code="en">pages</language>
+        <language code="el">σελίδες</language>
+    </entry>
+
+    <entry id="Edit Setting">
+        <language code="en">Edit Setting</language>
+        <language code="el">Επεξεργασία Ρύθμισης</language>
+    </entry>
+
+    <entry id="Search problem">
+        <language code="en">Search problem</language>
+        <language code="el">Πρόβλημα αναζήτησης</language>
+    </entry>
+
+    <entry id="No Settings Founded">
+        <language code="en">No Settings Found</language>
+        <language code="el">Δεν βρέθηκαν ρυθμίσεις</language>
+    </entry>
+
+    <entry id="IMPORTANT WARNING">
+        <language code="en">IMPORTANT WARNING</language>
+        <language code="el">ΣΗΜΑΝΤΙΚΗ ΠΡΟΕΙΔΟΠΟΙΗΣΗ</language>
+    </entry>
+
+    <entry id="Importing this OPML file will">
+        <language code="en">Importing this OPML file will:</language>
+        <language code="el">Η εισαγωγή αυτού του αρχείου OPML θα:</language>
+    </entry>
+
+    <entry id="DELETE all your existing feeds">
+        <language code="en">DELETE all your existing feeds</language>
+        <language code="el">ΔΙΑΓΡΑΨΕΙ όλες τις υπάρχουσες ροές σας</language>
+    </entry>
+
+    <entry id="DELETE all your existing folders">
+        <language code="en">DELETE all your existing folders</language>
+        <language code="el">ΔΙΑΓΡΑΨΕΙ όλους τους υπάρχοντες φακέλους σας</language>
+    </entry>
+
+    <entry id="DELETE all your existing posts">
+        <language code="en">DELETE all your existing posts</language>
+        <language code="el">ΔΙΑΓΡΑΨΕΙ όλα τα υπάρχοντα άρθρα σας</language>
+    </entry>
+
+    <entry id="This action CANNOT be undone">
+        <language code="en">This action CANNOT be undone!</language>
+        <language code="el">Αυτή η ενέργεια ΔΕΝ ΜΠΟΡΕΙ να αναιρεθεί!</language>
+    </entry>
+
+    <entry id="Are you sure you want to continue">
+        <language code="en">Are you sure you want to continue and replace all your current data?</language>
+        <language code="el">Είστε σίγουροι ότι θέλετε να συνεχίσετε και να αντικαταστήσετε όλα τα τρέχοντα δεδομένα σας;</language>
+    </entry>
+
+    <entry id="No file uploaded">
+        <language code="en">Error: No file uploaded</language>
+        <language code="el">Σφάλμα: Δεν μεταφορτώθηκε αρχείο</language>
+    </entry>
+
+    <entry id="File must be OPML or XML">
+        <language code="en">Error: File must be an OPML (.opml) or XML (.xml) file</language>
+        <language code="el">Σφάλμα: Το αρχείο πρέπει να είναι OPML (.opml) ή XML (.xml)</language>
+    </entry>
+
+    <entry id="Successfully replaced existing feeds">
+        <language code="en">Successfully replaced existing feeds. Imported {0} new feeds.</language>
+        <language code="el">Επιτυχής αντικατάσταση υπαρχουσών ροών. Εισήχθησαν {0} νέες ροές.</language>
+    </entry>
+
+    <entry id="Error importing OPML">
+        <language code="en">Error importing OPML: {0}</language>
+        <language code="el">Σφάλμα εισαγωγής OPML: {0}</language>
+    </entry>
+
+    <entry id="Feeds parsed and posts updated">
+        <language code="en">Feeds parsed and posts updated.</language>
+        <language code="el">Οι ροές αναλύθηκαν και τα άρθρα ενημερώθηκαν.</language>
+    </entry>
+
+    <entry id="Error parsing feeds">
+        <language code="en">Error parsing feeds: {0}</language>
+        <language code="el">Σφάλμα ανάλυσης ροών: {0}</language>
+    </entry>
+
+    <entry id="All posts deleted">
+        <language code="en">All posts deleted.</language>
+        <language code="el">Όλα τα άρθρα διαγράφηκαν.</language>
+    </entry>
+
+    <entry id="Error deleting posts">
+        <language code="en">Error deleting posts: {0}</language>
+        <language code="el">Σφάλμα διαγραφής άρθρων: {0}</language>
+    </entry>
+
+    <entry id="Invalid setting value">
+        <language code="en">Invalid setting value</language>
+        <language code="el">Μη έγκυρη τιμή ρύθμισης</language>
+    </entry>
+
+    <entry id="Languages not found">
+        <language code="en">Languages not found</language>
+        <language code="el">Δεν βρέθηκαν γλώσσες</language>
+    </entry>
+
+    <entry id="No folders found">
+        <language code="en">No folders found</language>
+        <language code="el">Δεν βρέθηκαν φάκελοι</language>
+    </entry>
+
+    <entry id="Setting saved with success">
+        <language code="en">Setting saved successfully</language>
+        <language code="el">Η ρύθμιση αποθηκεύτηκε επιτυχώς</language>
+    </entry>
+
 </root>
