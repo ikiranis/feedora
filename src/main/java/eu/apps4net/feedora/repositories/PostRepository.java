@@ -5,6 +5,8 @@ import eu.apps4net.feedora.models.Feed;
 import eu.apps4net.feedora.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,4 +19,8 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     List<Post> findByUser(User user, Pageable pageable);
     long countByUser(User user);
     boolean existsByFeedAndUserAndLink(Feed feed, User user, String link);
+    
+    @Modifying
+    @Transactional
+    void deleteByUser(User user);
 }

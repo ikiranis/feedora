@@ -1,27 +1,5 @@
 <template>
     <div class="container py-4">
-        <div class="row justify-content-center mb-4">
-            <div class="col-auto">
-                <div v-if="feeds.length === 0" class="text-center">
-                    <input 
-                        ref="fileInput"
-                        type="file" 
-                        accept=".opml,.xml" 
-                        @change="handleFileSelect"
-                        class="form-control mb-3"
-                        style="max-width: 300px; display: inline-block;"
-                    />
-                    <br>
-                    <button 
-                        @click="importOPML" 
-                        :disabled="!selectedFile"
-                        class="btn btn-success btn-lg"
-                    >
-                        Import OPML
-                    </button>
-                </div>
-            </div>
-        </div>
         <div v-if="feeds.length > 0" class="table-responsive">
             <table class="table table-bordered table-hover align-middle">
                 <thead class="table-light">
@@ -45,6 +23,30 @@
             </table>
         </div>
         <div v-if="error" class="alert alert-danger text-center mt-3">{{ error }}</div>
+        
+        <!-- OPML Import Section -->
+        <div class="row justify-content-center mt-4">
+            <div class="col-auto">
+                <div class="d-flex align-items-center gap-3">
+                    <input 
+                        ref="fileInput"
+                        type="file" 
+                        accept=".opml,.xml" 
+                        @change="handleFileSelect"
+                        class="form-control"
+                        style="width: 300px;"
+                    />
+                    <button 
+                        @click="importOPML" 
+                        :disabled="!selectedFile"
+                        class="btn btn-success"
+                        style="white-space: nowrap;"
+                    >
+                        Import OPML
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -78,6 +80,21 @@ const importOPML = async () => {
     if (!selectedFile.value) {
         error.value = 'Please select an OPML file first.';
         return;
+    }
+    
+    // Show confirmation dialog
+    const confirmed = confirm(
+        `⚠️ IMPORTANT WARNING ⚠️\n\n` +
+        `Importing this OPML file will:\n` +
+        `• DELETE all your existing feeds\n` +
+        `• DELETE all your existing folders\n` +
+        `• DELETE all your existing posts\n\n` +
+        `This action CANNOT be undone!\n\n` +
+        `Are you sure you want to continue and replace all your current data?`
+    );
+    
+    if (!confirmed) {
+        return; // User cancelled the operation
     }
     
     try {

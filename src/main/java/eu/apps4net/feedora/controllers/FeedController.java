@@ -24,7 +24,7 @@ public class FeedController {
 
     /**
      * Imports feeds and folders from an uploaded OPML file.
-     * Creates folders and feeds in the database, relating them to the admin user.
+     * Replaces all existing feeds and folders for the admin user with the new ones from the OPML file.
      *
      * @param file The OPML file uploaded by the user
      * @return A message indicating the number of feeds imported or an error message.
@@ -43,7 +43,7 @@ public class FeedController {
             
             User adminUser = userService.getOrCreateAdminUser();
             int feedsAdded = feedService.importOPML(file.getInputStream(), adminUser);
-            return "Imported " + feedsAdded + " feeds.";
+            return "Successfully replaced existing feeds. Imported " + feedsAdded + " new feeds.";
         } catch (Exception e) {
             e.printStackTrace();
             return "Error importing OPML: " + e.getMessage();

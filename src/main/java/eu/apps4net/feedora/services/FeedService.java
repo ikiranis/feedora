@@ -5,8 +5,10 @@ import eu.apps4net.feedora.models.Folder;
 import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.repositories.FeedRepository;
 import eu.apps4net.feedora.repositories.FolderRepository;
+import eu.apps4net.feedora.repositories.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.w3c.dom.*;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -20,17 +22,23 @@ public class FeedService {
     private FeedRepository feedRepository;
     @Autowired
     private FolderRepository folderRepository;
+    @Autowired
+    private PostRepository postRepository;
 
     /**
      * Imports feeds and folders from an OPML file and saves them to the database.
-     * If a folder or feed already exists for the user, it will not be duplicated.
+     * This method replaces all existing feeds and folders for the user with the new ones from the OPML file.
      *
      * @param opmlInputStream The OPML file input stream to import
      * @param user The user to relate the feeds and folders to
      * @return The number of feeds added
      * @throws Exception if there is an error reading or parsing the OPML file
      */
+    @Transactional
     public int importOPML(InputStream opmlInputStream, User user) throws Exception {
+        // Clear existing feeds, folders, and posts for the user
+        clearUserFeeds(user);
+        
         DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
         Document doc = dBuilder.parse(opmlInputStream);
@@ -63,11 +71,10 @@ public class FeedService {
                             String xmlUrl = feedElem.getAttribute("xmlUrl");
                             String htmlUrl = feedElem.getAttribute("htmlUrl");
                             String type = feedElem.getAttribute("type");
-                            if (!feedRepository.existsByXmlUrlAndUser(xmlUrl, user)) {
-                                Feed feed = new Feed(title, xmlUrl, htmlUrl, type, folder, user);
-                                feedRepository.save(feed);
-                                feedsAdded++;
-                            }
+                            // Since we cleared all feeds, we can always add new ones
+                            Feed feed = new Feed(title, xmlUrl, htmlUrl, type, folder, user);
+                            feedRepository.save(feed);
+                            feedsAdded++;
                         }
                     }
                 }
@@ -99,5 +106,25 @@ public class FeedService {
     public void removeFeedById(UUID id) {
         feedRepository.deleteById(id);
         System.out.println("[Feedora] Removed feed due to invalid (HTML) response: " + id);
+    }
+
+    /**
+     * Clears all feeds, folders, and posts for a specific user.
+     * This is used before importing new OPML data to replace existing feeds.
+     *
+     * @param user The user whose feeds should be cleared
+     */
+    @Transactional
+    public void clearUserFeeds(User user) {
+        // Delete posts first (due to foreign key constraints)
+        postRepository.deleteByUser(user);
+        
+        // Delete feeds
+        feedRepository.deleteByUser(user);
+        
+        // Delete folders (after feeds are deleted)
+        folderRepository.deleteByUser(user);
+        
+        System.out.println("[Feedora] Cleared all existing feeds, folders, and posts for user: " + user.getUsername());
     }
 }
