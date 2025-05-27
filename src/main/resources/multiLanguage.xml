@@ -353,4 +353,9 @@
         <language code="el">Η ρύθμιση αποθηκεύτηκε επιτυχώς</language>
     </entry>
 
+    <entry id="Refresh Posts">
+        <language code="en">Refresh Posts</language>
+        <language code="el">Ανανέωση Άρθρων</language>
+    </entry>
+
 </root>

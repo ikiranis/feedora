@@ -6,6 +6,16 @@
                     <h2>{{ language.get('Posts') }}</h2>
                 </div>
                 <div class="col-auto d-flex align-items-center">
+                    <button @click="handleRefreshPosts" class="btn btn-outline-primary me-3"
+                        :title="language.get('Refresh Posts') || 'Refresh Posts'"
+                        :disabled="loading">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+                            class="bi bi-arrow-clockwise" :class="{ 'spin': loading }" viewBox="0 0 16 16">
+                            <title>{{ language.get('Refresh Posts') || 'Refresh Posts' }}</title>
+                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                        </svg>
+                    </button>
                     <button @click="showDetails = !showDetails" class="btn btn-outline-secondary me-3"
                         :title="showDetails ? language.get('Show Summary') : language.get('Show Details')">
                         <svg v-if="showDetails" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
@@ -179,6 +189,14 @@ const handleDeleteAllPosts = async () => {
 };
 
 /**
+ * Handles refreshing the posts by fetching the latest data.
+ */
+const handleRefreshPosts = async () => {
+    loading.value = true;
+    await fetchPosts(true); // Reset and fetch fresh posts
+};
+
+/**
  * Handles when a post is marked as read.
  * Updates the local state to reflect the change immediately.
  */
@@ -259,5 +277,15 @@ onUnmounted(() => {
     bottom: 5em;
     left: 20px;
     z-index: 1000; /* Same z-index as spinner, or adjust as needed */
+}
+
+/* Refresh button spin animation */
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 </style>
