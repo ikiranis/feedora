@@ -9,6 +9,9 @@ import eu.apps4net.feedora.repositories.PostRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.w3c.dom.*;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -102,6 +105,18 @@ public class FeedService {
      */
     public List<Feed> getAllFeeds() {
         return feedRepository.findAll();
+    }
+
+    /**
+     * Returns paginated feeds for a given user.
+     * @param user The user
+     * @param page The page number (1-indexed)
+     * @param pageSize The number of feeds per page
+     * @return List of feeds
+     */
+    public List<Feed> getFeedsForUser(User user, int page, int pageSize) {
+        Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.ASC, "title"));
+        return feedRepository.findByUser(user, pageable);
     }
 
     public void removeFeedByXmlUrlAndUser(String xmlUrl, User user) {

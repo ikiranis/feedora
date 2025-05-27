@@ -67,6 +67,19 @@ public class FeedController {
     }
 
     /**
+     * Returns paginated feeds for the admin user.
+     *
+     * @param page The page number (1-indexed)
+     * @param pageSize The number of feeds per page
+     * @return List of Feed entities (without user and folder details)
+     */
+    @GetMapping("/getFeeds")
+    public List<FeedDTO> getFeeds(@RequestParam int page, @RequestParam int pageSize) {
+        User adminUser = userService.getOrCreateAdminUser();
+        return feedService.getFeedsForUser(adminUser, page, pageSize).stream().map(FeedDTO::fromFeed).toList();
+    }
+
+    /**
      * Checks if a feed operation (parsing or OPML import) is currently running.
      *
      * @return JSON object with status information

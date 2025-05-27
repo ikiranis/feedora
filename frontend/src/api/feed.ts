@@ -18,6 +18,25 @@ export const getFeeds = async () => {
 };
 
 /**
+ * Get paginated feeds from the backend
+ * @param page - The page number (1-indexed)
+ * @param pageSize - The number of feeds per page
+ */
+export const getFeedsPaginated = async (page: number, pageSize: number) => {
+    try {
+        const response = await axios.get(config.defaultServer() + '/api/getFeeds', {
+            params: { page, pageSize },
+            headers: { 'Accept': 'application/json' }
+        });
+        if (response.status === 200) {
+            return response.data;
+        }
+    } catch (error: any) {
+        throw error;
+    }
+};
+
+/**
  * Import feeds from uploaded OPML file
  * @param file - The OPML file to upload
  */

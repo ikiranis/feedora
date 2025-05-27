@@ -1,4 +1,31 @@
 <template>
+    <!-- OPML Import Section - Fixed at top, always visible -->
+    <div class="container py-3">
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <div class="d-flex align-items-center gap-3">
+                    <input 
+                        ref="fileInput"
+                        type="file" 
+                        accept=".opml,.xml" 
+                        @change="handleFileSelect"
+                        class="form-control"
+                        style="width: 300px;"
+                        :disabled="importing"
+                    />
+                    <button 
+                        @click="importOPML" 
+                        :disabled="!selectedFile || importing"
+                        class="btn btn-success"
+                        style="white-space: nowrap;"
+                    >
+                        {{ language.get('Import OPML') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="scrollable-feed-view" ref="scrollableContainerRef">
         <div class="container py-4">
             <div v-if="feeds.length > 0" class="table-responsive">
@@ -22,34 +49,12 @@
                         </tr>
                     </tbody>
                 </table>
+                <div v-if="allLoaded && feeds.length > 0" class="text-center w-100 text-muted my-4">
+                    {{ language.get('No more feeds') || 'No more feeds' }}
+                </div>
             </div>
             <div v-else-if="!loading" class="text-center text-muted mt-5">
                 {{ language.get('No feeds found') }}
-            </div>
-            
-            <!-- OPML Import Section -->
-            <div class="row justify-content-center mt-4">
-                <div class="col-auto">
-                    <div class="d-flex align-items-center gap-3">
-                        <input 
-                            ref="fileInput"
-                            type="file" 
-                            accept=".opml,.xml" 
-                            @change="handleFileSelect"
-                            class="form-control"
-                            style="width: 300px;"
-                            :disabled="importing"
-                        />
-                        <button 
-                            @click="importOPML" 
-                            :disabled="!selectedFile || importing"
-                            class="btn btn-success"
-                            style="white-space: nowrap;"
-                        >
-                            {{ language.get('Import OPML') }}
-                        </button>
-                    </div>
-                </div>
             </div>
 
             <!-- Fixed loading spinner -->
@@ -66,7 +71,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import { getFeeds, importOPML as importOPMLApi, getFeedOperationStatus } from '@/api/feed';
+import { getFeedsPaginated, importOPML as importOPMLApi, getFeedOperationStatus } from '@/api/feed';
 import { Feed } from '@/types';
 import { language } from '@/functions/languageStore';
 import Error from '@/components/error/Error.vue';
@@ -78,12 +83,35 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const scrollableContainerRef = ref<HTMLElement | null>(null); // Ref for the scrollable container
 const loading = ref(false);
 const importing = ref(false);
+const page = ref(1);
+const pageSize = 15;
+const allLoaded = ref(false);
 
-const fetchFeeds = async () => {
+/**
+ * Fetches feeds from the API. It supports pagination and resetting the feed list.
+ * @param {boolean} [reset=false] - If true, clears existing feeds and resets pagination.
+ */
+const fetchFeeds = async (reset = false) => {
     try {
-        loading.value = true;
-        const data = await getFeeds();
-        feeds.value = data;
+        if (reset) {
+            feeds.value = [];
+            page.value = 1;
+            allLoaded.value = false;
+        }
+
+        const data = await getFeedsPaginated(page.value, pageSize);
+
+        if (data.length < pageSize) {
+            allLoaded.value = true;
+        }
+
+        if (reset) {
+            feeds.value = data;
+        } else {
+            feeds.value = feeds.value.concat(data);
+        }
+
+        page.value++; // Increment page for the next fetch
     } catch (e: any) {
         if (e.response && e.response.data && e.response.data.message && typeof e.response.data.status === 'number') {
             errorStore.set(true, e.response.data.message, e.response.data.status);
@@ -138,7 +166,7 @@ const importOPML = async () => {
     try {
         importing.value = true;
         const result = await importOPMLApi(selectedFile.value);
-        await fetchFeeds();
+        await fetchFeeds(true); // Refresh feeds with reset
         errorStore.set(true, result, 200); // Use errorStore for success message
         // Reset file input
         selectedFile.value = null;
@@ -156,14 +184,39 @@ const importOPML = async () => {
     }
 };
 
+/**
+ * Handles the scroll event on the scrollable container.
+ * When the user scrolls near the bottom, it loads more feeds if available.
+ */
+const handleScroll = () => {
+    if (loading.value || allLoaded.value || !scrollableContainerRef.value) return;
+
+    const container = scrollableContainerRef.value;
+    const scrollTop = container.scrollTop;
+    const clientHeight = container.clientHeight;
+    const scrollHeight = container.scrollHeight;
+
+    // Load more when 200px from the bottom
+    if (scrollTop + clientHeight + 200 >= scrollHeight) {
+        loading.value = true;
+        fetchFeeds();
+    }
+};
+
 onMounted(() => {
     loading.value = true;
-    fetchFeeds();
+    fetchFeeds(true); // Initial fetch
+    if (scrollableContainerRef.value) {
+        scrollableContainerRef.value.addEventListener('scroll', handleScroll);
+    }
     // Ensure body overflow is hidden when this component is active
     document.body.style.overflow = 'hidden';
 });
 
 onUnmounted(() => {
+    if (scrollableContainerRef.value) {
+        scrollableContainerRef.value.removeEventListener('scroll', handleScroll);
+    }
     // Restore body overflow when this component is destroyed
     document.body.style.overflow = 'auto';
 });
@@ -172,7 +225,7 @@ onUnmounted(() => {
 <style scoped>
 /* Make the main view scrollable instead of the whole page */
 .scrollable-feed-view {
-    height: 90vh; /* Adjust height as needed */
+    height: 80vh; /* Reduced height to account for fixed import section */
     overflow-y: auto;
 }
 
