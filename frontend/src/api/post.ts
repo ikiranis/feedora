@@ -3,13 +3,21 @@ import config from "@/functions/config.ts";
 
 /**
  * Fetch all posts from the backend for the current user.
+ * @param page - The page number (1-indexed)
+ * @param pageSize - The number of posts per page
+ * @param search - Optional search term to filter posts by title
  * @returns {Promise<any>} List of posts
  * @throws Error if the request fails
  */
-export const getPosts = async (page: number, pageSize: number) => {
+export const getPosts = async (page: number, pageSize: number, search?: string) => {
     try {
+        const params: any = { page, pageSize };
+        if (search && search.trim()) {
+            params.search = search.trim();
+        }
+        
         const response = await axios.get(config.defaultServer() + '/api/posts/getPosts', {
-            params: { page, pageSize },
+            params,
             headers: { 'Accept': 'application/json' }
         });
         if (response.status === 200) {

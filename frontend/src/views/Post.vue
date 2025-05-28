@@ -36,9 +36,23 @@
                     <button @click="handleParseFeeds" class="btn btn-primary me-2">
                         {{ language.get('Parse RSS Feeds') }}
                     </button>
-                    <button @click="handleDeleteAllPosts" class="btn btn-danger">
+                    <button @click="handleDeleteAllPosts" class="btn btn-danger me-3">
                         {{ language.get('Delete All Posts') }}
                     </button>
+                    <div class="input-group" style="width: 250px;">
+                        <span class="input-group-text">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                            </svg>
+                        </span>
+                        <input 
+                            v-model="searchTerm"
+                            type="text" 
+                            class="form-control"
+                            :placeholder="language.get('Search posts by title...')"
+                            :title="language.get('Filter posts by title')"
+                        />
+                    </div>
                 </div>
             </div>
             <div v-if="posts.length > 0" class="row g-4">
@@ -46,12 +60,15 @@
                     :class="showDetails ? 'col-12 col-md-6 col-lg-4' : 'col-12'">
                     <PostElement :post="post" :show-details="showDetails" @post-read="handlePostRead" />
                 </div>
-                <div v-if="allLoaded && posts.length > 0" class="text-center w-100 text-muted my-4">
+                <div v-if="allLoaded && posts.length > 0 && !searchTerm.trim()" class="text-center w-100 text-muted my-4">
                     {{ language.get('No more posts') || 'No more posts' }}
                 </div>
             </div>
-            <div v-else class="text-center text-muted mt-5">
+            <div v-else-if="!loading && posts.length === 0 && !searchTerm.trim()" class="text-center text-muted mt-5">
                 {{ language.get('No posts found') }}
+            </div>
+            <div v-else-if="!loading && posts.length === 0 && searchTerm.trim()" class="text-center text-muted mt-5">
+                {{ language.get('No posts match your search') || 'No posts match your search' }}
             </div>
 
             <!-- Fixed bottom-right loading spinner -->
@@ -67,7 +84,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { getPosts, parseFeeds, deleteAllPosts, markAsRead } from '@/api/post';
 import { getFeedOperationStatus } from '@/api/feed';
 import { PostType } from '@/types';
@@ -86,6 +103,8 @@ const scrollableContainerRef = ref<HTMLElement | null>(null); // Ref for the scr
 const intersectionObserver = ref<IntersectionObserver | null>(null);
 const observedPosts = ref<Set<string>>(new Set()); // Track which posts are being observed
 const lastScrollTop = ref(0); // Track scroll position to determine scroll direction
+const searchTerm = ref('');
+const searchTimeout = ref<number | null>(null);
 
 /**
  * Fetches posts from the API. It supports pagination and resetting the post list.
@@ -100,7 +119,7 @@ const fetchPosts = async (reset = false) => {
             allLoaded.value = false;
         }
 
-        const data = await getPosts(page.value, pageSize);
+        const data = await getPosts(page.value, pageSize, searchTerm.value);
 
         if (data.length < pageSize) {
             allLoaded.value = true;
@@ -341,6 +360,29 @@ const handleScroll = () => {
     }
 };
 
+// Watch for search term changes with debouncing
+watch(searchTerm, (_) => {
+    // Clear existing timeout
+    if (searchTimeout.value) {
+        clearTimeout(searchTimeout.value);
+    }
+    
+    // Set new timeout for debounced search
+    searchTimeout.value = setTimeout(() => {
+        // Cleanup intersection observer before search
+        cleanupIntersectionObserver();
+        
+        // Reset and fetch with search
+        loading.value = true;
+        fetchPosts(true);
+        
+        // Re-setup intersection observer after search
+        nextTick(() => {
+            setupIntersectionObserver();
+        });
+    }, 500); // 500ms debounce delay
+});
+
 // Lifecycle hooks
 onMounted(() => {
     loading.value = true;
@@ -361,6 +403,10 @@ onMounted(() => {
 onUnmounted(() => {
     if (scrollableContainerRef.value) {
         scrollableContainerRef.value.removeEventListener('scroll', handleScroll);
+    }
+    // Cleanup search timeout
+    if (searchTimeout.value) {
+        clearTimeout(searchTimeout.value);
     }
     // Cleanup intersection observer
     cleanupIntersectionObserver();

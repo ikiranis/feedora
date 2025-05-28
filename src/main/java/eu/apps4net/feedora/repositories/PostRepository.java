@@ -6,6 +6,8 @@ import eu.apps4net.feedora.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -19,6 +21,12 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     List<Post> findByUser(User user, Pageable pageable);
     List<Post> findByUserAndReadFalse(User user);
     List<Post> findByUserAndReadFalse(User user, Pageable pageable);
+    
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.read = false AND " +
+           "(LOWER(p.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
+    List<Post> findByUserAndReadFalseAndTitleOrDescriptionContaining(@Param("user") User user, @Param("searchTerm") String searchTerm, Pageable pageable);
+    
     long countByUser(User user);
     boolean existsByFeedAndUserAndLink(Feed feed, User user, String link);
     

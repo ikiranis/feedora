@@ -153,6 +153,24 @@ public class PostService {
     }
 
     /**
+     * Returns paginated unread posts for a given user with search functionality.
+     * @param user The user
+     * @param page The page number (0-indexed)
+     * @param pageSize The number of posts per page
+     * @param searchTerm The search term to filter posts by title or description (case-insensitive)
+     * @return List of unread posts
+     */
+    public List<Post> getPostsForUser(User user, int page, int pageSize, String searchTerm) {
+        Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "pubDate"));
+        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+            String trimmedSearchTerm = searchTerm.trim();
+            return postRepository.findByUserAndReadFalseAndTitleOrDescriptionContaining(user, trimmedSearchTerm, pageable);
+        } else {
+            return postRepository.findByUserAndReadFalse(user, pageable);
+        }
+    }
+
+    /**
      * Delete all posts from the database.
      */
     public void deleteAllPosts() {

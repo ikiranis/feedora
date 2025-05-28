@@ -57,9 +57,9 @@ public class PostController {
     }
 
     @GetMapping("/getPosts")
-    public List<Post> getPosts(@RequestParam int page, @RequestParam int pageSize) {
+    public List<Post> getPosts(@RequestParam int page, @RequestParam int pageSize, @RequestParam(required = false) String search) {
         User adminUser = userService.getOrCreateAdminUser();
-        return postService.getPostsForUser(adminUser, page, pageSize);
+        return postService.getPostsForUser(adminUser, page, pageSize, search);
     }
 
     @PutMapping("/markAsRead/{postId}")
