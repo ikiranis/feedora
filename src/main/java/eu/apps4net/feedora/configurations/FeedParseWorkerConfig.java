@@ -30,6 +30,6 @@ public class FeedParseWorkerConfig {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }, 0, 5, TimeUnit.MINUTES);
+        }, 0, 10, TimeUnit.MINUTES);
     }
 }
