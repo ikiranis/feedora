@@ -518,6 +518,36 @@
         <language code="el">Αποτυχία διαγραφής ροής</language>
     </entry>
 
+    <entry id="Feed updated successfully">
+        <language code="en">Feed updated successfully</language>
+        <language code="el">Η ροή ενημερώθηκε επιτυχώς</language>
+    </entry>
+
+    <entry id="Edit Feed">
+        <language code="en">Edit Feed</language>
+        <language code="el">Επεξεργασία Ροής</language>
+    </entry>
+
+    <entry id="Error updating feed">
+        <language code="en">Error updating feed: {0}</language>
+        <language code="el">Σφάλμα ενημέρωσης ροής: {0}</language>
+    </entry>
+
+    <entry id="Failed to update feed">
+        <language code="en">Failed to update feed</language>
+        <language code="el">Αποτυχία ενημέρωσης ροής</language>
+    </entry>
+
+    <entry id="Save Changes">
+        <language code="en">Save Changes</language>
+        <language code="el">Αποθήκευση Αλλαγών</language>
+    </entry>
+
+    <entry id="Optional folder name">
+        <language code="en">Optional folder name</language>
+        <language code="el">Προαιρετικό όνομα φακέλου</language>
+    </entry>
+
     <entry id="Search posts by title or description...">
         <language code="en">Search posts by title or description...</language>
         <language code="el">Αναζήτηση άρθρων κατά τίτλο ή περιγραφή...</language>

@@ -317,4 +317,57 @@ public class FeedService {
         feedRepository.delete(feed);
         return Language.getActionString("Feed deleted successfully");
     }
+
+    /**
+     * Updates a single feed for a specific user.
+     *
+     * @param feedId The UUID of the feed to update
+     * @param title The new title for the feed
+     * @param folderName The new folder name for the feed (can be null or empty for no folder)
+     * @param user The user who owns the feed
+     * @return Success message
+     * @throws Exception if the feed is not found or doesn't belong to the user
+     */
+    @Transactional
+    public String updateFeed(String feedId, String title, String folderName, User user) throws Exception {
+        UUID uuid;
+        try {
+            uuid = UUID.fromString(feedId);
+        } catch (IllegalArgumentException e) {
+            throw new Exception(Language.getActionString("Invalid feed ID"));
+        }
+
+        Optional<Feed> feedOpt = feedRepository.findById(uuid);
+        if (!feedOpt.isPresent()) {
+            throw new Exception(Language.getActionString("Feed not found"));
+        }
+
+        Feed feed = feedOpt.get();
+        if (!feed.getUser().equals(user)) {
+            throw new Exception(Language.getActionString("Feed doesn't belong to user"));
+        }
+
+        // Update title
+        if (title != null && !title.trim().isEmpty()) {
+            feed.setTitle(title.trim());
+        }
+
+        // Update folder
+        Folder folder = null;
+        if (folderName != null && !folderName.trim().isEmpty()) {
+            // Try to find existing folder or create a new one
+            Optional<Folder> folderOpt = folderRepository.findByNameAndUser(folderName.trim(), user);
+            if (folderOpt.isPresent()) {
+                folder = folderOpt.get();
+            } else {
+                // Create new folder
+                folder = new Folder(folderName.trim(), user);
+                folder = folderRepository.save(folder);
+            }
+        }
+        feed.setFolder(folder);
+
+        feedRepository.save(feed);
+        return Language.getActionString("Feed updated successfully");
+    }
 }

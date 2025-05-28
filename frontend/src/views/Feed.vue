@@ -1,22 +1,4 @@
 <template>
-    <!-- Actio                    <button 
-                        @click="importOPML" 
-                        :disabled="!selectedFile || importing"
-                        class="btn btn-success"
-                        style="white-space: nowrap;"
-                        :title="language.get('Import feeds from the selected OPML file')"
-                    >
-                        {{ language.get('Import OPML') }}
-                    </button>
-                    <input 
-                        v-model="searchTerm"
-                        type="text" 
-                        class="form-control"
-                        style="width: 250px;"
-                        :placeholder="language.get('Search feeds by name...')"
-                        :title="language.get('Filter feeds by name')"
-                    />
-                </div> - Fixed at top, always visible -->
     <div class="container py-3">
         <div class="row justify-content-center">
             <div class="col-auto">
@@ -91,6 +73,15 @@
                             <td>{{ feed.folderName }}</td>
                             <td>
                                 <button 
+                                    class="btn btn-warning btn-sm me-2"
+                                    @click="editFeed(feed)"
+                                    :title="language.get('Edit this feed')"
+                                >
+                                    <svg width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                                        <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708L10.5 8.207l-3-3L12.146.146zM11.207 1.5L1.5 11.207V14.5h3.293L14.5 4.793 11.207 1.5z"/>
+                                    </svg>
+                                </button>
+                                <button 
                                     class="btn btn-danger btn-sm"
                                     @click="deleteFeed(feed)"
                                     :title="language.get('Delete this feed')"
@@ -127,6 +118,14 @@
     <!-- Add Feed Modal -->
     <AddFeedModal @feed-added="handleFeedAdded" />
 
+    <!-- Edit Feed Modal -->
+    <EditFeedModal 
+        :feed="editingFeed" 
+        :show="showEditModal"
+        @feed-updated="handleFeedUpdated"
+        @modal-hidden="handleEditModalHidden"
+    />
+
     <Error class="error-fixed-bottom" />
 </template>
 
@@ -137,6 +136,7 @@ import { Feed } from '@/types';
 import { language } from '@/functions/languageStore';
 import Error from '@/components/error/Error.vue';
 import AddFeedModal from '@/components/AddFeedModal.vue';
+import EditFeedModal from '@/components/EditFeedModal.vue';
 import { errorStore } from '@/components/error/errorStore';
 
 const feeds = ref<Feed[]>([]);
@@ -150,6 +150,10 @@ const pageSize = 15;
 const allLoaded = ref(false);
 const searchTerm = ref('');
 const searchTimeout = ref<number | null>(null);
+
+// Edit feed modal variables
+const editingFeed = ref<Feed | null>(null);
+const showEditModal = ref(false);
 
 // Remove the client-side filteredFeeds computed property since we'll use server-side search
 // The feeds array will now contain the already filtered results from the server
@@ -262,6 +266,32 @@ const importOPML = async () => {
     } finally {
         importing.value = false;
     }
+};
+
+/**
+ * Opens the edit feed modal
+ */
+const editFeed = (feed: Feed) => {
+    editingFeed.value = feed;
+    showEditModal.value = true;
+};
+
+/**
+ * Handles when a feed is updated via the edit modal.
+ * Refreshes the feeds list to show the updated feed.
+ */
+const handleFeedUpdated = async () => {
+    loading.value = true;
+    await fetchFeeds(true); // Refresh feeds
+};
+
+/**
+ * Handles when the edit modal is hidden.
+ * Cleans up the edit state.
+ */
+const handleEditModalHidden = () => {
+    showEditModal.value = false;
+    editingFeed.value = null;
 };
 
 /**

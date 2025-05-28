@@ -149,11 +149,38 @@ public class FeedController {
     }
 
     /**
+     * Updates a single feed in the database.
+     *
+     * @param updateRequest The feed update data containing feedId, title, and folderName
+     * @return Success message or error message
+     */
+    @PostMapping("/updateFeed")
+    public ResponseEntity<String> updateFeed(@RequestBody UpdateFeedRequest updateRequest) {
+        try {
+            User adminUser = userService.getOrCreateAdminUser();
+            String result = feedService.updateFeed(updateRequest.feedId, updateRequest.title, updateRequest.folderName, adminUser);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            String errorMessage = Language.getActionString("Error updating feed").replace("{0}", e.getMessage());
+            return ResponseEntity.badRequest().body(errorMessage);
+        }
+    }
+
+    /**
      * Request object for adding a feed
      */
     public static class AddFeedRequest {
         public String url;
         public String folderId;
         public String title;
+    }
+
+    /**
+     * Request object for updating a feed
+     */
+    public static class UpdateFeedRequest {
+        public String feedId;
+        public String title;
+        public String folderName;
     }
 }
