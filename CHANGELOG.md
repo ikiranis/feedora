@@ -74,28 +74,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **State Management:** Implemented theme store and improved data flow
 - **Documentation:** Updated README with deployment instructions
 
-### Commits Included (Latest 20)
-1. `1da8fec` Update CHANGELOG for version 0.0.2
-2. `1210516` Refactor API endpoints: feed management routes
-3. `130f554` Update CHANGELOG: document folder management system
-4. `bc3d03b` Enhance README and CHANGELOG: folder management features
-5. `351bacf` Implement folder management functionality
-6. `9502561` Refactor feed modals: move to 'feed' directory
-7. `6367e31` Add feed update functionality
-8. `439c491` Enhance PostElement and Feed components
-9. `6b0e934` Enhance PostElement layout: folder name display
-10. `46f9430` Update PostElement styles: theme support
-11. `617c2ec` Update dark theme styles for posts
-12. `04b425e` Implement theme toggle functionality
-13. `25f4fa9` Enhance PostElement styling: unread posts
-14. `f1d2a8b` Add multilingual support for search/filter
-15. `5b5a0c9` Refactor Post.vue: search improvements
-16. `717e39a` Implement search functionality for posts
-17. `931c735` Add search functionality to feeds
-18. `278d1a4` Increase feed parsing interval optimization
-19. `8e7b84f` Bump version to 0.0.2
-20. `4acecf1` Update README: production deployment guide
-
 ### Technical Notes
 - No database migration required
 - Existing feeds remain unaffected
