@@ -158,9 +158,13 @@ const handleCardClick = async () => {
 
 .post-title-link {
     text-decoration: none;
-    color: #007bff;
-    font-weight: 500;
+    color: #000000;
+    font-weight: bold;
     transition: color 0.3s;
+}
+
+[data-bs-theme="dark"] .post-title-link {
+    color: #ffffff;
 }
 
 .post-title-link:hover {
