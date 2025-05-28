@@ -1,60 +1,63 @@
 <template>
-    <div class="scrollable-post-view" ref="scrollableContainerRef">
-        <div class="container py-4">
-            <div class="row justify-content-between mb-4 align-items-center">
-                <div class="col-auto">
-                    <h2>{{ language.get('Posts') }}</h2>
-                </div>
-                <div class="col-auto d-flex align-items-center">
-                    <button @click="handleRefreshPosts" class="btn btn-outline-primary me-3"
-                        :title="language.get('Refresh Posts') || 'Refresh Posts'"
-                        :disabled="loading">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
-                            class="bi bi-arrow-clockwise" :class="{ 'spin': loading }" viewBox="0 0 16 16">
-                            <title>{{ language.get('Refresh Posts') || 'Refresh Posts' }}</title>
-                            <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
-                            <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+    <div class="container py-4">
+        <div class="row justify-content-between mb-4 align-items-center">
+            <div class="col-auto">
+                <h2>{{ language.get('Posts') }}</h2>
+            </div>
+            <div class="col-auto d-flex align-items-center">
+                <button @click="handleRefreshPosts" class="btn btn-outline-primary me-3"
+                    :title="language.get('Refresh Posts') || 'Refresh Posts'"
+                    :disabled="loading">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
+                        class="bi bi-arrow-clockwise" :class="{ 'spin': loading }" viewBox="0 0 16 16">
+                        <title>{{ language.get('Refresh Posts') || 'Refresh Posts' }}</title>
+                        <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+                        <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+                    </svg>
+                </button>
+                <button @click="showDetails = !showDetails" class="btn btn-outline-secondary me-3"
+                    :title="showDetails ? language.get('Show Summary') : language.get('Show Details')">
+                    <svg v-if="showDetails" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                        fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
+                        <title>{{ language.get('Show Summary') }}</title>
+                        <path fill-rule="evenodd"
+                            d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z" />
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-card-text" viewBox="0 0 16 16">
+                        <title>{{ language.get('Show Details') }}</title>
+                        <path
+                            d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z" />
+                        <path
+                            d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z" />
+                    </svg>
+                </button>
+                <button @click="handleParseFeeds" class="btn btn-primary me-2">
+                    {{ language.get('Parse RSS Feeds') }}
+                </button>
+                <button @click="handleDeleteAllPosts" class="btn btn-danger me-3">
+                    {{ language.get('Delete All Posts') }}
+                </button>
+                <div class="input-group" style="width: 250px;">
+                    <span class="input-group-text">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
                         </svg>
-                    </button>
-                    <button @click="showDetails = !showDetails" class="btn btn-outline-secondary me-3"
-                        :title="showDetails ? language.get('Show Summary') : language.get('Show Details')">
-                        <svg v-if="showDetails" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                            fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
-                            <title>{{ language.get('Show Summary') }}</title>
-                            <path fill-rule="evenodd"
-                                d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z" />
-                        </svg>
-                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                            class="bi bi-card-text" viewBox="0 0 16 16">
-                            <title>{{ language.get('Show Details') }}</title>
-                            <path
-                                d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z" />
-                            <path
-                                d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z" />
-                        </svg>
-                    </button>
-                    <button @click="handleParseFeeds" class="btn btn-primary me-2">
-                        {{ language.get('Parse RSS Feeds') }}
-                    </button>
-                    <button @click="handleDeleteAllPosts" class="btn btn-danger me-3">
-                        {{ language.get('Delete All Posts') }}
-                    </button>
-                    <div class="input-group" style="width: 250px;">
-                        <span class="input-group-text">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
-                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
-                            </svg>
-                        </span>
-                        <input 
-                            v-model="searchTerm"
-                            type="text" 
-                            class="form-control"
-                            :placeholder="language.get('Search posts by title...')"
-                            :title="language.get('Filter posts by title')"
-                        />
-                    </div>
+                    </span>
+                    <input 
+                        v-model="searchTerm"
+                        type="text" 
+                        class="form-control"
+                        :placeholder="language.get('Search posts by title or description...')"
+                        :title="language.get('Filter posts by title or description')"
+                    />
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <div class="scrollable-post-view" ref="scrollableContainerRef">
+        <div class="container py-4">
             <div v-if="posts.length > 0" class="row g-4">
                 <div v-for="post in posts" :key="post.id" :data-post-id="post.id"
                     :class="showDetails ? 'col-12 col-md-6 col-lg-4' : 'col-12'">
@@ -419,7 +422,7 @@ onUnmounted(() => {
 <style>
 /* Make the main view scrollable instead of the whole page */
 .scrollable-post-view {
-    height: 90vh; /* Adjust height as needed */
+    height: calc(90vh - 120px); /* Adjust height to account for fixed header */
     overflow-y: auto;
 }
 
