@@ -6,7 +6,7 @@ import config from "@/functions/config.ts";
  */
 export const getFeeds = async () => {
     try {
-        const response = await axios.get(config.defaultServer() + '/api/getAllFeeds', {
+        const response = await axios.get(config.defaultServer() + '/api/feed/getAllFeeds', {
             headers: { 'Accept': 'application/json' }
         });
         if (response.status === 200) {
@@ -30,7 +30,7 @@ export const getFeedsPaginated = async (page: number, pageSize: number, search?:
             params.search = search.trim();
         }
         
-        const response = await axios.get(config.defaultServer() + '/api/getFeeds', {
+        const response = await axios.get(config.defaultServer() + '/api/feed/getFeeds', {
             params,
             headers: { 'Accept': 'application/json' }
         });
@@ -51,7 +51,7 @@ export const importOPML = async (file: File) => {
         const formData = new FormData();
         formData.append('file', file);
         
-        const response = await axios.post(config.defaultServer() + '/api/importOPML', formData, {
+        const response = await axios.post(config.defaultServer() + '/api/feed/importOPML', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
@@ -69,7 +69,7 @@ export const importOPML = async (file: File) => {
  */
 export const getFeedOperationStatus = async () => {
     try {
-        const response = await axios.get(config.defaultServer() + '/api/feedOperationStatus', {
+        const response = await axios.get(config.defaultServer() + '/api/feed/feedOperationStatus', {
             headers: { 'Accept': 'application/json' }
         });
         if (response.status === 200) {
@@ -86,7 +86,7 @@ export const getFeedOperationStatus = async () => {
  */
 export const addFeed = async (feedData: { url: string; folderId: string | null; title?: string }) => {
     try {
-        const response = await axios.post(config.defaultServer() + '/api/addFeed', feedData, {
+        const response = await axios.post(config.defaultServer() + '/api/feed/addFeed', feedData, {
             headers: { 'Content-Type': 'application/json' }
         });
         if (response.status === 200) {
@@ -103,7 +103,7 @@ export const addFeed = async (feedData: { url: string; folderId: string | null; 
  */
 export const fetchFeedInfo = async (url: string) => {
     try {
-        const response = await axios.get(config.defaultServer() + '/api/fetchFeedInfo', {
+        const response = await axios.get(config.defaultServer() + '/api/feed/fetchFeedInfo', {
             params: { url },
             headers: { 'Accept': 'application/json' }
         });
@@ -121,7 +121,7 @@ export const fetchFeedInfo = async (url: string) => {
  */
 export const deleteFeed = async (feedId: string) => {
     try {
-        const response = await axios.post(config.defaultServer() + '/api/deleteFeed', null, {
+        const response = await axios.post(config.defaultServer() + '/api/feed/deleteFeed', null, {
             params: { feedId },
             headers: { 'Content-Type': 'application/json' }
         });
@@ -140,7 +140,7 @@ export const deleteFeed = async (feedId: string) => {
  */
 export const updateFeed = async (feedId: string, updateData: { title: string; folderName: string }) => {
     try {
-        const response = await axios.post(config.defaultServer() + '/api/updateFeed', {
+        const response = await axios.post(config.defaultServer() + '/api/feed/updateFeed', {
             feedId,
             title: updateData.title,
             folderName: updateData.folderName

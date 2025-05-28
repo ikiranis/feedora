@@ -21,7 +21,7 @@ import java.util.HashMap;
 import eu.apps4net.feedora.models.FeedDTO;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/feed")
 public class FeedController {
     @Autowired
     private FeedService feedService;

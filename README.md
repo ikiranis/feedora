@@ -151,13 +151,14 @@ java -jar target/Feedora-0.0.1.jar
 ## 📋 API Endpoints
 
 ### Feed Management
-- `GET /api/getAllFeeds` - Get all feeds
-- `GET /api/getFeeds?page=1&pageSize=10` - Get paginated feeds
-- `POST /api/addFeed` - Add a new RSS feed
-- `POST /api/deleteFeed?feedId={id}` - Delete a feed
-- `GET /api/fetchFeedInfo?url={rss-url}` - Get feed metadata
-- `POST /api/importOPML` - Import feeds from OPML file
-- `GET /api/feedOperationStatus` - Check feed operation status
+- `GET /api/feed/getAllFeeds` - Get all feeds
+- `GET /api/feed/getFeeds?page=1&pageSize=10` - Get paginated feeds
+- `POST /api/feed/addFeed` - Add a new RSS feed
+- `POST /api/feed/deleteFeed?feedId={id}` - Delete a feed
+- `GET /api/feed/fetchFeedInfo?url={rss-url}` - Get feed metadata
+- `POST /api/feed/importOPML` - Import feeds from OPML file
+- `GET /api/feed/feedOperationStatus` - Check feed operation status
+- `POST /api/feed/updateFeed` - Update feed title and folder
 
 ### Folder Management *(New)*
 - `GET /api/folders` - Get all folders for current user

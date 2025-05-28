@@ -215,14 +215,8 @@ onMounted(async () => {
     await Promise.all([fetchFolders(), fetchFeeds()]);
 });
 
-// Clean up when component is unmounted (if using in router)
-// This would be handled by Vue's lifecycle, but good to be explicit
-const cleanup = () => {
-    document.body.style.overflow = 'auto';
-};
-
-// Note: onUnmounted would be used here if this component could be unmounted
-// onUnmounted(cleanup);
+// Note: If component cleanup is needed in the future:
+// onUnmounted(() => { document.body.style.overflow = 'auto'; });
 </script>
 
 <style scoped>
