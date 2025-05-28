@@ -135,8 +135,8 @@ import { getFeedsPaginated, importOPML as importOPMLApi, getFeedOperationStatus,
 import { Feed } from '@/types';
 import { language } from '@/functions/languageStore';
 import Error from '@/components/error/Error.vue';
-import AddFeedModal from '@/components/AddFeedModal.vue';
-import EditFeedModal from '@/components/EditFeedModal.vue';
+import AddFeedModal from '@/components/feed/AddFeedModal.vue';
+import EditFeedModal from '@/components/feed/EditFeedModal.vue';
 import { errorStore } from '@/components/error/errorStore';
 
 const feeds = ref<Feed[]>([]);
