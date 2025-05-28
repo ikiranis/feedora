@@ -21,11 +21,17 @@ export const getFeeds = async () => {
  * Get paginated feeds from the backend
  * @param page - The page number (1-indexed)
  * @param pageSize - The number of feeds per page
+ * @param search - Optional search term to filter feeds by title
  */
-export const getFeedsPaginated = async (page: number, pageSize: number) => {
+export const getFeedsPaginated = async (page: number, pageSize: number, search?: string) => {
     try {
+        const params: any = { page, pageSize };
+        if (search && search.trim()) {
+            params.search = search.trim();
+        }
+        
         const response = await axios.get(config.defaultServer() + '/api/getFeeds', {
-            params: { page, pageSize },
+            params,
             headers: { 'Accept': 'application/json' }
         });
         if (response.status === 200) {

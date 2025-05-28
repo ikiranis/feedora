@@ -73,12 +73,13 @@ public class FeedController {
      *
      * @param page The page number (1-indexed)
      * @param pageSize The number of feeds per page
+     * @param search Optional search term to filter feeds by title (case-insensitive)
      * @return List of Feed entities (without user and folder details)
      */
     @GetMapping("/getFeeds")
-    public List<FeedDTO> getFeeds(@RequestParam int page, @RequestParam int pageSize) {
+    public List<FeedDTO> getFeeds(@RequestParam int page, @RequestParam int pageSize, @RequestParam(required = false) String search) {
         User adminUser = userService.getOrCreateAdminUser();
-        return feedService.getFeedsForUser(adminUser, page, pageSize).stream().map(FeedDTO::fromFeed).toList();
+        return feedService.getFeedsForUser(adminUser, page, pageSize, search).stream().map(FeedDTO::fromFeed).toList();
     }
 
     /**

@@ -120,6 +120,23 @@ public class FeedService {
         return feedRepository.findByUser(user, pageable);
     }
 
+    /**
+     * Returns paginated feeds for a given user with search functionality.
+     * @param user The user
+     * @param page The page number (1-indexed)
+     * @param pageSize The number of feeds per page
+     * @param searchTerm The search term to filter feeds by title (case-insensitive)
+     * @return List of feeds
+     */
+    public List<Feed> getFeedsForUser(User user, int page, int pageSize, String searchTerm) {
+        Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.ASC, "title"));
+        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
+            return feedRepository.findByUserAndTitleContainingIgnoreCase(user, searchTerm.trim(), pageable);
+        } else {
+            return feedRepository.findByUser(user, pageable);
+        }
+    }
+
     public void removeFeedByXmlUrlAndUser(String xmlUrl, User user) {
         Feed feed = feedRepository.findByUser(user).stream()
             .filter(f -> f.getXmlUrl().equals(xmlUrl))

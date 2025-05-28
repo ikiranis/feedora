@@ -1,5 +1,22 @@
 <template>
-    <!-- Actions Section - Fixed at top, always visible -->
+    <!-- Actio                    <button 
+                        @click="importOPML" 
+                        :disabled="!selectedFile || importing"
+                        class="btn btn-success"
+                        style="white-space: nowrap;"
+                        :title="language.get('Import feeds from the selected OPML file')"
+                    >
+                        {{ language.get('Import OPML') }}
+                    </button>
+                    <input 
+                        v-model="searchTerm"
+                        type="text" 
+                        class="form-control"
+                        style="width: 250px;"
+                        :placeholder="language.get('Search feeds by name...')"
+                        :title="language.get('Filter feeds by name')"
+                    />
+                </div> - Fixed at top, always visible -->
     <div class="container py-3">
         <div class="row justify-content-center">
             <div class="col-auto">
@@ -32,6 +49,20 @@
                     >
                         {{ language.get('Import OPML') }}
                     </button>
+                    <div class="input-group" style="width: 250px;">
+                        <span class="input-group-text">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
+                                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                            </svg>
+                        </span>
+                        <input 
+                            v-model="searchTerm"
+                            type="text" 
+                            class="form-control"
+                            :placeholder="language.get('Search feeds by name...')"
+                            :title="language.get('Filter feeds by name')"
+                        />
+                    </div>
                 </div>
             </div>
         </div>
@@ -73,12 +104,15 @@
                         </tr>
                     </tbody>
                 </table>
-                <div v-if="allLoaded && feeds.length > 0" class="text-center w-100 text-muted my-4">
+                <div v-if="allLoaded && feeds.length > 0 && !searchTerm.trim()" class="text-center w-100 text-muted my-4">
                     {{ language.get('No more feeds') || 'No more feeds' }}
                 </div>
             </div>
-            <div v-else-if="!loading" class="text-center text-muted mt-5">
+            <div v-else-if="!loading && feeds.length === 0 && !searchTerm.trim()" class="text-center text-muted mt-5">
                 {{ language.get('No feeds found') }}
+            </div>
+            <div v-else-if="!loading && feeds.length === 0 && searchTerm.trim()" class="text-center text-muted mt-5">
+                {{ language.get('No feeds match your search') || 'No feeds match your search' }}
             </div>
 
             <!-- Fixed loading spinner -->
@@ -97,7 +131,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { getFeedsPaginated, importOPML as importOPMLApi, getFeedOperationStatus, deleteFeed as deleteFeedApi } from '@/api/feed';
 import { Feed } from '@/types';
 import { language } from '@/functions/languageStore';
@@ -114,6 +148,11 @@ const importing = ref(false);
 const page = ref(1);
 const pageSize = 15;
 const allLoaded = ref(false);
+const searchTerm = ref('');
+const searchTimeout = ref<number | null>(null);
+
+// Remove the client-side filteredFeeds computed property since we'll use server-side search
+// The feeds array will now contain the already filtered results from the server
 
 /**
  * Fetches feeds from the API. It supports pagination and resetting the feed list.
@@ -127,7 +166,7 @@ const fetchFeeds = async (reset = false) => {
             allLoaded.value = false;
         }
 
-        const data = await getFeedsPaginated(page.value, pageSize);
+        const data = await getFeedsPaginated(page.value, pageSize, searchTerm.value);
 
         if (data.length < pageSize) {
             allLoaded.value = true;
@@ -150,6 +189,19 @@ const fetchFeeds = async (reset = false) => {
         loading.value = false;
     }
 };
+
+// Watch for search term changes and implement debounced search
+watch(searchTerm, () => {
+    // Clear the existing timeout
+    if (searchTimeout.value) {
+        clearTimeout(searchTimeout.value);
+    }
+    
+    // Set a new timeout for debounced search (500ms delay)
+    searchTimeout.value = setTimeout(() => {
+        fetchFeeds(true); // Reset and fetch with new search term
+    }, 500);
+});
 
 const handleFileSelect = (event: Event) => {
     const target = event.target as HTMLInputElement;
