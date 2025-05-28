@@ -29,4 +29,10 @@ public class UserService {
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
+
+    public User getCurrentUser() {
+        // For now, always return the admin user
+        // This can be extended later to support proper authentication
+        return getOrCreateAdminUser();
+    }
 }

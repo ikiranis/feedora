@@ -1,6 +1,7 @@
 package eu.apps4net.feedora.repositories;
 
 import eu.apps4net.feedora.models.Feed;
+import eu.apps4net.feedora.models.Folder;
 import eu.apps4net.feedora.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -17,6 +18,7 @@ public interface FeedRepository extends JpaRepository<Feed, UUID> {
     List<Feed> findByUser(User user);
     List<Feed> findByUser(User user, Pageable pageable);
     List<Feed> findByUserAndTitleContainingIgnoreCase(User user, String title, Pageable pageable);
+    List<Feed> findByFolder(Folder folder);
     
     @Modifying
     @Transactional

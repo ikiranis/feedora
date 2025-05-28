@@ -593,4 +593,144 @@
         <language code="el">Φωτεινή Λειτουργία</language>
     </entry>
 
+    <entry id="Add Folder">
+        <language code="en">Add Folder</language>
+        <language code="el">Προσθήκη Φακέλου</language>
+    </entry>
+
+    <entry id="Add a new folder to organize your feeds">
+        <language code="en">Add a new folder to organize your feeds</language>
+        <language code="el">Προσθέστε έναν νέο φάκελο για να οργανώσετε τις ροές σας</language>
+    </entry>
+
+    <entry id="Search folders by name...">
+        <language code="en">Search folders by name...</language>
+        <language code="el">Αναζήτηση φακέλων ανά όνομα...</language>
+    </entry>
+
+    <entry id="Filter folders by name">
+        <language code="en">Filter folders by name</language>
+        <language code="el">Φιλτράρισμα φακέλων ανά όνομα</language>
+    </entry>
+
+    <entry id="Folder Name">
+        <language code="en">Folder Name</language>
+        <language code="el">Όνομα Φακέλου</language>
+    </entry>
+
+    <entry id="Feed Count">
+        <language code="en">Feed Count</language>
+        <language code="el">Αριθμός Ροών</language>
+    </entry>
+
+    <entry id="Actions">
+        <language code="en">Actions</language>
+        <language code="el">Ενέργειες</language>
+    </entry>
+
+    <entry id="Delete this folder">
+        <language code="en">Delete this folder</language>
+        <language code="el">Διαγραφή αυτού του φακέλου</language>
+    </entry>
+
+    <entry id="Create your first folder to organize your feeds">
+        <language code="en">Create your first folder to organize your feeds</language>
+        <language code="el">Δημιουργήστε τον πρώτο σας φάκελο για να οργανώσετε τις ροές σας</language>
+    </entry>
+
+    <entry id="No folders match your search">
+        <language code="en">No folders match your search</language>
+        <language code="el">Κανένας φάκελος δεν ταιριάζει με την αναζήτησή σας</language>
+    </entry>
+
+    <entry id="Try adjusting your search terms">
+        <language code="en">Try adjusting your search terms</language>
+        <language code="el">Δοκιμάστε να προσαρμόσετε τους όρους αναζήτησής σας</language>
+    </entry>
+
+    <entry id="Loading">
+        <language code="en">Loading</language>
+        <language code="el">Φόρτωση</language>
+    </entry>
+
+    <entry id="Failed to fetch folders">
+        <language code="en">Failed to fetch folders</language>
+        <language code="el">Αποτυχία ανάκτησης φακέλων</language>
+    </entry>
+
+    <entry id="Are you sure you want to delete this folder">
+        <language code="en">Are you sure you want to delete this folder</language>
+        <language code="el">Είστε σίγουροι ότι θέλετε να διαγράψετε αυτόν τον φάκελο</language>
+    </entry>
+
+    <entry id="This folder contains">
+        <language code="en">This folder contains</language>
+        <language code="el">Αυτός ο φάκελος περιέχει</language>
+    </entry>
+
+    <entry id="feeds">
+        <language code="en">feeds</language>
+        <language code="el">ροές</language>
+    </entry>
+
+    <entry id="These feeds will be moved to the default folder">
+        <language code="en">These feeds will be moved to the default folder</language>
+        <language code="el">Αυτές οι ροές θα μετακινηθούν στον προεπιλεγμένο φάκελο</language>
+    </entry>
+
+    <entry id="Failed to delete folder">
+        <language code="en">Failed to delete folder</language>
+        <language code="el">Αποτυχία διαγραφής φακέλου</language>
+    </entry>
+
+    <entry id="Enter folder name">
+        <language code="en">Enter folder name</language>
+        <language code="el">Εισάγετε όνομα φακέλου</language>
+    </entry>
+
+    <entry id="Add">
+        <language code="en">Add</language>
+        <language code="el">Προσθήκη</language>
+    </entry>
+
+    <entry id="Failed to add folder">
+        <language code="en">Failed to add folder</language>
+        <language code="el">Αποτυχία προσθήκης φακέλου</language>
+    </entry>
+
+    <entry id="Folder name cannot be empty">
+        <language code="en">Folder name cannot be empty</language>
+        <language code="el">Το όνομα φακέλου δεν μπορεί να είναι κενό</language>
+    </entry>
+
+    <entry id="Folder already exists">
+        <language code="en">Folder already exists</language>
+        <language code="el">Ο φάκελος υπάρχει ήδη</language>
+    </entry>
+
+    <entry id="Folder added successfully">
+        <language code="en">Folder added successfully</language>
+        <language code="el">Ο φάκελος προστέθηκε επιτυχώς</language>
+    </entry>
+
+    <entry id="Invalid folder ID">
+        <language code="en">Invalid folder ID</language>
+        <language code="el">Μη έγκυρο ID φακέλου</language>
+    </entry>
+
+    <entry id="Folder not found">
+        <language code="en">Folder not found</language>
+        <language code="el">Ο φάκελος δεν βρέθηκε</language>
+    </entry>
+
+    <entry id="Folder doesn't belong to user">
+        <language code="en">Folder doesn't belong to user</language>
+        <language code="el">Ο φάκελος δεν ανήκει στον χρήστη</language>
+    </entry>
+
+    <entry id="Folder deleted successfully">
+        <language code="en">Folder deleted successfully</language>
+        <language code="el">Ο φάκελος διαγράφηκε επιτυχώς</language>
+    </entry>
+
 </root>
