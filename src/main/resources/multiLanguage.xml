@@ -548,4 +548,19 @@
         <language code="el">Καμία ροή δεν ταιριάζει με την αναζήτησή σας</language>
     </entry>
 
+    <entry id="Toggle Dark Mode">
+        <language code="en">Toggle Dark Mode</language>
+        <language code="el">Εναλλαγή Σκοτεινής Λειτουργίας</language>
+    </entry>
+
+    <entry id="Dark Mode">
+        <language code="en">Dark Mode</language>
+        <language code="el">Σκοτεινή Λειτουργία</language>
+    </entry>
+
+    <entry id="Light Mode">
+        <language code="en">Light Mode</language>
+        <language code="el">Φωτεινή Λειτουργία</language>
+    </entry>
+
 </root>

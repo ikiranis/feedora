@@ -1,13 +1,41 @@
 // Import all of Bootstrap's CSS
 @use "bootstrap/scss/bootstrap";
 
+:root {
+    // Light theme colors
+    --bg-color: #ffffff;
+    --text-color: #213547;
+    --sidebar-bg: #333;
+    --sidebar-text: #fff;
+    --sidebar-hover: #555;
+    --sidebar-active: #666;
+    --card-bg: #ffffff;
+    --border-color: #ddd;
+    --input-bg: #ffffff;
+    --input-border: #ced4da;
+}
+
+[data-bs-theme="dark"] {
+    // Dark theme colors
+    --bg-color: #1a1a1a;
+    --text-color: #ffffff;
+    --sidebar-bg: #2d3748;
+    --sidebar-text: #e2e8f0;
+    --sidebar-hover: #4a5568;
+    --sidebar-active: #718096;
+    --card-bg: #2d3748;
+    --border-color: #4a5568;
+    --input-bg: #2d3748;
+    --input-border: #4a5568;
+}
+
 body {
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
     line-height: 1.5;
     font-weight: 400;
 
-    color: #213547;
-    background-color: #ffffff;
+    color: var(--text-color);
+    background-color: var(--bg-color);
 
     font-synthesis: none;
     text-rendering: optimizeLegibility;
@@ -16,6 +44,7 @@ body {
     -webkit-text-size-adjust: 100%;
 
     overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1 {
@@ -47,23 +76,24 @@ h1 {
 }
 
 .sidebar {
-    background-color: #333;
-    color: #fff;
+    background-color: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    transition: background-color 0.3s ease;
 
     a {
         padding: 10px 20px;
         text-decoration: none;
         font-size: 18px;
-        color: #fff;
+        color: var(--sidebar-text);
         display: block;
         transition: 0.3s;
 
         &:hover {
-            background-color: #555;
+            background-color: var(--sidebar-hover);
         }
 
         .currentPage {
-            background-color: #666;
+            background-color: var(--sidebar-active);
         }
     }
 }

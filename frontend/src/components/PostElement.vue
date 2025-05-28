@@ -56,10 +56,10 @@ const handleCardClick = async () => {
 
 <style scoped>
 .custom-card {
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 0.5rem;
-    background-color: #fff;
-    transition: transform 0.2s, box-shadow 0.2s;
+    background-color: var(--card-bg);
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s, border-color 0.3s;
     cursor: pointer;
 }
 
@@ -69,8 +69,13 @@ const handleCardClick = async () => {
     background-color: #f8f9fa;
 }
 
+[data-bs-theme="dark"] .custom-card.unread-post {
+    border: 2px solid #6c757d;
+    background-color: #343a40;
+}
+
 .custom-card.read-post {
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-color);
 }
 
 .custom-card:hover {
@@ -78,11 +83,16 @@ const handleCardClick = async () => {
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
+[data-bs-theme="dark"] .custom-card:hover {
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+}
+
 .post-title {
     font-size: 1.25rem;
     font-weight: bold;
-    color: #333;
+    color: var(--text-color);
     text-decoration: none;
+    transition: color 0.3s;
 }
 
 .post-title:hover {
@@ -92,10 +102,10 @@ const handleCardClick = async () => {
 
 .custom-summary {
     padding: 0.75rem;
-    border: 1px solid #ddd;
+    border: 1px solid var(--border-color);
     border-radius: 0.5rem;
-    background-color: #f8f9fa;
-    transition: background-color 0.2s;
+    background-color: var(--card-bg);
+    transition: background-color 0.3s, border-color 0.3s;
     cursor: pointer;
 }
 
@@ -105,20 +115,30 @@ const handleCardClick = async () => {
     background-color: #f8f9fa;
 }
 
+[data-bs-theme="dark"] .custom-summary.unread-post {
+    border: 2px solid #6c757d;
+    background-color: #343a40;
+}
+
 .custom-summary.read-post {
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border-color);
 }
 
 .custom-summary:hover {
     background-color: #e9ecef;
 }
 
+[data-bs-theme="dark"] .custom-summary:hover {
+    background-color: #495057;
+}
+
 .post-summary {
     padding: 0.5rem 0.75rem;
-    border: 1px solid #eee;
+    border: 1px solid var(--border-color);
     border-radius: 0.25rem;
-    background-color: #f9f9f9;
+    background-color: var(--card-bg);
     margin-bottom: 0.5rem;
+    transition: background-color 0.3s, border-color 0.3s;
     /* Remove flex to allow second line to break naturally */
 }
 
@@ -126,6 +146,7 @@ const handleCardClick = async () => {
     text-decoration: none;
     color: #007bff;
     font-weight: 500;
+    transition: color 0.3s;
 }
 
 .post-title-link:hover {
