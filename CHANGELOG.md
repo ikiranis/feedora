@@ -9,105 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Complete Folder Management System** 🗂️
-  - **Frontend Components:**
-    - New `AddFolderModal.vue` component with Bootstrap modal integration
-    - Completely redesigned `Folder.vue` page with modern table layout
-    - Search functionality for filtering folders by name
-    - Real-time feed count display for each folder
-    - Delete functionality with confirmation dialogs
-    - Loading states and comprehensive error handling
-    - Empty state illustrations and user-friendly messages
-  
-  - **Backend API Endpoints:**
-    - `POST /api/addFolder` - Create new folders with duplicate checking
-    - `DELETE /api/deleteFolder/{folderId}` - Delete folders with feed migration
-    - Enhanced `GET /api/folders` - List all folders for current user
-    - User-based folder isolation for security
-  
-  - **Backend Services:**
-    - `FolderService.addFolder()` - Business logic for folder creation
-    - `FolderService.deleteFolder()` - Safe folder deletion with feed migration
-    - Transaction management for data consistency
-    - Integration with internationalization system
-  
-  - **Database Enhancements:**
-    - Added `findByFolder()` method to `FeedRepository`
-    - Enhanced folder-feed relationship management
-    - Automatic feed migration to default folder on folder deletion
+  - New `AddFolderModal.vue` component for creating folders
+  - Redesigned `Folder.vue` with modern table layout and search functionality
+  - Backend API endpoints: `POST /api/addFolder`, `DELETE /api/deleteFolder/{id}`
+  - User-based folder isolation and feed migration on deletion
+  - Real-time feed count display per folder
 
-- **Internationalization Improvements** 🌍
+- **API Path Refactoring** 🔧
+  - Moved FeedController from `/api` to `/api/feed` for better organization
+  - Updated all frontend API calls to match new paths
+  - Improved REST API structure and consistency
+
+- **Internationalization** 🌍
   - Added 25+ new language entries for folder management
-  - English and Greek translations for all folder-related messages
-  - Error messages, UI labels, and user feedback in multiple languages
-  - Enhanced language support for:
-    - Folder creation and deletion workflows
-    - Search and filtering operations
-    - Confirmation dialogs and error states
-    - Loading and empty state messages
-
-- **User Experience Enhancements** ✨
-  - **Modern UI Design:**
-    - Professional table layout for folder management
-    - Bootstrap 5 integration for consistent styling
-    - Responsive design for mobile and desktop
-    - Interactive hover states and visual feedback
-  
-  - **Advanced Functionality:**
-    - Real-time search with instant filtering
-    - Feed count badges for quick overview
-    - Confirmation dialogs for destructive actions
-    - Loading spinners and progress indicators
-    - Comprehensive error handling with user-friendly messages
-
-- **Developer Improvements** 🔧
-  - Enhanced API error handling and validation
-  - Comprehensive JSDoc documentation
-  - Type-safe TypeScript interfaces
-  - Consistent error message patterns
-  - Transaction management for data integrity
+  - Enhanced English and Greek translations
+  - Comprehensive error messages and UI labels
 
 ### Changed
-- **Folder.vue Complete Redesign:**
-  - Transformed from simple list to professional table interface
-  - Added search functionality and action buttons
-  - Improved accessibility and mobile responsiveness
-  - Enhanced error handling and user feedback
-
-- **FolderController Enhancements:**
-  - Updated endpoint mappings from `/api/folders` to `/api`
-  - Added proper request/response handling
-  - Integrated user authentication context
-  - Enhanced error handling and validation
-
-- **Language System Integration:**
-  - Fixed `LanguageService` usage in backend services
-  - Proper integration with `Language.getString()` method
-  - Consistent error message localization
+- **Folder Interface:** Complete redesign with table layout, search, and actions
+- **API Structure:** Reorganized endpoints for better separation of concerns
+- **User Experience:** Modern Bootstrap styling with loading states and error handling
 
 ### Fixed
-- **Backend Compilation Issues:**
-  - Added missing `getCurrentUser()` method to `UserService`
-  - Fixed `LanguageService.get()` method references
-  - Added missing `findByFolder()` method to `FeedRepository`
-  - Resolved import issues and method signatures
+- Backend compilation issues (missing methods in UserService, FeedRepository)
+- Language service integration with proper `Language.getString()` usage
+- User authentication context for folder operations
 
-- **User Context Management:**
-  - Implemented proper user authentication for folder operations
-  - Added user-based folder access control
-  - Fixed folder ownership validation
-
-### Technical Details
-- **Frontend Stack:** Vue 3, TypeScript, Bootstrap 5, Vite
-- **Backend Stack:** Java 21, Spring Boot 3.4.4, JPA/Hibernate
-- **New Dependencies:** Enhanced modal and form handling
-- **Database Changes:** New repository methods for folder-feed relationships
-- **API Changes:** New REST endpoints for folder management
-
-### Migration Notes
-- All existing feeds will continue to work without folder assignment
-- Folder deletion safely migrates feeds to default folder (no data loss)
-- New language entries are automatically loaded from `multiLanguage.xml`
-- No database migration required - JPA handles schema updates
+### Technical Notes
+- No database migration required
+- Existing feeds remain unaffected
+- Safe folder deletion with automatic feed migration
 
 ---
 
