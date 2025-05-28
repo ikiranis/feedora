@@ -5,7 +5,7 @@
                 <a :href="post.link" target="_blank" class="post-title" @click.stop>{{ post.title }}</a>
             </h5>
             <div class="d-flex align-items-center mb-2 gap-2">
-                <span class="badge bg-dark text-light p-1">{{ post.feed?.title }}</span>
+                <span class="badge feed-title-badge p-1">{{ post.feed?.title }}</span>
                 <span v-if="post.feed?.folderName" class="badge bg-secondary text-light p-1">{{ post.feed.folderName }}</span>
             </div>
             <div class="mb-2" v-if="post.description">
@@ -106,6 +106,12 @@ const handleCardClick = async () => {
 .post-title:hover {
     color: #007bff;
     text-decoration: underline;
+}
+
+.feed-title-badge {
+    background-color: transparent !important;
+    color: var(--text-color) !important;
+    border: 1px solid var(--border-color);
 }
 
 .custom-summary {

@@ -72,12 +72,10 @@
         <div class="container py-4">
             <div v-if="feeds.length > 0" class="table-responsive">
                 <table class="table table-bordered table-hover align-middle">
-                    <thead class="table-light">
+                    <thead class="table-light custom-table-header">
                         <tr>
                             <th>{{ language.get('Title') }}</th>
                             <th>{{ language.get('XML URL') }}</th>
-                            <th>{{ language.get('HTML URL') }}</th>
-                            <th>{{ language.get('Type') }}</th>
                             <th>{{ language.get('Folder') }}</th>
                             <th>{{ language.get('Actions') }}</th>
                         </tr>
@@ -85,9 +83,11 @@
                     <tbody>
                         <tr v-for="feed in feeds" :key="feed.id">
                             <td>{{ feed.title }}</td>
-                            <td>{{ feed.xmlUrl }}</td>
-                            <td>{{ feed.htmlUrl }}</td>
-                            <td>{{ feed.type }}</td>
+                            <td>
+                                <a :href="feed.xmlUrl" target="_blank" class="text-decoration-none" :title="feed.xmlUrl">
+                                    {{ feed.xmlUrl.length > 30 ? feed.xmlUrl.substring(0, 30) + '...' : feed.xmlUrl }}
+                                </a>
+                            </td>
                             <td>{{ feed.folderName }}</td>
                             <td>
                                 <button 
@@ -363,5 +363,17 @@ onUnmounted(() => {
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 1000; /* Same z-index as spinner, or adjust as needed */
+}
+
+/* Custom table header for dark mode */
+[data-bs-theme="dark"] .custom-table-header {
+    background-color: #343a40 !important;
+    color: #ffffff !important;
+}
+
+[data-bs-theme="dark"] .custom-table-header th {
+    background-color: #343a40 !important;
+    color: #ffffff !important;
+    border-color: #495057 !important;
 }
 </style>
