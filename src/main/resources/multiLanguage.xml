@@ -518,4 +518,34 @@
         <language code="el">Αποτυχία διαγραφής ροής</language>
     </entry>
 
+    <entry id="Search posts by title or description...">
+        <language code="en">Search posts by title or description...</language>
+        <language code="el">Αναζήτηση άρθρων κατά τίτλο ή περιγραφή...</language>
+    </entry>
+
+    <entry id="Filter posts by title or description">
+        <language code="en">Filter posts by title or description</language>
+        <language code="el">Φιλτράρισμα άρθρων κατά τίτλο ή περιγραφή</language>
+    </entry>
+
+    <entry id="No posts match your search">
+        <language code="en">No posts match your search</language>
+        <language code="el">Κανένα άρθρο δεν ταιριάζει με την αναζήτησή σας</language>
+    </entry>
+
+    <entry id="Search feeds by name...">
+        <language code="en">Search feeds by name...</language>
+        <language code="el">Αναζήτηση ροών κατά όνομα...</language>
+    </entry>
+
+    <entry id="Filter feeds by name">
+        <language code="en">Filter feeds by name</language>
+        <language code="el">Φιλτράρισμα ροών κατά όνομα</language>
+    </entry>
+
+    <entry id="No feeds match your search">
+        <language code="en">No feeds match your search</language>
+        <language code="el">Καμία ροή δεν ταιριάζει με την αναζήτησή σας</language>
+    </entry>
+
 </root>
