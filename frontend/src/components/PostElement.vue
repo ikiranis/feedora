@@ -71,11 +71,16 @@ const handleCardClick = async () => {
 
 [data-bs-theme="dark"] .custom-card.unread-post {
     border: 2px solid #6c757d;
-    background-color: #343a40;
+    background-color: #212529;
 }
 
 .custom-card.read-post {
     border: 1px solid var(--border-color);
+}
+
+[data-bs-theme="dark"] .custom-card.read-post {
+    background-color: var(--bg-color);
+    border: 1px solid #2d3748;
 }
 
 .custom-card:hover {
@@ -117,11 +122,16 @@ const handleCardClick = async () => {
 
 [data-bs-theme="dark"] .custom-summary.unread-post {
     border: 2px solid #6c757d;
-    background-color: #343a40;
+    background-color: #212529;
 }
 
 .custom-summary.read-post {
     border: 1px solid var(--border-color);
+}
+
+[data-bs-theme="dark"] .custom-summary.read-post {
+    background-color: var(--bg-color);
+    border: 1px solid #2d3748;
 }
 
 .custom-summary:hover {
@@ -140,6 +150,10 @@ const handleCardClick = async () => {
     margin-bottom: 0.5rem;
     transition: background-color 0.3s, border-color 0.3s;
     /* Remove flex to allow second line to break naturally */
+}
+
+[data-bs-theme="dark"] .post-summary.read-post {
+    background-color: var(--bg-color);
 }
 
 .post-title-link {
