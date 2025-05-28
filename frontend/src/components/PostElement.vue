@@ -4,7 +4,10 @@
             <h5 class="card-title">
                 <a :href="post.link" target="_blank" class="post-title" @click.stop>{{ post.title }}</a>
             </h5>
-            <h6 class="badge bg-dark mb-2 text-light p-1">{{ post.feed?.title }}</h6>
+            <div class="d-flex align-items-center mb-2 gap-2">
+                <span class="badge bg-dark text-light p-1">{{ post.feed?.title }}</span>
+                <span v-if="post.feed?.folderName" class="badge bg-secondary text-light p-1">{{ post.feed.folderName }}</span>
+            </div>
             <div class="mb-2" v-if="post.description">
                 <div class="description-content-limiter" v-html="post.description"></div>
             </div>
