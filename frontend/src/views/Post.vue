@@ -1,9 +1,6 @@
 <template>
     <div class="container py-4">
-        <div class="row justify-content-between mb-4 align-items-center">
-            <div class="col-auto">
-                <h2>{{ language.get('Posts') }}</h2>
-            </div>
+        <div class="row justify-content-end mb-4 align-items-center">
             <div class="col-auto d-flex align-items-center">
                 <button @click="handleRefreshPosts" class="btn btn-outline-primary me-3"
                     :title="language.get('Refresh Posts') || 'Refresh Posts'"

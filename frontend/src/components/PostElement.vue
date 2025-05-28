@@ -66,6 +66,7 @@ const handleCardClick = async () => {
 .custom-card.unread-post {
     border: 2px solid #333;
     font-weight: bold;
+    background-color: #f8f9fa;
 }
 
 .custom-card.read-post {
@@ -101,6 +102,7 @@ const handleCardClick = async () => {
 .custom-summary.unread-post {
     border: 2px solid #333;
     font-weight: bold;
+    background-color: #f8f9fa;
 }
 
 .custom-summary.read-post {
