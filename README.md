@@ -1,8 +1,13 @@
 # Feedora RSS Reader
 
-Feedora is a modern, full-stack RSS reader application that provides a seamless experience for managing and reading RSS feeds. Built with enterprise-grade technologies, it features a robust Java Spring Boot backend and a responsive Vue.js frontend.
+Feedora is a modern, full-stack RSS reader application that provides a seamless experience for managing and reading RSS feeds. Built with enterprise-grade technologies, it features a robust Java Spring Boot backend and a responsive Vue.js frontend with comprehensive folder management capabilities.
 
 ![28-05--2025_00-45](https://github.com/user-attachments/assets/2fd9f8f7-6266-4f0d-81cc-6983d307d637)
+
+## 📋 Documentation
+- [📄 Changelog](CHANGELOG.md) - View recent updates and feature additions
+- [🚀 Quick Start](#-getting-started) - Get up and running in minutes
+- [📋 API Documentation](#-api-endpoints) - Complete API reference
 
 ## ✨ Key Features
 
@@ -13,18 +18,28 @@ Feedora is a modern, full-stack RSS reader application that provides a seamless 
 - **Database:** Apache Derby (embedded)
 
 ### 📰 **RSS Management**
-- **Feed Operations:** Add, remove, and organize RSS feeds with folder support
+- **Feed Operations:** Add, remove, and organize RSS feeds with comprehensive folder support
+- **Advanced Folder System:** Create, organize, and manage folders with search and filtering
 - **OPML Support:** Import and export feed collections in OPML format
 - **Multi-threaded Parsing:** Efficient feed fetching with up to 8 concurrent threads
 - **Automatic Updates:** Scheduled feed parsing every 5 minutes
 - **Duplicate Detection:** Prevents duplicate posts from the same feed
 
+### 🗂️ **Folder Management** *(New)*
+- **Complete Folder System:** Create, edit, and delete folders with confirmation dialogs
+- **Feed Organization:** Organize feeds into custom folders for better management
+- **Search & Filter:** Real-time search functionality for finding folders quickly
+- **Feed Count Display:** Visual badges showing number of feeds per folder
+- **Safe Deletion:** Folder deletion safely migrates feeds to default folder
+- **Responsive Design:** Modern table layout with mobile-friendly interface
+
 ### 👤 **User Experience**
 - **Post Management:** Mark posts as read/unread, pagination support
-- **Folder Organization:** Organize feeds into custom folders
-- **Responsive Design:** Modern, mobile-friendly interface
-- **Internationalization:** Multi-language support with XML-based configuration
-- **Search & Filter:** Find posts and feeds quickly
+- **Modern UI Design:** Professional Bootstrap 5 interface with responsive design
+- **Internationalization:** Multi-language support (English/Greek) with XML-based configuration
+- **Search & Filter:** Find posts, feeds, and folders quickly with real-time filtering
+- **Loading States:** Comprehensive loading indicators and error handling
+- **Mobile Responsive:** Optimized for desktop, tablet, and mobile devices
 
 ### 🛠️ **Developer Features**
 - **RESTful API:** Well-documented endpoints for all operations
@@ -53,7 +68,8 @@ feedora/
 │   ├── src/
 │   │   ├── api/              # API client services
 │   │   ├── components/       # Vue components
-│   │   ├── views/            # Page components
+│   │   │   └── feed/         # Feed-related components (AddFolderModal)
+│   │   ├── views/            # Page components (enhanced Folder.vue)
 │   │   ├── router/           # Vue Router configuration
 │   │   └── types/            # TypeScript type definitions
 │   ├── public/               # Static assets
@@ -143,6 +159,16 @@ java -jar target/Feedora-0.0.1.jar
 - `POST /api/importOPML` - Import feeds from OPML file
 - `GET /api/feedOperationStatus` - Check feed operation status
 
+### Folder Management *(New)*
+- `GET /api/folders` - Get all folders for current user
+- `POST /api/addFolder` - Create a new folder
+  ```json
+  {
+    "name": "Technology News"
+  }
+  ```
+- `DELETE /api/deleteFolder/{folderId}` - Delete folder (migrates feeds to default)
+
 ### Post Management
 - `GET /api/posts/getAllPosts` - Get all posts
 - `GET /api/posts/getPosts?page=1&pageSize=10` - Get paginated posts
@@ -165,10 +191,13 @@ java -jar target/Feedora-0.0.1.jar
 
 ### Frontend Development
 - **New Components:** Add Vue components in `frontend/src/components/`
+  - **Folder Components:** `AddFolderModal.vue` for folder creation dialogs
 - **Pages:** Create new views in `frontend/src/views/`
+  - **Enhanced Views:** `Folder.vue` with modern table layout and search
 - **API Integration:** Extend services in `frontend/src/api/`
+  - **Folder API:** `folder.ts` with add/delete functionality
 - **Routing:** Configure routes in `frontend/src/router/`
-- **Styling:** Customize styles in SCSS files
+- **Styling:** Customize styles in SCSS files with Bootstrap 5 integration
 
 ### Configuration
 - **Database:** Modify `src/main/resources/application.properties`
@@ -204,8 +233,8 @@ java -jar target/Feedora-0.0.1.jar
 
 ### Database Schema
 - **Users:** Store user accounts and authentication
-- **Folders:** Organize feeds into categories
-- **Feeds:** RSS feed metadata and URLs
+- **Folders:** Organize feeds into categories with user-based isolation *(Enhanced)*
+- **Feeds:** RSS feed metadata and URLs with folder relationships *(Enhanced)*
 - **Posts:** Individual articles from feeds
 - **Settings:** Application configuration
 
@@ -215,12 +244,14 @@ java -jar target/Feedora-0.0.1.jar
 - **Pagination:** Built-in pagination for large datasets
 - **Concurrency:** Multi-threaded feed parsing
 - **Caching:** Built-in Spring caching where applicable
+- **Real-time Search:** Instant filtering for folders and feeds *(New)*
 
 ### Security Features
 - **Input Validation:** Server-side validation for all inputs
 - **SQL Injection Prevention:** JPA/Hibernate parameter binding
 - **Error Handling:** Comprehensive error management
 - **Operation Locking:** Prevents concurrent feed operations
+- **User Isolation:** Folder-based access control per user *(New)*
 
 ---
 
