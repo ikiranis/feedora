@@ -29,15 +29,15 @@ public class PostController {
 
     @GetMapping("/getAllPosts")
     public List<Post> getAllPosts() {
-        User adminUser = userService.getOrCreateAdminUser();
-        return postService.getAllPostsForUser(adminUser);
+        User currentUser = userService.getCurrentUser();
+        return postService.getAllPostsForUser(currentUser);
     }
 
     @PostMapping("/parseFeeds")
     public String parseFeeds() {
         try {
-            User adminUser = userService.getOrCreateAdminUser();
-            postService.parseFeeds(adminUser);
+            User currentUser = userService.getCurrentUser();
+            postService.parseFeeds(currentUser);
             return Language.getActionString("Feeds parsed and posts updated");
         } catch (Exception e) {
             e.printStackTrace();
@@ -48,7 +48,9 @@ public class PostController {
     @DeleteMapping("/deleteAll")
     public String deleteAllPosts() {
         try {
-            postService.deleteAllPosts();
+            User currentUser = userService.getCurrentUser();
+            // Only delete posts for the current user
+            postService.deleteAllPostsForUser(currentUser);
             return Language.getActionString("All posts deleted");
         } catch (Exception e) {
             e.printStackTrace();
@@ -58,15 +60,15 @@ public class PostController {
 
     @GetMapping("/getPosts")
     public List<Post> getPosts(@RequestParam int page, @RequestParam int pageSize, @RequestParam(required = false) String search) {
-        User adminUser = userService.getOrCreateAdminUser();
-        return postService.getPostsForUser(adminUser, page, pageSize, search);
+        User currentUser = userService.getCurrentUser();
+        return postService.getPostsForUser(currentUser, page, pageSize, search);
     }
 
     @PutMapping("/markAsRead/{postId}")
     public ResponseEntity<String> markPostAsRead(@PathVariable UUID postId) {
         try {
-            User adminUser = userService.getOrCreateAdminUser();
-            boolean success = postService.markPostAsRead(postId, adminUser);
+            User currentUser = userService.getCurrentUser();
+            boolean success = postService.markPostAsRead(postId, currentUser);
             
             if (success) {
                 return ResponseEntity.ok("Post marked as read");

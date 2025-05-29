@@ -954,4 +954,9 @@
         <language code="el">Η εγγραφή απέτυχε. Παρακαλώ δοκιμάστε ξανά.</language>
     </entry>
 
+    <entry id="Logged out successfully">
+        <language code="en">Logged out successfully</language>
+        <language code="el">Αποσυνδεθήκατε επιτυχώς</language>
+    </entry>
+
 </root>

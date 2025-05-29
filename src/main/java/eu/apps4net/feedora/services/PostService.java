@@ -178,6 +178,15 @@ public class PostService {
     }
 
     /**
+     * Delete all posts for a specific user.
+     * @param user The user whose posts should be deleted
+     */
+    public void deleteAllPostsForUser(User user) {
+        List<Post> userPosts = postRepository.findByUser(user);
+        postRepository.deleteAll(userPosts);
+    }
+
+    /**
      * Mark a post as read for a specific user.
      * @param postId The UUID of the post to mark as read
      * @param user The user who is marking the post as read

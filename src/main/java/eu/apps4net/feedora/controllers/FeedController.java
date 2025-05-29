@@ -49,8 +49,8 @@ public class FeedController {
                 return Language.getActionString("File must be OPML or XML");
             }
             
-            User adminUser = userService.getOrCreateAdminUser();
-            int feedsAdded = feedService.importOPML(file.getInputStream(), adminUser);
+            User currentUser = userService.getCurrentUser();
+            int feedsAdded = feedService.importOPML(file.getInputStream(), currentUser);
             return Language.getActionString("Successfully replaced existing feeds").replace("{0}", String.valueOf(feedsAdded));
         } catch (Exception e) {
             e.printStackTrace();
@@ -78,8 +78,8 @@ public class FeedController {
      */
     @GetMapping("/getFeeds")
     public List<FeedDTO> getFeeds(@RequestParam int page, @RequestParam int pageSize, @RequestParam(required = false) String search) {
-        User adminUser = userService.getOrCreateAdminUser();
-        return feedService.getFeedsForUser(adminUser, page, pageSize, search).stream().map(FeedDTO::fromFeed).toList();
+        User currentUser = userService.getCurrentUser();
+        return feedService.getFeedsForUser(currentUser, page, pageSize, search).stream().map(FeedDTO::fromFeed).toList();
     }
 
     /**
@@ -103,8 +103,8 @@ public class FeedController {
     @PostMapping("/addFeed")
     public ResponseEntity<String> addFeed(@RequestBody AddFeedRequest feedRequest) {
         try {
-            User adminUser = userService.getOrCreateAdminUser();
-            String result = feedService.addSingleFeed(feedRequest.url, feedRequest.folderId, feedRequest.title, adminUser);
+            User currentUser = userService.getCurrentUser();
+            String result = feedService.addSingleFeed(feedRequest.url, feedRequest.folderId, feedRequest.title, currentUser);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             String errorMessage = Language.getActionString("Error adding feed").replace("{0}", e.getMessage());
@@ -121,8 +121,8 @@ public class FeedController {
     @PostMapping("/deleteFeed")
     public ResponseEntity<String> deleteFeed(@RequestParam String feedId) {
         try {
-            User adminUser = userService.getOrCreateAdminUser();
-            String result = feedService.deleteFeed(feedId, adminUser);
+            User currentUser = userService.getCurrentUser();
+            String result = feedService.deleteFeed(feedId, currentUser);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             String errorMessage = Language.getActionString("Error deleting feed").replace("{0}", e.getMessage());
@@ -157,8 +157,8 @@ public class FeedController {
     @PostMapping("/updateFeed")
     public ResponseEntity<String> updateFeed(@RequestBody UpdateFeedRequest updateRequest) {
         try {
-            User adminUser = userService.getOrCreateAdminUser();
-            String result = feedService.updateFeed(updateRequest.feedId, updateRequest.title, updateRequest.folderName, adminUser);
+            User currentUser = userService.getCurrentUser();
+            String result = feedService.updateFeed(updateRequest.feedId, updateRequest.title, updateRequest.folderName, currentUser);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             String errorMessage = Language.getActionString("Error updating feed").replace("{0}", e.getMessage());

@@ -1,5 +1,6 @@
 package eu.apps4net.feedora.controllers;
 
+import eu.apps4net.feedora.configurations.Language;
 import eu.apps4net.feedora.models.*;
 import eu.apps4net.feedora.services.UserService;
 import eu.apps4net.feedora.utilities.JwtUtil;
@@ -26,13 +27,13 @@ public class AuthController {
         try {
             // Validate input
             if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Username is required");
+                return ResponseEntity.badRequest().body(Language.getString("Username is required"));
             }
             if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Email is required");
+                return ResponseEntity.badRequest().body(Language.getString("Email is required"));
             }
             if (request.getPassword() == null || request.getPassword().length() < 6) {
-                return ResponseEntity.badRequest().body("Password must be at least 6 characters long");
+                return ResponseEntity.badRequest().body(Language.getString("Password must be at least 6 characters long"));
             }
             
             // Register user
@@ -52,7 +53,7 @@ public class AuthController {
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Registration failed: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(Language.getString("Registration failed. Please try again."));
         }
     }
     
@@ -61,23 +62,23 @@ public class AuthController {
         try {
             // Validate input
             if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Email is required");
+                return ResponseEntity.badRequest().body(Language.getString("Email is required"));
             }
             if (request.getPassword() == null || request.getPassword().isEmpty()) {
-                return ResponseEntity.badRequest().body("Password is required");
+                return ResponseEntity.badRequest().body(Language.getString("Password is required"));
             }
             
             // Find user
             Optional<User> userOpt = userService.findByEmail(request.getEmail().trim().toLowerCase());
             if (userOpt.isEmpty()) {
-                return ResponseEntity.badRequest().body("Invalid email or password");
+                return ResponseEntity.badRequest().body(Language.getString("Invalid email or password"));
             }
             
             User user = userOpt.get();
             
             // Check password
             if (!userService.checkPassword(user, request.getPassword())) {
-                return ResponseEntity.badRequest().body("Invalid email or password");
+                return ResponseEntity.badRequest().body(Language.getString("Invalid email or password"));
             }
             
             // Generate token
@@ -88,7 +89,7 @@ public class AuthController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Login failed: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(Language.getString("Login failed. Please try again."));
         }
     }
     
@@ -106,10 +107,10 @@ public class AuthController {
                 return ResponseEntity.ok(response);
             }
             
-            return ResponseEntity.badRequest().body("User not authenticated");
+            return ResponseEntity.badRequest().body(Language.getString("Please check your input"));
             
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Failed to get user info: " + e.getMessage());
+            return ResponseEntity.internalServerError().body(Language.getString("Please check your input"));
         }
     }
     
@@ -117,6 +118,6 @@ public class AuthController {
     public ResponseEntity<?> logout() {
         // Since we're using stateless JWT, logout is handled on the client side
         // by removing the token from localStorage
-        return ResponseEntity.ok("Logged out successfully");
+        return ResponseEntity.ok(Language.getString("Logged out successfully"));
     }
 }
