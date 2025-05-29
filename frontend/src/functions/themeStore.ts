@@ -3,18 +3,17 @@ import { ref, watch } from 'vue';
 export type Theme = 'light' | 'dark';
 
 // Reactive theme state
-const currentTheme = ref<Theme>('light');
+const currentTheme = ref<Theme>('dark');
 
-// Initialize theme from localStorage or system preference
+// Initialize theme from localStorage or default to dark mode
 const initializeTheme = () => {
     const savedTheme = localStorage.getItem('app-theme') as Theme;
     
     if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
         currentTheme.value = savedTheme;
     } else {
-        // Check system preference
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        currentTheme.value = prefersDark ? 'dark' : 'light';
+        // Default to dark mode for new users
+        currentTheme.value = 'dark';
     }
     
     applyTheme(currentTheme.value);
@@ -53,10 +52,11 @@ watch(currentTheme, (newTheme) => {
 
 // Listen for system theme changes
 const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-mediaQuery.addEventListener('change', (e) => {
+mediaQuery.addEventListener('change', () => {
     // Only apply system preference if no manual theme is set
     if (!localStorage.getItem('app-theme')) {
-        currentTheme.value = e.matches ? 'dark' : 'light';
+        // Default to dark mode even if system prefers light
+        currentTheme.value = 'dark';
     }
 });
 
