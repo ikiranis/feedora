@@ -874,4 +874,84 @@
         <language code="el">Το όνομα χρήστη είναι υποχρεωτικό</language>
     </entry>
 
+    <entry id="Please sign in to continue">
+        <language code="en">Please sign in to continue</language>
+        <language code="el">Παρακαλώ συνδεθείτε για να συνεχίσετε</language>
+    </entry>
+
+    <entry id="Signing In...">
+        <language code="en">Signing In...</language>
+        <language code="el">Σύνδεση...</language>
+    </entry>
+
+    <entry id="Create Account">
+        <language code="en">Create Account</language>
+        <language code="el">Δημιουργία Λογαριασμού</language>
+    </entry>
+
+    <entry id="Join us today">
+        <language code="en">Join us today</language>
+        <language code="el">Γίνετε μέλος σήμερα</language>
+    </entry>
+
+    <entry id="Password must be at least 6 characters long">
+        <language code="en">Password must be at least 6 characters long</language>
+        <language code="el">Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες</language>
+    </entry>
+
+    <entry id="Confirm Password">
+        <language code="en">Confirm Password</language>
+        <language code="el">Επιβεβαίωση Κωδικού</language>
+    </entry>
+
+    <entry id="Creating Account...">
+        <language code="en">Creating Account...</language>
+        <language code="el">Δημιουργία Λογαριασμού...</language>
+    </entry>
+
+    <entry id="Sign in">
+        <language code="en">Sign in</language>
+        <language code="el">Είσοδος</language>
+    </entry>
+
+    <entry id="Username must be at least 3 characters long">
+        <language code="en">Username must be at least 3 characters long</language>
+        <language code="el">Το όνομα χρήστη πρέπει να έχει τουλάχιστον 3 χαρακτήρες</language>
+    </entry>
+
+    <entry id="Please confirm your password">
+        <language code="en">Please confirm your password</language>
+        <language code="el">Παρακαλώ επιβεβαιώστε τον κωδικό σας</language>
+    </entry>
+
+    <entry id="Passwords do not match">
+        <language code="en">Passwords do not match</language>
+        <language code="el">Οι κωδικοί δεν ταιριάζουν</language>
+    </entry>
+
+    <entry id="Email is already in use">
+        <language code="en">Email is already in use</language>
+        <language code="el">Το email χρησιμοποιείται ήδη</language>
+    </entry>
+
+    <entry id="Username is already taken">
+        <language code="en">Username is already taken</language>
+        <language code="el">Το όνομα χρήστη είναι ήδη κατειλημμένο</language>
+    </entry>
+
+    <entry id="Please check your input">
+        <language code="en">Please check your input</language>
+        <language code="el">Παρακαλώ ελέγξτε τα στοιχεία σας</language>
+    </entry>
+
+    <entry id="Login failed. Please try again.">
+        <language code="en">Login failed. Please try again.</language>
+        <language code="el">Η σύνδεση απέτυχε. Παρακαλώ δοκιμάστε ξανά.</language>
+    </entry>
+
+    <entry id="Registration failed. Please try again.">
+        <language code="en">Registration failed. Please try again.</language>
+        <language code="el">Η εγγραφή απέτυχε. Παρακαλώ δοκιμάστε ξανά.</language>
+    </entry>
+
 </root>

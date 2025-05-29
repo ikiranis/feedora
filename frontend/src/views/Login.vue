@@ -56,7 +56,7 @@
                     <p class="mb-0">
                         {{ language.get('Don\'t have an account?') }}
                         <a href="#" @click.prevent="$emit('showRegister')" class="text-decoration-none">
-                            {{ language.get('Sign up') }}
+                            {{ language.get('Sign Up') }}
                         </a>
                     </p>
                 </div>
