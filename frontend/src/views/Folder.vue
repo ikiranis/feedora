@@ -58,7 +58,7 @@
                             <td>
                                 <div class="d-flex gap-2">
                                     <button 
-                                        class="btn btn-outline-primary btn-sm"
+                                        class="btn btn-warning btn-sm me-2"
                                         @click="editFolder(folder)"
                                         :title="language.get('Edit this folder') || 'Edit this folder'"
                                     >
