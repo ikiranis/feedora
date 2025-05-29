@@ -2,8 +2,87 @@
 
 All notable changes to Feedora RSS Reader will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [0.0.3] - 2025-05-30
+
+### Added
+- **Complete User Authentication System** 🔐
+  - JWT-based authentication with secure token management
+  - User registration and login functionality with form validation
+  - `AuthController` with login, register, and logout endpoints
+  - `SecurityConfig` for Spring Security integration
+  - `JwtAuthenticationFilter` for request authentication
+  - `JwtUtil` for token generation and validation
+  - Protected routes with authentication guards
+  - User session management with `authStore`
+  - Modern login and registration pages with responsive design
+  - Authentication state persistence across browser sessions
+
+- **Enhanced Error Handling System** ⚠️
+  - Improved `errorStore` with better state management
+  - Comprehensive error handling in Post.vue component
+  - Language initialization fallback system
+  - Global error clearing on successful authentication
+  - Router-level error state management
+  - Better error messages for authentication failures
+
+- **User Interface Improvements** ✨
+  - Enhanced user section in sidebar with avatar and profile display
+  - User information display with username and email
+  - Logout functionality with confirmation
+  - Improved visual consistency across authentication flows
+  - Better styling for user interactions and feedback
+
+- **Theme System Enhancement** 🌙
+  - **Dark mode set as default theme** for better user experience
+  - Simplified theme initialization logic
+  - Improved theme persistence across sessions
+  - Enhanced dark mode styling consistency
+
+- **Multilingual Support Expansion** 🌍
+  - Added comprehensive authentication-related translations
+  - New language entries for login, registration, and user management
+  - Enhanced multilingual support for feed management operations
+  - Updated sign-up link text for consistency
+  - Improved language initialization with proper fallbacks
+
+### Changed
+- **Authentication Flow:** Complete overhaul from admin-based to user-based authentication
+- **Default Theme:** Dark mode is now the default for new users
+- **Error Handling:** Simplified and more robust error management system
+- **User Experience:** Enhanced feedback and loading states
+- **Component Organization:** Better separation of authentication components
+- **API Security:** All endpoints now require proper user authentication
+
+### Fixed
+- **Authentication Context:** Fixed controllers to use authenticated user instead of admin user
+- **Post Fetching Errors:** Resolved "Failed to fetch posts" error after successful login
+- **Language Initialization:** Fixed NullPointerException in Language configuration
+- **Error State Persistence:** Cleared error states on successful navigation
+- **Theme Initialization:** Improved theme loading and persistence logic
+- **User Context:** Fixed all API calls to use current authenticated user
+
+### Security Improvements
+- **JWT Token Security:** Secure token generation with configurable secrets
+- **Password Security:** Proper password hashing and validation
+- **Route Protection:** All application routes now require authentication
+- **Session Management:** Secure session handling with automatic cleanup
+- **API Protection:** All backend endpoints protected with JWT authentication
+
+### Technical Improvements
+- **Dependencies:** Added Spring Security and JWT dependencies
+- **Configuration:** New security configuration with JWT filter integration
+- **Database:** Enhanced User entity with authentication fields
+- **Frontend State:** Improved state management with authentication store
+- **API Structure:** Consistent user context across all endpoints
+- **Error Resilience:** Better error handling and recovery mechanisms
+
+### Migration Notes
+- **Breaking Change:** Application now requires user authentication
+- **First Run:** Users need to register before accessing the application
+- **Data Migration:** Existing data will be associated with the first registered user
+- **Configuration:** New JWT secret configuration required in application properties
+
+---
 
 ## [0.0.2] - 2025-05-29
 
