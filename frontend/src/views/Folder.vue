@@ -113,7 +113,7 @@ import type { FolderType, Feed } from '@/types';
 import { language } from '@/functions/languageStore';
 import { errorStore } from '@/components/error/errorStore';
 import Error from '@/components/error/Error.vue';
-import AddFolderModal from '@/components/feed/AddFolderModal.vue';
+import AddFolderModal from '@/components/folder/AddFolderModal.vue';
 
 const folders = ref<FolderType[]>([]);
 const feeds = ref<Feed[]>([]);
