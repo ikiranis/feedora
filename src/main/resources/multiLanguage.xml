@@ -758,4 +758,120 @@
         <language code="el">Επεξεργασία αυτού του φακέλου</language>
     </entry>
 
+    <!-- Authentication entries -->
+    <entry id="Login">
+        <language code="en">Login</language>
+        <language code="el">Σύνδεση</language>
+    </entry>
+
+    <entry id="Register">
+        <language code="en">Register</language>
+        <language code="el">Εγγραφή</language>
+    </entry>
+
+    <entry id="Logout">
+        <language code="en">Logout</language>
+        <language code="el">Αποσύνδεση</language>
+    </entry>
+
+    <entry id="Email">
+        <language code="en">Email</language>
+        <language code="el">Email</language>
+    </entry>
+
+    <entry id="Password">
+        <language code="en">Password</language>
+        <language code="el">Κωδικός</language>
+    </entry>
+
+    <entry id="Username">
+        <language code="en">Username</language>
+        <language code="el">Όνομα χρήστη</language>
+    </entry>
+
+    <entry id="Sign In">
+        <language code="en">Sign In</language>
+        <language code="el">Είσοδος</language>
+    </entry>
+
+    <entry id="Sign Up">
+        <language code="en">Sign Up</language>
+        <language code="el">Εγγραφή</language>
+    </entry>
+
+    <entry id="Already have an account">
+        <language code="en">Already have an account?</language>
+        <language code="el">Έχετε ήδη λογαριασμό;</language>
+    </entry>
+
+    <entry id="Don't have an account">
+        <language code="en">Don't have an account?</language>
+        <language code="el">Δεν έχετε λογαριασμό;</language>
+    </entry>
+
+    <entry id="Welcome to Feedora">
+        <language code="en">Welcome to Feedora</language>
+        <language code="el">Καλώς ήρθατε στο Feedora</language>
+    </entry>
+
+    <entry id="Create your account">
+        <language code="en">Create your account</language>
+        <language code="el">Δημιουργήστε τον λογαριασμό σας</language>
+    </entry>
+
+    <entry id="Enter your email">
+        <language code="en">Enter your email</language>
+        <language code="el">Εισάγετε το email σας</language>
+    </entry>
+
+    <entry id="Enter your password">
+        <language code="en">Enter your password</language>
+        <language code="el">Εισάγετε τον κωδικό σας</language>
+    </entry>
+
+    <entry id="Enter your username">
+        <language code="en">Enter your username</language>
+        <language code="el">Εισάγετε το όνομα χρήστη σας</language>
+    </entry>
+
+    <entry id="Invalid email or password">
+        <language code="en">Invalid email or password</language>
+        <language code="el">Λάθος email ή κωδικός</language>
+    </entry>
+
+    <entry id="User already exists">
+        <language code="en">User already exists</language>
+        <language code="el">Ο χρήστης υπάρχει ήδη</language>
+    </entry>
+
+    <entry id="Registration successful">
+        <language code="en">Registration successful</language>
+        <language code="el">Επιτυχής εγγραφή</language>
+    </entry>
+
+    <entry id="Login successful">
+        <language code="en">Login successful</language>
+        <language code="el">Επιτυχής σύνδεση</language>
+    </entry>
+
+    <entry id="Password must be at least 6 characters">
+        <language code="en">Password must be at least 6 characters</language>
+        <language code="el">Ο κωδικός πρέπει να έχει τουλάχιστον 6 χαρακτήρες</language>
+    </entry>
+
+    <entry id="Email is required">
+        <language code="en">Email is required</language>
+        <language code="el">Το email είναι υποχρεωτικό</language>
+    </entry>
+
+    <entry id="Password is required">
+        <language code="en">Password is required</language>
+        <language code="el">Ο κωδικός είναι υποχρεωτικός</language>
+    </entry>
+
+    <entry id="Username is required">
+        <language code="en">Username is required</language>
+        <language code="el">Το όνομα χρήστη είναι υποχρεωτικό</language>
+    </entry>
+
 </root>

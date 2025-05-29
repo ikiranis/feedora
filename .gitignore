@@ -38,3 +38,7 @@ derby.log
 app.lock
 
 feeds.xml
+
+# Security - sensitive configuration files
+application-secrets.properties
+src/main/resources/application-secrets.properties

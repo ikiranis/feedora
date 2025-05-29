@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { language } from "@/functions/languageStore.ts";
 import { computed, ComputedRef } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import LanguageSelect from "@/components/utilities/LanguageSelect.vue";
+import { authStore } from "@/functions/authStore";
 
 const route = useRoute()
+const router = useRouter()
 
 const props = defineProps({
     collapsed: {
@@ -41,12 +43,26 @@ const menuItemClasses: ComputedRef<string> = computed(() => {
 const getIconSize: ComputedRef<number> = computed(() => {
     return props.collapsed ? 42 : 24
 })
+
+/**
+ * Handle logout
+ */
+const handleLogout = async () => {
+    try {
+        await authStore.logout();
+        router.push({ name: 'Auth' });
+    } catch (error) {
+        console.error('Logout error:', error);
+        // Even if logout fails, redirect to auth
+        router.push({ name: 'Auth' });
+    }
+}
 </script>
 
 <template>
     <div>
         <div>
-            <router-link :to="{ name: 'Home' }" title="Home" :class="menuItemClasses">
+            <router-link :to="{ name: 'Posts' }" title="Feedora" :class="menuItemClasses">
                 <h2 class="d-flex">
                     <span>
                         <svg xmlns="http://www.w3.org/2000/svg" :width="getIconSize + 8" fill="white"
@@ -113,8 +129,91 @@ const getIconSize: ComputedRef<number> = computed(() => {
             </router-link>
         </div>
 
-        <div class="mt-auto d-flex justify-content-center mb-3">
-            <language-select :collapsed="collapsed" />
+        <div class="mt-auto">
+            <!-- User Info and Logout -->
+            <div v-if="authStore.user.value" class="user-section mb-3 px-2">
+                <div v-if="!collapsed" class="user-info bg-light dark:bg-dark rounded p-2 mb-2">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="user-avatar me-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
+                                <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+                                <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+                            </svg>
+                        </div>
+                        <div class="user-details flex-grow-1">
+                            <div class="username fw-semibold text-truncate">{{ authStore.user.value.username }}</div>
+                            <div class="email text-muted small text-truncate">{{ authStore.user.value.email }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button 
+                    @click="handleLogout" 
+                    :class="menuItemClasses + ' btn btn-outline-danger w-100'"
+                    :title="language.get('Logout')"
+                >
+                    <span>
+                        <svg xmlns="http://www.w3.org/2000/svg" :width="getIconSize" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0v2z"/>
+                            <path fill-rule="evenodd" d="m15.854 8.354-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708l3-3a.5.5 0 0 0 0-.708z"/>
+                        </svg>
+                    </span>
+                    <span class="mx-2" v-if="!collapsed">{{ language.get('Logout') }}</span>
+                </button>
+            </div>
+            
+            <!-- Language Selector -->
+            <div class="d-flex justify-content-center mb-3">
+                <language-select :collapsed="collapsed" />
+            </div>
         </div>
     </div>
 </template>
+
+<style scoped lang="scss">
+.user-section {
+    .user-info {
+        background-color: rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .user-avatar {
+        color: #6c757d;
+    }
+    
+    .username {
+        font-size: 0.9rem;
+        max-width: 120px;
+    }
+    
+    .email {
+        font-size: 0.75rem;
+        max-width: 120px;
+    }
+    
+    .btn-outline-danger {
+        border-color: #dc3545;
+        color: #dc3545;
+        
+        &:hover {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+    }
+}
+
+[data-bs-theme="dark"] {
+    .user-section {
+        .user-info {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--bs-light);
+        }
+        
+        .user-avatar {
+            color: #adb5bd;
+        }
+    }
+}
+</style>

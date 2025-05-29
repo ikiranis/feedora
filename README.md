@@ -97,7 +97,19 @@ git clone <repository-url>
 cd feedora
 ```
 
-#### 2. Backend Setup (Spring Boot)
+#### 2. Security Configuration Setup
+```bash
+# Copy the template file to create your secrets configuration
+cp src/main/resources/application-secrets.properties.template src/main/resources/application-secrets.properties
+
+# Generate a secure JWT secret key (optional - one is already provided)
+openssl rand -base64 32
+
+# Edit the secrets file and replace the JWT secret if needed
+# Note: This file is already in .gitignore and should never be committed
+```
+
+#### 3. Backend Setup (Spring Boot)
 ```bash
 # Using Maven wrapper (recommended)
 ./mvnw clean install
@@ -110,7 +122,7 @@ mvn spring-boot:run
 
 **Backend will start on:** `http://localhost:9999`
 
-#### 3. Frontend Setup (Vue 3)
+#### 4. Frontend Setup (Vue 3)
 ```bash
 # Navigate to frontend directory
 cd frontend
@@ -148,7 +160,60 @@ java -jar target/Feedora-0.0.1.jar
 
 ---
 
+## 🔐 Security Configuration
+
+### JWT Authentication
+Feedora uses JWT (JSON Web Tokens) for secure user authentication. The JWT secret key is stored in a separate configuration file that is excluded from version control.
+
+#### Security Setup
+- **Secrets File:** `src/main/resources/application-secrets.properties`
+- **Template File:** `src/main/resources/application-secrets.properties.template`
+- **Git Protection:** The secrets file is automatically excluded via `.gitignore`
+
+#### Configuration Properties
+```properties
+# JWT secret key (must be at least 256 bits)
+jwt.secret=your-secure-base64-encoded-key
+
+# Token expiration time in milliseconds (default: 24 hours)
+jwt.expiration=86400000
+```
+
+#### Generating Secure Keys
+```bash
+# Generate a secure 256-bit key
+openssl rand -base64 32
+
+# Example output: 39wS0mNH6jcOyhoDFmruBIZmJZorGjycodaSMl/QPdI=
+```
+
+### Protected Endpoints
+- All `/api/**` endpoints except `/api/auth/**` and `/api/language/**` require authentication
+- JWT tokens are required in the `Authorization` header: `Bearer <token>`
+- Tokens are automatically managed by the frontend authentication system
+
+---
+
 ## 📋 API Endpoints
+
+### Authentication
+- `POST /api/auth/register` - Register a new user
+  ```json
+  {
+    "username": "john_doe",
+    "email": "john@example.com",
+    "password": "secure_password"
+  }
+  ```
+- `POST /api/auth/login` - Authenticate user and get JWT token
+  ```json
+  {
+    "email": "john@example.com",
+    "password": "secure_password"
+  }
+  ```
+- `GET /api/auth/me` - Get current authenticated user info
+- `POST /api/auth/logout` - Logout current user
 
 ### Feed Management
 - `GET /api/feed/getAllFeeds` - Get all feeds
