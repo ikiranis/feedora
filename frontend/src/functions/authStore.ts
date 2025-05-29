@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue';
 import { login as apiLogin, register as apiRegister, logout as apiLogout, getCurrentUser, LoginRequest, RegisterRequest, AuthResponse, User } from '@/api/auth';
 import axios from 'axios';
+import { errorStore } from '@/components/error/errorStore';
 
 // Authentication state
 const token = ref<string | null>(localStorage.getItem('auth_token'));
@@ -51,6 +52,9 @@ export const authStore = {
                 email: response.email
             };
             
+            // Clear any existing errors on successful login
+            errorStore.clear();
+            
         } catch (error) {
             token.value = null;
             user.value = null;
@@ -78,6 +82,9 @@ export const authStore = {
                 username: response.username,
                 email: response.email
             };
+            
+            // Clear any existing errors on successful registration
+            errorStore.clear();
             
         } catch (error) {
             token.value = null;

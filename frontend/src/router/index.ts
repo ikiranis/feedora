@@ -11,6 +11,7 @@ import User from "@/views/User.vue"
 import Post from "@/views/Post.vue"
 import Auth from "@/views/Auth.vue"
 import { authStore } from "@/functions/authStore"
+import { errorStore } from "@/components/error/errorStore"
 
 const routes : RouteRecordRaw[] = [
     {
@@ -93,6 +94,11 @@ router.beforeEach(async (to, from, next) => {
     if (to.meta.requiresGuest && isAuthenticated) {
         next({ path: '/posts' });
         return;
+    }
+    
+    // Clear errors when successfully navigating to protected routes after authentication
+    if (to.meta.requiresAuth && isAuthenticated && from.name === 'Auth') {
+        errorStore.clear();
     }
     
     next();

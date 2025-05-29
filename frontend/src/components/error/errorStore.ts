@@ -25,6 +25,13 @@ const set = (enable: boolean, message: string, status: number) => {
     Object.assign(state, newState)
 };
 
+const clear = () => {
+    state.enable = false;
+    state.message = '';
+    state.status = 0;
+    state.progress = 0;
+};
+
 const setProgress = (progress: number) => {
     state.progress = progress;
 }
@@ -36,5 +43,6 @@ const get = () => {
 export const errorStore =  {
     set,
     get,
-    setProgress
+    setProgress,
+    clear
 };

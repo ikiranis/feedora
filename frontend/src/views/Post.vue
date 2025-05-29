@@ -137,21 +137,10 @@ const fetchPosts = async (reset = false) => {
         nextTick(() => {
             observePostElements();
         });
-    } catch (e) {
-        if (
-            typeof e === 'object' &&
-            e !== null &&
-            'response' in e &&
-            typeof (e as any).response === 'object' &&
-            (e as any).response !== null &&
-            'data' in (e as any).response &&
-            typeof (e as any).response.data === 'object' &&
-            (e as any).response.data !== null &&
-            'message' in (e as any).response.data &&
-            'status' in (e as any).response.data &&
-            typeof (e as any).response.data.status === 'number'
-        ) {
-            errorStore.set(true, (e as any).response.data.message, (e as any).response.data.status);
+    } catch (e: any) {
+        console.error('Error fetching posts:', e);
+        if (e.response && e.response.data) {
+            errorStore.set(true, e.response.data.message || e.response.data, e.response.status || 500);
         } else {
             errorStore.set(true, language.get('Failed to fetch posts') || 'Failed to fetch posts.', 500);
         }
@@ -385,6 +374,9 @@ watch(searchTerm, (_) => {
 
 // Lifecycle hooks
 onMounted(() => {
+    // Clear any existing errors when navigating to posts page
+    errorStore.clear();
+    
     loading.value = true;
     fetchPosts(true); // Initial fetch
     if (scrollableContainerRef.value) {

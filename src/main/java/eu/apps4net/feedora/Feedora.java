@@ -24,12 +24,24 @@ public class Feedora {
     public static void main(String[] args)
     {
         SpringApplication.run(Feedora.class, args);
-        Language.setActionsLanguage(settingService.getDefaultActionsLanguage());
         System.out.println("Run app on http://localhost:9999");
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void initAdminUser() {
         userService.getOrCreateAdminUser();
+        
+        // Initialize Language configuration after Spring context is ready
+        try {
+            String defaultLanguage = settingService.getDefaultActionsLanguage();
+            Language.setLanguage(defaultLanguage); // This initializes languageStrings
+            Language.setActionsLanguage(defaultLanguage); // This initializes actionStrings
+            System.out.println("Language configuration initialized with: " + defaultLanguage);
+        } catch (Exception e) {
+            System.err.println("Failed to initialize language configuration, using default 'en': " + e.getMessage());
+            // Fallback to English if there's an issue
+            Language.setLanguage("en");
+            Language.setActionsLanguage("en");
+        }
     }
 }

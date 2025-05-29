@@ -113,10 +113,28 @@ public class Language {
     }
 
     public static String getString(String key) {
-        return languageStrings.get(key);
+        if (languageStrings == null) {
+            // Lazy initialization as a fallback
+            try {
+                getTranslations("en");
+            } catch (Exception e) {
+                System.err.println("Failed to initialize language strings: " + e.getMessage());
+                return key; // Return the key itself if translation fails
+            }
+        }
+        return languageStrings.getOrDefault(key, key);
     }
 
     public static String getActionString(String key) {
-        return actionStrings.get(key);
+        if (actionStrings == null) {
+            // Lazy initialization as a fallback
+            try {
+                setActionsLanguage("en");
+            } catch (Exception e) {
+                System.err.println("Failed to initialize action strings: " + e.getMessage());
+                return key; // Return the key itself if translation fails
+            }
+        }
+        return actionStrings.getOrDefault(key, key);
     }
 }
