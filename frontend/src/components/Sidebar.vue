@@ -132,7 +132,7 @@ const handleLogout = async () => {
         <div class="mt-auto">
             <!-- User Info and Logout -->
             <div v-if="authStore.user.value" class="user-section mb-3 px-2">
-                <div v-if="!collapsed" class="user-info bg-light dark:bg-dark rounded p-2 mb-2">
+                <div v-if="!collapsed" class="user-info rounded p-2 mb-2">
                     <div class="d-flex align-items-center mb-2">
                         <div class="user-avatar me-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-person-circle" viewBox="0 0 16 16">
@@ -173,22 +173,24 @@ const handleLogout = async () => {
 <style scoped lang="scss">
 .user-section {
     .user-info {
-        background-color: rgba(0, 0, 0, 0.05);
-        border: 1px solid rgba(0, 0, 0, 0.1);
+        background-color: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
     .user-avatar {
-        color: #6c757d;
+        color: #f8f9fa;
     }
     
     .username {
         font-size: 0.9rem;
         max-width: 120px;
+        color: #f8f9fa;
     }
     
     .email {
         font-size: 0.75rem;
         max-width: 120px;
+        color: #adb5bd !important;
     }
     
     .btn-outline-danger {
@@ -205,14 +207,33 @@ const handleLogout = async () => {
 
 [data-bs-theme="dark"] {
     .user-section {
+        // Same styling for both light and dark modes since sidebar is always dark
         .user-info {
-            background-color: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: var(--bs-light);
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .user-avatar {
-            color: #adb5bd;
+            color: #f8f9fa;
+        }
+        
+        .username {
+            color: #f8f9fa;
+        }
+        
+        .email {
+            color: #adb5bd !important;
+        }
+        
+        .btn-outline-danger {
+            border-color: #dc3545;
+            color: #dc3545;
+            
+            &:hover {
+                background-color: #dc3545;
+                border-color: #dc3545;
+                color: white;
+            }
         }
     }
 }
