@@ -88,4 +88,48 @@ public class FolderService {
         
         return Language.getString("Folder deleted successfully");
     }
+    
+    @Transactional
+    public String updateFolder(String folderId, String newName, User user) {
+        if (folderId == null || folderId.trim().isEmpty()) {
+            throw new IllegalArgumentException(Language.getString("Invalid folder ID"));
+        }
+        
+        if (newName == null || newName.trim().isEmpty()) {
+            throw new IllegalArgumentException(Language.getString("Folder name cannot be empty"));
+        }
+        
+        String trimmedName = newName.trim();
+        
+        UUID folderUuid;
+        try {
+            folderUuid = UUID.fromString(folderId);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(Language.getString("Invalid folder ID"));
+        }
+        
+        Optional<Folder> folderOpt = folderRepository.findById(folderUuid);
+        if (folderOpt.isEmpty()) {
+            throw new IllegalArgumentException(Language.getString("Folder not found"));
+        }
+        
+        Folder folder = folderOpt.get();
+        
+        // Check if folder belongs to user
+        if (!folder.getUser().getId().equals(user.getId())) {
+            throw new IllegalArgumentException(Language.getString("Folder doesn't belong to user"));
+        }
+        
+        // Check if another folder with the same name already exists for this user (excluding current folder)
+        Optional<Folder> existingFolder = folderRepository.findByNameAndUser(trimmedName, user);
+        if (existingFolder.isPresent() && !existingFolder.get().getId().equals(folder.getId())) {
+            throw new IllegalArgumentException(Language.getString("Folder already exists"));
+        }
+        
+        // Update folder name
+        folder.setName(trimmedName);
+        folderRepository.save(folder);
+        
+        return Language.getString("Folder updated successfully");
+    }
 }

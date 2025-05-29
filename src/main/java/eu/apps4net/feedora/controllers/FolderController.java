@@ -26,10 +26,10 @@ public class FolderController {
     }
     
     @PostMapping("/addFolder")
-    public ResponseEntity<String> addFolder(@RequestBody AddFolderRequest request) {
+    public ResponseEntity<String> addFolder(@RequestBody String name) {
         try {
             User user = userService.getCurrentUser();
-            String result = folderService.addFolder(request.getName(), user);
+            String result = folderService.addFolder(name, user);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("Error adding folder: " + e.getMessage());
@@ -47,10 +47,14 @@ public class FolderController {
         }
     }
     
-    public static class AddFolderRequest {
-        private String name;
-        
-        public String getName() { return name; }
-        public void setName(String name) { this.name = name; }
+    @PutMapping("/updateFolder/{folderId}")
+    public ResponseEntity<String> updateFolder(@PathVariable String folderId, @RequestBody String name) {
+        try {
+            User user = userService.getCurrentUser();
+            String result = folderService.updateFolder(folderId, name, user);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error updating folder: " + e.getMessage());
+        }
     }
 }

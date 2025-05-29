@@ -733,4 +733,29 @@
         <language code="el">Ο φάκελος διαγράφηκε επιτυχώς</language>
     </entry>
 
+    <entry id="Edit Folder">
+        <language code="en">Edit Folder</language>
+        <language code="el">Επεξεργασία Φακέλου</language>
+    </entry>
+
+    <entry id="Update">
+        <language code="en">Update</language>
+        <language code="el">Ενημέρωση</language>
+    </entry>
+
+    <entry id="Folder updated successfully">
+        <language code="en">Folder updated successfully</language>
+        <language code="el">Ο φάκελος ενημερώθηκε επιτυχώς</language>
+    </entry>
+
+    <entry id="Failed to update folder">
+        <language code="en">Failed to update folder</language>
+        <language code="el">Αποτυχία ενημέρωσης φακέλου</language>
+    </entry>
+
+    <entry id="Edit this folder">
+        <language code="en">Edit this folder</language>
+        <language code="el">Επεξεργασία αυτού του φακέλου</language>
+    </entry>
+
 </root>

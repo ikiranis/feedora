@@ -1,20 +1,20 @@
 <template>
-    <!-- Add Folder Modal -->
-    <div class="modal fade" id="addFolderModal" tabindex="-1" aria-labelledby="addFolderModalLabel" aria-hidden="true">
+    <!-- Edit Folder Modal -->
+    <div class="modal fade" id="editFolderModal" tabindex="-1" aria-labelledby="editFolderModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="addFolderModalLabel">{{ language.get('Add Folder') || 'Add Folder' }}</h5>
+                    <h5 class="modal-title" id="editFolderModalLabel">{{ language.get('Edit Folder') || 'Edit Folder' }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <form @submit.prevent="addFolder">
+                    <form @submit.prevent="updateFolder">
                         <div class="mb-3">
-                            <label for="folderNameInput" class="form-label">{{ language.get('Folder Name') || 'Folder Name' }}</label>
+                            <label for="editFolderNameInput" class="form-label">{{ language.get('Folder Name') || 'Folder Name' }}</label>
                             <input 
                                 type="text" 
                                 class="form-control" 
-                                id="folderNameInput"
+                                id="editFolderNameInput"
                                 v-model="folderName"
                                 :placeholder="language.get('Enter folder name') || 'Enter folder name'"
                                 required
@@ -26,9 +26,9 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         {{ language.get('Cancel') || 'Cancel' }}
                     </button>
-                    <button type="button" class="btn btn-primary" @click="addFolder" :disabled="!folderName.trim() || loading">
+                    <button type="button" class="btn btn-primary" @click="updateFolder" :disabled="!folderName.trim() || loading">
                         <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        {{ language.get('Add') || 'Add' }}
+                        {{ language.get('Update') || 'Update' }}
                     </button>
                 </div>
             </div>
@@ -37,30 +37,49 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { addFolder as addFolderApi } from '@/api/folder';
+import { ref, watch } from 'vue';
+import { updateFolder as updateFolderApi } from '@/api/folder';
 import { language } from '@/functions/languageStore';
 import { errorStore } from '@/components/error/errorStore';
+import type { FolderType } from '@/types';
+
+// Props
+interface Props {
+    folder?: FolderType | null;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    folder: null
+});
 
 // Emits
 const emit = defineEmits<{
-    'folder-added': [];
+    'folder-updated': [];
 }>();
 
 // Reactive variables
 const folderName = ref('');
 const loading = ref(false);
 
-// Add folder function
-const addFolder = async () => {
-    if (!folderName.value.trim()) return;
+// Watch for folder changes to populate form
+watch(() => props.folder, (newFolder) => {
+    if (newFolder) {
+        folderName.value = newFolder.name || '';
+    } else {
+        folderName.value = '';
+    }
+}, { immediate: true });
+
+// Update folder function
+const updateFolder = async () => {
+    if (!folderName.value.trim() || !props.folder) return;
     
     try {
         loading.value = true;
-        const result = await addFolderApi(folderName.value.trim());
+        const result = await updateFolderApi(props.folder.id, folderName.value.trim());
         
         // Hide the modal
-        const modalElement = document.getElementById('addFolderModal');
+        const modalElement = document.getElementById('editFolderModal');
         if (modalElement) {
             try {
                 // Try to use Bootstrap's Modal API if available
@@ -109,7 +128,7 @@ const addFolder = async () => {
         folderName.value = '';
         
         // Emit event to parent
-        emit('folder-added');
+        emit('folder-updated');
         
         // Show success message
         errorStore.set(true, result, 200);
@@ -117,7 +136,7 @@ const addFolder = async () => {
         if (e.response && e.response.data) {
             errorStore.set(true, e.response.data, e.response.status || 500);
         } else {
-            errorStore.set(true, language.get('Failed to add folder') || 'Failed to add folder.', 500);
+            errorStore.set(true, language.get('Failed to update folder') || 'Failed to update folder.', 500);
         }
     } finally {
         loading.value = false;

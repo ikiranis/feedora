@@ -56,16 +56,27 @@
                                 <span class="badge bg-secondary">{{ getFeedCount(folder) }}</span>
                             </td>
                             <td>
-                                <button 
-                                    class="btn btn-danger btn-sm"
-                                    @click="deleteFolder(folder)"
-                                    :title="language.get('Delete this folder') || 'Delete this folder'"
-                                >
-                                    <svg width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
-                                        <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/>
-                                        <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z"/>
-                                    </svg>
-                                </button>
+                                <div class="d-flex gap-2">
+                                    <button 
+                                        class="btn btn-outline-primary btn-sm"
+                                        @click="editFolder(folder)"
+                                        :title="language.get('Edit this folder') || 'Edit this folder'"
+                                    >
+                                        <svg width="16" height="16" fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708L10.5 8.207l-3-3L12.146.146zM11.207 1.5 1.5 11.207V14.5h3.293L14.5 4.793 11.207 1.5z"/>
+                                        </svg>
+                                    </button>
+                                    <button 
+                                        class="btn btn-danger btn-sm"
+                                        @click="deleteFolder(folder)"
+                                        :title="language.get('Delete this folder') || 'Delete this folder'"
+                                    >
+                                        <svg width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16">
+                                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/>
+                                            <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z"/>
+                                        </svg>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -102,6 +113,9 @@
     <!-- Add Folder Modal -->
     <AddFolderModal @folder-added="handleFolderAdded" />
 
+    <!-- Edit Folder Modal -->
+    <EditFolderModal :folder="selectedFolder" @folder-updated="handleFolderUpdated" />
+
     <Error class="error-fixed-bottom" />
 </template>
 
@@ -114,12 +128,14 @@ import { language } from '@/functions/languageStore';
 import { errorStore } from '@/components/error/errorStore';
 import Error from '@/components/error/Error.vue';
 import AddFolderModal from '@/components/folder/AddFolderModal.vue';
+import EditFolderModal from '@/components/folder/EditFolderModal.vue';
 
 const folders = ref<FolderType[]>([]);
 const feeds = ref<Feed[]>([]);
 const loading = ref(false);
 const searchTerm = ref('');
 const scrollableContainerRef = ref<HTMLElement | null>(null);
+const selectedFolder = ref<FolderType | null>(null);
 
 // Computed property for filtered folders
 const filteredFolders = computed(() => {
@@ -204,6 +220,58 @@ const deleteFolder = async (folder: FolderType) => {
  * Refreshes the folders list to show the new folder.
  */
 const handleFolderAdded = async () => {
+    await Promise.all([fetchFolders(), fetchFeeds()]); // Refresh both folders and feeds
+};
+
+/**
+ * Opens the edit folder modal for the selected folder
+ */
+const editFolder = (folder: FolderType) => {
+    selectedFolder.value = folder;
+    
+    // Open the modal
+    const modalElement = document.getElementById('editFolderModal');
+    if (modalElement) {
+        try {
+            // Try to use Bootstrap's Modal API if available
+            if ((window as any).bootstrap && (window as any).bootstrap.Modal) {
+                const bootstrapModal = new (window as any).bootstrap.Modal(modalElement);
+                bootstrapModal.show();
+            } else {
+                // Fallback: manually show modal
+                modalElement.classList.add('show');
+                modalElement.style.display = 'block';
+                modalElement.setAttribute('aria-modal', 'true');
+                modalElement.removeAttribute('aria-hidden');
+                
+                // Add backdrop
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.onclick = () => {
+                    modalElement.classList.remove('show');
+                    modalElement.style.display = 'none';
+                    modalElement.setAttribute('aria-hidden', 'true');
+                    modalElement.removeAttribute('aria-modal');
+                    backdrop.remove();
+                    document.body.classList.remove('modal-open');
+                };
+                document.body.appendChild(backdrop);
+                
+                // Add modal-open class to body
+                document.body.classList.add('modal-open');
+            }
+        } catch (error) {
+            console.warn('Bootstrap Modal API not available, using fallback method', error);
+        }
+    }
+};
+
+/**
+ * Handles when a folder is updated via the modal.
+ * Refreshes the folders list to show the updated folder.
+ */
+const handleFolderUpdated = async () => {
+    selectedFolder.value = null;
     await Promise.all([fetchFolders(), fetchFeeds()]); // Refresh both folders and feeds
 };
 
