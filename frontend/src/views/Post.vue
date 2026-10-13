@@ -160,6 +160,7 @@ import { getFeedOperationStatus } from '@/api/feed';
 import { getFolders } from '@/api/folder';
 import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType } from '@/types';
 import { language } from '@/functions/languageStore';
+import { postContentStore } from '@/functions/postContentStore';
 import PostElement from '@/components/PostElement.vue';
 import Error from '@/components/error/Error.vue'; // Changed from ErrorDisplay
 import { errorStore } from '@/components/error/errorStore'; // Import errorStore
@@ -644,6 +645,15 @@ const handleKeydown = (event: KeyboardEvent) => {
     event.preventDefault();
     selectPost(next);
 };
+
+// In list mode, preload the content of the selected post and the next ones (or the first ones if none is selected),
+// so opening them shows the full article right away
+const PREFETCH_COUNT = 4;
+watch([selectedIndex, showDetails, () => posts.value.length], () => {
+    if (showDetails.value) return;
+    const start = Math.max(0, selectedIndex.value);
+    postContentStore.prefetch(posts.value.slice(start, start + PREFETCH_COUNT));
+});
 
 // Persist the cards/list mode
 watch(showDetails, (value) => {

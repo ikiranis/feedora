@@ -81,7 +81,8 @@
                 <span class="spinner-border spinner-border-sm" role="status"></span>
                 {{ language.get('Loading full article...') || 'Loading full article...' }}
             </div>
-            <div v-if="fullContent || post.description" class="summary-description"
+            <!-- While the full content loads, show only the spinner so the description isn't swapped out (no flicker) -->
+            <div v-else-if="fullContent || post.description" class="summary-description"
                 :class="{ 'post-content': fullContent }" v-html="fullContent || post.description"></div>
         </div>
     </div>
@@ -89,7 +90,8 @@
 
 <script setup lang="ts">
 import { PostType } from '@/types';
-import { markAsRead, getPostContent } from '@/api/post';
+import { markAsRead } from '@/api/post';
+import { postContentStore } from '@/functions/postContentStore';
 import { language } from '@/functions/languageStore';
 import { computed, ref, watch } from 'vue';
 
@@ -183,34 +185,18 @@ watch(() => props.post.id, () => {
     iconFailed.value = false;
     thumbnailFailed.value = false;
     playing.value = false;
-    fullContent.value = null;
-    contentRequested = false;
 });
 
-const fullContent = ref<string | null>(null); // Full article HTML, loaded when the post is opened in list mode
-const contentLoading = ref(false);
-let contentRequested = false;
+// Full article HTML from the shared cache (preloaded by the posts list), shown when the post is opened in list mode
+const fullContent = computed(() => postContentStore.get(props.post.id) ?? null);
+const contentLoading = computed(() => postContentStore.isLoading(props.post.id));
+const isOpened = computed(() => !!props.selected && !props.showDetails && !youtubeVideo.value);
 
 /**
- * Loads the full article content when the post is opened (expanded) in list mode.
- * Waits briefly so posts skipped over with the keyboard don't trigger requests. Skipped for YouTube videos.
+ * Loads the full article content when the post is opened (expanded) in list mode, if it wasn't preloaded.
  */
-watch(() => props.selected && !props.showDetails, (opened) => {
-    if (!opened || contentRequested || youtubeVideo.value) return;
-
-    setTimeout(async () => {
-        if (!props.selected || props.showDetails || contentRequested) return;
-        contentRequested = true;
-        contentLoading.value = true;
-        try {
-            fullContent.value = await getPostContent(props.post.id);
-        } catch (error) {
-            console.error('Failed to load post content:', error);
-            contentRequested = false; // Retry the next time the post is opened
-        } finally {
-            contentLoading.value = false;
-        }
-    }, 300);
+watch([isOpened, () => props.post.id], ([opened]) => {
+    if (opened) postContentStore.load(props.post.id);
 }, { immediate: true });
 
 const emit = defineEmits<{
