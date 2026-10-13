@@ -15,7 +15,9 @@ import org.springframework.data.domain.Sort;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -161,13 +163,48 @@ public class PostService {
      * @return List of unread posts
      */
     public List<Post> getPostsForUser(User user, int page, int pageSize, String searchTerm) {
+        return getPostsForUser(user, page, pageSize, searchTerm, null);
+    }
+
+    /**
+     * Returns paginated unread posts for a given user, optionally filtered by search term and folder.
+     * @param user The user
+     * @param page The page number (1-indexed)
+     * @param pageSize The number of posts per page
+     * @param searchTerm The search term to filter posts by title or description (case-insensitive)
+     * @param folderId The folder whose feeds' posts to return, or null for all folders
+     * @return List of unread posts
+     */
+    public List<Post> getPostsForUser(User user, int page, int pageSize, String searchTerm, UUID folderId) {
         Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "pubDate"));
-        if (searchTerm != null && !searchTerm.trim().isEmpty()) {
-            String trimmedSearchTerm = searchTerm.trim();
-            return postRepository.findByUserAndReadFalseAndTitleOrDescriptionContaining(user, trimmedSearchTerm, pageable);
-        } else {
-            return postRepository.findByUserAndReadFalse(user, pageable);
+        boolean hasSearch = searchTerm != null && !searchTerm.trim().isEmpty();
+
+        if (folderId != null) {
+            return hasSearch
+                    ? postRepository.findByUserAndReadFalseAndFolderAndTitleOrDescriptionContaining(user, folderId, searchTerm.trim(), pageable)
+                    : postRepository.findByUserAndReadFalseAndFolder(user, folderId, pageable);
         }
+
+        return hasSearch
+                ? postRepository.findByUserAndReadFalseAndTitleOrDescriptionContaining(user, searchTerm.trim(), pageable)
+                : postRepository.findByUserAndReadFalse(user, pageable);
+    }
+
+    /**
+     * Returns the unread post counts for a given user, in total and per folder.
+     * @param user The user
+     * @return Map with "total" (long) and "folders" (folder id → unread count)
+     */
+    public Map<String, Object> getUnreadCounts(User user) {
+        Map<String, Long> folderCounts = new HashMap<>();
+        for (Object[] row : postRepository.countUnreadByFolder(user)) {
+            folderCounts.put(row[0].toString(), (Long) row[1]);
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("total", postRepository.countByUserAndReadFalse(user));
+        result.put("folders", folderCounts);
+        return result;
     }
 
     /**

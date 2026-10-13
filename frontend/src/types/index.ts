@@ -33,11 +33,17 @@ export interface Feed {
     htmlUrl: string;
     type: string;
     folderName?: string;
+    folderId?: string | null;
 }
 
 export interface FolderType {
     id: string;
     name: string;
+}
+
+export interface UnreadCountsType {
+    total: number;
+    folders: Record<string, number>;
 }
 
 export interface UserType {

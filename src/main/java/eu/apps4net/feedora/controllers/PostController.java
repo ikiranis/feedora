@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -59,9 +60,16 @@ public class PostController {
     }
 
     @GetMapping("/getPosts")
-    public List<Post> getPosts(@RequestParam int page, @RequestParam int pageSize, @RequestParam(required = false) String search) {
+    public List<Post> getPosts(@RequestParam int page, @RequestParam int pageSize, @RequestParam(required = false) String search,
+                               @RequestParam(required = false) UUID folderId) {
         User currentUser = userService.getCurrentUser();
-        return postService.getPostsForUser(currentUser, page, pageSize, search);
+        return postService.getPostsForUser(currentUser, page, pageSize, search, folderId);
+    }
+
+    @GetMapping("/unreadCounts")
+    public Map<String, Object> getUnreadCounts() {
+        User currentUser = userService.getCurrentUser();
+        return postService.getUnreadCounts(currentUser);
     }
 
     @PutMapping("/markAsRead/{postId}")

@@ -74,4 +74,9 @@ public class Feed {
     public String getFolderName() {
         return folder != null ? folder.getName() : null;
     }
+
+    // Expose folderId for serialization
+    public UUID getFolderId() {
+        return folder != null ? folder.getId() : null;
+    }
 }

@@ -1,19 +1,24 @@
 import axios from "axios";
 import config from "@/functions/config.ts";
+import type { UnreadCountsType } from "@/types";
 
 /**
  * Fetch all posts from the backend for the current user.
  * @param page - The page number (1-indexed)
  * @param pageSize - The number of posts per page
  * @param search - Optional search term to filter posts by title
+ * @param folderId - Optional folder id to only return posts of that folder's feeds
  * @returns {Promise<any>} List of posts
  * @throws Error if the request fails
  */
-export const getPosts = async (page: number, pageSize: number, search?: string) => {
+export const getPosts = async (page: number, pageSize: number, search?: string, folderId?: string | null) => {
     try {
         const params: any = { page, pageSize };
         if (search && search.trim()) {
             params.search = search.trim();
+        }
+        if (folderId) {
+            params.folderId = folderId;
         }
         
         const response = await axios.get(config.defaultServer() + '/api/posts/getPosts', {
@@ -26,6 +31,16 @@ export const getPosts = async (page: number, pageSize: number, search?: string) 
     } catch (error: any) {
         throw error;
     }
+};
+
+/**
+ * Fetch the unread post counts for the current user, in total and per folder.
+ * @returns {Promise<UnreadCountsType>} Total unread count and a map of folder id to unread count
+ * @throws Error if the request fails
+ */
+export const getUnreadCounts = async (): Promise<UnreadCountsType> => {
+    const response = await axios.get(config.defaultServer() + '/api/posts/unreadCounts');
+    return response.data;
 };
 
 /**

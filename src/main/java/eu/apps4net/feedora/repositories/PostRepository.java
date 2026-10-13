@@ -27,6 +27,18 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
            "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
     List<Post> findByUserAndReadFalseAndTitleOrDescriptionContaining(@Param("user") User user, @Param("searchTerm") String searchTerm, Pageable pageable);
     
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.read = false AND p.feed.folder.id = :folderId")
+    List<Post> findByUserAndReadFalseAndFolder(@Param("user") User user, @Param("folderId") UUID folderId, Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.read = false AND p.feed.folder.id = :folderId AND " +
+           "(LOWER(p.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
+    List<Post> findByUserAndReadFalseAndFolderAndTitleOrDescriptionContaining(@Param("user") User user, @Param("folderId") UUID folderId, @Param("searchTerm") String searchTerm, Pageable pageable);
+
+    @Query("SELECT p.feed.folder.id, COUNT(p) FROM Post p WHERE p.user = :user AND p.read = false AND p.feed.folder IS NOT NULL GROUP BY p.feed.folder.id")
+    List<Object[]> countUnreadByFolder(@Param("user") User user);
+
+    long countByUserAndReadFalse(User user);
     long countByUser(User user);
     boolean existsByFeedAndUserAndLink(Feed feed, User user, String link);
     

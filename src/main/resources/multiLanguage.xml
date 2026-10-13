@@ -959,4 +959,9 @@
         <language code="el">Αποσυνδεθήκατε επιτυχώς</language>
     </entry>
 
+    <entry id="All Posts">
+        <language code="en">All Posts</language>
+        <language code="el">Όλα τα άρθρα</language>
+    </entry>
+
 </root>
