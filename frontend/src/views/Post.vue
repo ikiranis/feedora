@@ -150,7 +150,7 @@ import { errorStore } from '@/components/error/errorStore'; // Import errorStore
 
 const posts = ref<PostType[]>([]);
 const page = ref(1);
-const pageSize = 15;
+const pageSize = 50;
 const loading = ref(false);
 const allLoaded = ref(false);
 const showDetails = ref(true);
@@ -279,9 +279,11 @@ const fetchPosts = async (reset = false) => {
 
         page.value++; // Increment page for the next fetch
 
-        // Re-observe post elements after posts are loaded
+        // Re-observe post elements after posts are loaded, and keep loading while the list
+        // is too short to scroll, since infinite scroll only triggers on scroll events
         nextTick(() => {
             observePostElements();
+            handleScroll();
         });
     } catch (e: any) {
         console.error('Error fetching posts:', e);
@@ -512,8 +514,7 @@ const handleScroll = () => {
     // Load more when 200px from the bottom
     if (scrollTop + clientHeight + 200 >= scrollHeight) {
         loading.value = true;
-        page.value++;
-        fetchPosts();
+        fetchPosts(); // fetchPosts advances the page itself
     }
 };
 
