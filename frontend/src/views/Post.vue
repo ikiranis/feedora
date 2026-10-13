@@ -78,6 +78,30 @@
             <div class="container py-4">
                 <div class="row justify-content-end mb-4 align-items-center">
                     <div class="col-auto d-flex align-items-center">
+                        <div v-if="!showSaved" class="btn-group me-3">
+                            <button type="button" class="btn btn-outline-primary d-flex align-items-center gap-2"
+                                @click="handleMarkAllAsRead(null)" :disabled="loading"
+                                :title="language.get('Mark all as read') || 'Mark all as read'">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                    class="bi bi-check2-all" viewBox="0 0 16 16">
+                                    <path d="M12.354 4.354a.5.5 0 0 0-.708-.708L5 10.293 1.854 7.146a.5.5 0 1 0-.708.708l3.5 3.5a.5.5 0 0 0 .708 0l7-7zm-4.208 7-.896-.897.707-.707.543.543 6.646-6.647a.5.5 0 0 1 .708.708l-7 7a.5.5 0 0 1-.708 0z"/>
+                                    <path d="m5.354 7.146.896.897-.707.707-.897-.896a.5.5 0 1 1 .708-.708z"/>
+                                </svg>
+                                <span class="d-none d-xl-inline">{{ language.get('Mark all as read') || 'Mark all as read' }}</span>
+                            </button>
+                            <button type="button" class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split"
+                                data-bs-toggle="dropdown" aria-expanded="false" :disabled="loading">
+                                <span class="visually-hidden">{{ language.get('Mark as read') || 'Mark as read' }}</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><h6 class="dropdown-header">{{ language.get('Mark as read') || 'Mark as read' }}</h6></li>
+                                <li v-for="option in markAsReadOptions" :key="option.label">
+                                    <button type="button" class="dropdown-item" @click="handleMarkAllAsRead(option.days)">
+                                        {{ language.get(option.label) || option.label }}
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
                         <button @click="handleRefreshPosts" class="btn btn-outline-primary me-3"
                             :title="language.get('Refresh Posts') || 'Refresh Posts'"
                             :disabled="loading">
@@ -168,7 +192,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
-import { getPosts, parseFeeds, deleteAllPosts, markAsRead, getUnreadCounts, setPostSaved } from '@/api/post';
+import { getPosts, parseFeeds, deleteAllPosts, markAsRead, markAllAsRead, getUnreadCounts, setPostSaved } from '@/api/post';
 import { getFeedOperationStatus } from '@/api/feed';
 import { getFolders } from '@/api/folder';
 import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType } from '@/types';
@@ -178,6 +202,7 @@ import PostElement from '@/components/PostElement.vue';
 import PostModal from '@/components/PostModal.vue';
 import Error from '@/components/error/Error.vue'; // Changed from ErrorDisplay
 import { errorStore } from '@/components/error/errorStore'; // Import errorStore
+import { confirmDialog } from '@/functions/javaDialogs';
 
 const posts = ref<PostType[]>([]);
 const page = ref(1);
@@ -202,6 +227,16 @@ const showSaved = ref(false); // Shows the saved posts (read or unread) instead 
 const expandedFolders = ref<Set<string>>(new Set());
 const failedFeedIcons = ref<Set<string>>(new Set());
 const showEmptyFolders = ref(localStorage.getItem('posts-show-empty-folders') === 'true'); // Persisted in localStorage
+
+// Choices of the "Mark all as read" dropdown, by the age of the posts to mark (null marks all of them)
+const markAsReadOptions: { label: string; days: number | null }[] = [
+    { label: 'All posts', days: null },
+    { label: 'Older than 1 day', days: 1 },
+    { label: 'Older than 3 days', days: 3 },
+    { label: 'Older than 1 week', days: 7 },
+    { label: 'Older than 2 weeks', days: 14 },
+    { label: 'Older than 1 month', days: 30 },
+];
 
 // Cards (true) or list (false) mode of each view (all, saved, a folder or a feed), persisted in localStorage
 const VIEW_MODES_KEY = 'posts-view-modes';
@@ -430,6 +465,27 @@ const handleDeleteAllPosts = async () => {
         }
     } finally {
         loading.value = false;
+    }
+};
+
+/**
+ * Marks all the unread posts of the current view (all, a folder or a feed) as read, then reloads the list.
+ * @param olderThanDays - Only mark the posts older than this many days, or null for all of them.
+ *                        Marking all of them from the main button asks for confirmation first.
+ */
+const handleMarkAllAsRead = async (olderThanDays: number | null) => {
+    if (olderThanDays === null && !confirmDialog(language.get('Mark all posts of this view as read?') || 'Mark all posts of this view as read?')) {
+        return;
+    }
+    try {
+        loading.value = true;
+        await markAllAsRead(selectedFolderId.value, selectedFeedId.value, olderThanDays);
+        scrollableContainerRef.value?.scrollTo({ top: 0 });
+        await handleRefreshPosts();
+    } catch (e: any) {
+        console.error('Failed to mark posts as read:', e);
+        loading.value = false;
+        errorStore.set(true, e.response?.data?.message || language.get('Failed to mark posts as read') || 'Failed to mark posts as read.', e.response?.status || 500);
     }
 };
 

@@ -113,6 +113,29 @@ export const markAsRead = async (postId: string) => {
 };
 
 /**
+ * Mark all the unread posts as read, optionally only those of a folder or feed, or older than some days.
+ * @param {string | null} folderId - Optional folder id to only mark posts of that folder's feeds
+ * @param {string | null} feedId - Optional feed id to only mark posts of that feed
+ * @param {number | null} olderThanDays - Optional age in days, to only mark posts published before it
+ * @returns {Promise<number>} The number of posts marked as read
+ * @throws Error if the request fails
+ */
+export const markAllAsRead = async (folderId?: string | null, feedId?: string | null, olderThanDays?: number | null): Promise<number> => {
+    const params: any = {};
+    if (folderId) {
+        params.folderId = folderId;
+    }
+    if (feedId) {
+        params.feedId = feedId;
+    }
+    if (olderThanDays) {
+        params.olderThanDays = olderThanDays;
+    }
+    const response = await axios.put(config.defaultServer() + '/api/posts/markAllAsRead', null, { params });
+    return response.data.count;
+};
+
+/**
  * Save a post for later, or remove it from the saved posts.
  * @param {string} postId - The UUID of the post
  * @param {boolean} saved - true to save the post, false to remove it from the saved posts

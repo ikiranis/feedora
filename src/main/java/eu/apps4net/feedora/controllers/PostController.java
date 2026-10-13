@@ -89,6 +89,13 @@ public class PostController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/markAllAsRead")
+    public Map<String, Integer> markAllPostsAsRead(@RequestParam(required = false) UUID folderId, @RequestParam(required = false) UUID feedId,
+                                                   @RequestParam(required = false) Integer olderThanDays) {
+        User currentUser = userService.getCurrentUser();
+        return Map.of("count", postService.markAllPostsAsRead(currentUser, folderId, feedId, olderThanDays));
+    }
+
     @PutMapping("/markAsRead/{postId}")
     public ResponseEntity<String> markPostAsRead(@PathVariable UUID postId) {
         try {

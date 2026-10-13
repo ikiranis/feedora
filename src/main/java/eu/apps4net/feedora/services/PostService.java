@@ -11,11 +11,19 @@ import eu.apps4net.feedora.utilities.ArticleExtractor;
 import eu.apps4net.feedora.utilities.RssFetcher;
 import com.rometools.rome.feed.synd.SyndContent;
 import com.rometools.rome.feed.synd.SyndEntry;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaUpdate;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -40,6 +48,8 @@ public class PostService {
     private FeedService feedService;
     @Autowired
     private OperationLockService operationLockService;
+    @PersistenceContext
+    private EntityManager entityManager;
 
     /**
      * Iterates over the current user's RSS feeds, fetches recent unread posts, and adds them as Posts in the database.
@@ -341,6 +351,42 @@ public class PostService {
             }
         }
         return false;
+    }
+
+    /**
+     * Mark all the unread posts of a user as read, optionally only those of a feed or folder, or older than some days.
+     * Runs as a single bulk update, so it doesn't load the posts.
+     * @param user The user whose posts to mark as read
+     * @param folderId The folder whose feeds' posts to mark, or null for all folders
+     * @param feedId The feed whose posts to mark, or null for all feeds. Takes precedence over folderId.
+     * @param olderThanDays Only mark the posts published more than this many days ago, or null for all posts
+     * @return The number of posts marked as read
+     */
+    @Transactional
+    public int markAllPostsAsRead(User user, UUID folderId, UUID feedId, Integer olderThanDays) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaUpdate<Post> update = cb.createCriteriaUpdate(Post.class);
+        Root<Post> post = update.from(Post.class);
+
+        List<Predicate> predicates = new ArrayList<>();
+        predicates.add(cb.equal(post.get("user"), user));
+        predicates.add(cb.isFalse(post.get("read")));
+
+        if (feedId != null) {
+            predicates.add(cb.equal(post.get("feed").get("id"), feedId));
+        } else if (folderId != null) {
+            Subquery<UUID> folderFeeds = update.subquery(UUID.class);
+            Root<Feed> feed = folderFeeds.from(Feed.class);
+            folderFeeds.select(feed.get("id")).where(cb.equal(feed.get("folder").get("id"), folderId));
+            predicates.add(post.get("feed").get("id").in(folderFeeds));
+        }
+
+        if (olderThanDays != null && olderThanDays > 0) {
+            predicates.add(cb.lessThan(post.get("pubDate"), LocalDateTime.now().minusDays(olderThanDays)));
+        }
+
+        update.set(post.<Boolean>get("read"), true).where(predicates.toArray(new Predicate[0]));
+        return entityManager.createQuery(update).executeUpdate();
     }
 
     /**

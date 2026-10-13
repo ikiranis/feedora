@@ -1009,4 +1009,54 @@
         <language code="el">Αποτυχία αποθήκευσης του άρθρου</language>
     </entry>
 
+    <entry id="Mark all as read">
+        <language code="en">Mark all as read</language>
+        <language code="el">Σήμανση όλων ως αναγνωσμένα</language>
+    </entry>
+
+    <entry id="Mark all posts of this view as read?">
+        <language code="en">Mark all posts of this view as read?</language>
+        <language code="el">Σήμανση όλων των άρθρων αυτής της προβολής ως αναγνωσμένα;</language>
+    </entry>
+
+    <entry id="Mark as read">
+        <language code="en">Mark as read</language>
+        <language code="el">Σήμανση ως αναγνωσμένα</language>
+    </entry>
+
+    <entry id="All posts">
+        <language code="en">All posts</language>
+        <language code="el">Όλα τα άρθρα</language>
+    </entry>
+
+    <entry id="Older than 1 day">
+        <language code="en">Older than 1 day</language>
+        <language code="el">Παλαιότερα από 1 ημέρα</language>
+    </entry>
+
+    <entry id="Older than 3 days">
+        <language code="en">Older than 3 days</language>
+        <language code="el">Παλαιότερα από 3 ημέρες</language>
+    </entry>
+
+    <entry id="Older than 1 week">
+        <language code="en">Older than 1 week</language>
+        <language code="el">Παλαιότερα από 1 εβδομάδα</language>
+    </entry>
+
+    <entry id="Older than 2 weeks">
+        <language code="en">Older than 2 weeks</language>
+        <language code="el">Παλαιότερα από 2 εβδομάδες</language>
+    </entry>
+
+    <entry id="Older than 1 month">
+        <language code="en">Older than 1 month</language>
+        <language code="el">Παλαιότερα από 1 μήνα</language>
+    </entry>
+
+    <entry id="Failed to mark posts as read">
+        <language code="en">Failed to mark posts as read</language>
+        <language code="el">Αποτυχία σήμανσης των άρθρων ως αναγνωσμένα</language>
+    </entry>
+
 </root>
