@@ -160,7 +160,8 @@ public class PostService {
         for (SyndContent content : entry.getContents()) {
             if (content.getValue() != null) html.append(content.getValue());
         }
-        return ArticleExtractor.sanitize(html.toString(), entry.getLink());
+        String content = ArticleExtractor.sanitize(html.toString(), entry.getLink());
+        return content != null ? ArticleExtractor.VERSION_MARKER + content : null;
     }
 
     /**
@@ -180,19 +181,27 @@ public class PostService {
         String description = ArticleExtractor.sanitize(post.getDescription(), post.getLink());
         int descriptionLength = ArticleExtractor.textLength(description);
 
-        if (post.getContent() != null && ArticleExtractor.textLength(post.getContent()) > descriptionLength) {
-            return post.getContent();
+        String stored = post.getContent();
+        boolean storedIsCurrent = stored != null && stored.startsWith(ArticleExtractor.VERSION_MARKER);
+        if (storedIsCurrent && ArticleExtractor.textLength(stored) > descriptionLength) {
+            return stored;
         }
 
+        String extracted = null;
         try {
-            String extracted = ArticleExtractor.extractFromUrl(post.getLink());
-            if (ArticleExtractor.textLength(extracted) > descriptionLength) {
-                post.setContent(extracted);
-                postRepository.save(post);
-                return extracted;
-            }
+            extracted = ArticleExtractor.extractFromUrl(post.getLink());
         } catch (Exception e) {
             System.err.println("[Feedora] Could not extract content from " + post.getLink() + " - " + e.getMessage());
+        }
+
+        // Prefer the newly extracted content, then content stored by an older version, if longer than the description
+        String best = ArticleExtractor.textLength(extracted) > descriptionLength ? extracted
+                : ArticleExtractor.textLength(stored) > descriptionLength ? stored.replace(ArticleExtractor.VERSION_MARKER, "")
+                : null;
+        if (best != null) {
+            post.setContent(ArticleExtractor.VERSION_MARKER + best);
+            postRepository.save(post);
+            return post.getContent();
         }
 
         return description;
