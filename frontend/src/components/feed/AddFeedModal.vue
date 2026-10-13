@@ -157,6 +157,10 @@ const fetchFeedTitle = async () => {
         fetchingTitle.value = true;
         const feedInfo = await fetchFeedInfo(feedUrl.value);
         feedTitle.value = feedInfo.title || '';
+        // Backend may resolve page URLs (e.g. YouTube channels) to their feed URL
+        if (feedInfo.url) {
+            feedUrl.value = feedInfo.url;
+        }
     } catch (error) {
         console.error('Failed to fetch feed title:', error);
         errorStore.set(true, language.get('Failed to fetch feed title') || 'Failed to fetch feed title', 500);

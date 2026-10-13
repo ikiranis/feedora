@@ -7,6 +7,7 @@ import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.repositories.FeedRepository;
 import eu.apps4net.feedora.repositories.FolderRepository;
 import eu.apps4net.feedora.repositories.PostRepository;
+import eu.apps4net.feedora.utilities.YouTubeFeedResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -185,6 +186,8 @@ public class FeedService {
      */
     @Transactional
     public String addSingleFeed(String url, String folderId, String title, User user) throws Exception {
+        url = YouTubeFeedResolver.resolve(url);
+
         // Check if feed already exists for this user
         if (feedRepository.findByXmlUrlAndUser(url, user).isPresent()) {
             throw new Exception(Language.getActionString("Feed already exists"));
@@ -193,7 +196,7 @@ public class FeedService {
         Folder folder = null;
         if (folderId != null && !folderId.isEmpty()) {
             folder = folderRepository.findById(UUID.fromString(folderId)).orElse(null);
-            if (folder == null || !folder.getUser().equals(user)) {
+            if (folder == null || !folder.getUser().getId().equals(user.getId())) {
                 throw new Exception(Language.getActionString("Folder not found or doesn't belong to user"));
             }
         }
@@ -226,6 +229,7 @@ public class FeedService {
         Map<String, Object> feedInfo = new HashMap<>();
         
         try {
+            url = YouTubeFeedResolver.resolve(url);
             java.net.URI feedUri = java.net.URI.create(url);
             java.net.HttpURLConnection connection = (java.net.HttpURLConnection) feedUri.toURL().openConnection();
             connection.setRequestMethod("GET");
@@ -306,7 +310,7 @@ public class FeedService {
         }
 
         Feed feed = feedOpt.get();
-        if (!feed.getUser().equals(user)) {
+        if (!feed.getUser().getId().equals(user.getId())) {
             throw new Exception(Language.getActionString("Feed doesn't belong to user"));
         }
 
@@ -343,7 +347,7 @@ public class FeedService {
         }
 
         Feed feed = feedOpt.get();
-        if (!feed.getUser().equals(user)) {
+        if (!feed.getUser().getId().equals(user.getId())) {
             throw new Exception(Language.getActionString("Feed doesn't belong to user"));
         }
 
