@@ -1,23 +1,51 @@
 <template>
-    <div v-if="showDetails" class="card h-100 shadow-sm custom-card" :class="{ 'unread-post': !post.read, 'read-post': post.read, 'selected-post': selected }" @click="handleCardClick">
-        <div class="card-body d-flex flex-column">
-            <h5 class="card-title d-flex align-items-start gap-2">
-                <img v-if="siteIcon" :src="siteIcon" class="site-icon site-icon-card" alt="" loading="lazy" @error="iconFailed = true" />
-                <a :href="post.link" target="_blank" class="post-title" @click.stop>{{ post.title }}</a>
-            </h5>
-            <div class="d-flex align-items-center mb-2 gap-2">
-                <span class="badge feed-title-badge p-1">{{ post.feed?.title }}</span>
-                <span v-if="post.feed?.folderName" class="badge bg-secondary text-light p-1">{{ post.feed.folderName }}</span>
+    <div v-if="showDetails" class="custom-card h-100" :class="{ 'unread-post': !post.read, 'read-post': post.read, 'selected-post': selected }" @click="handleCardClick">
+        <!-- Media: playing video, YouTube thumbnail or first image of the post -->
+        <div v-if="playing && youtubeEmbedUrl" class="card-media" @click.stop>
+            <iframe :src="`${youtubeEmbedUrl}?autoplay=1`" :title="post.title" allowfullscreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        </div>
+        <div v-else-if="thumbnailUrl" class="card-media" :class="{ 'is-short': youtubeVideo?.isShort }"
+            @click="youtubeVideo && (playing = true)">
+            <img v-if="youtubeVideo?.isShort" :src="thumbnailUrl" class="media-backdrop" alt="" aria-hidden="true" />
+            <img :src="thumbnailUrl" class="media-image" alt="" loading="lazy" @error="thumbnailFailed = true" />
+            <span v-if="youtubeVideo" class="media-badge">
+                <svg v-if="youtubeVideo.isShort" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.77 10.32l-1.2-.5L18 9.06a3.74 3.74 0 0 0-3.5-6.62L6 6.94a3.74 3.74 0 0 0 .23 6.74l1.2.49L6 14.93a3.75 3.75 0 0 0 3.5 6.63l8.5-4.5a3.74 3.74 0 0 0-.23-6.74zM10 14.65V9.35L15 12z"/>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.4 31.4 0 0 0 0 12a31.4 31.4 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.4 31.4 0 0 0 24 12a31.4 31.4 0 0 0-.5-5.8zM9.6 15.6V8.4l6.2 3.6z"/>
+                </svg>
+                {{ youtubeVideo.isShort ? 'Shorts' : 'YouTube' }}
+            </span>
+            <span v-if="youtubeVideo" class="media-play">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                </svg>
+            </span>
+        </div>
+
+        <div class="card-content">
+            <a :href="post.link" target="_blank" class="post-title" @click.stop>{{ post.title }}</a>
+            <div class="post-source">
+                <img v-if="siteIcon" :src="siteIcon" class="site-icon source-icon" alt="" loading="lazy" @error="iconFailed = true" />
+                <span class="text-truncate">{{ post.feed?.title }}</span>
+                <span v-if="post.feed?.folderName" class="post-folder text-truncate">&middot; {{ post.feed.folderName }}</span>
             </div>
-            <div v-if="youtubeEmbedUrl" class="ratio ratio-16x9 mb-2 video-embed" @click.stop>
-                <iframe :src="youtubeEmbedUrl" :title="post.title" loading="lazy" allowfullscreen
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-            </div>
-            <div class="mb-2" v-else-if="post.description">
-                <div class="description-content-limiter" v-html="post.description"></div>
-            </div>
-            <div class="mt-auto">
-                <span class="badge bg-light text-dark" v-if="post.pubDate">{{ new Date(post.pubDate).toLocaleString() }}</span>
+            <p v-if="!youtubeVideo && excerpt" class="post-excerpt" :class="{ 'no-media': !thumbnailUrl }">{{ excerpt }}</p>
+
+            <div class="card-footer-row">
+                <span class="post-time" :title="post.pubDate ? new Date(post.pubDate).toLocaleString() : ''">{{ shortDate }}</span>
+                <div class="d-flex align-items-center gap-3">
+                    <a :href="post.link" target="_blank" class="footer-action" :title="language.get('Open original') || 'Open original'" @click.stop>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
+                            <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
+                        </svg>
+                    </a>
+                    <span class="read-indicator" :class="{ unread: !post.read }"
+                        :title="post.read ? (language.get('Read') || 'Read') : (language.get('Unread') || 'Unread')"></span>
+                </div>
             </div>
         </div>
     </div>
@@ -45,6 +73,7 @@
 <script setup lang="ts">
 import { PostType } from '@/types';
 import { markAsRead } from '@/api/post';
+import { language } from '@/functions/languageStore';
 import { computed, ref, watch } from 'vue';
 
 const props = defineProps<{
@@ -68,31 +97,76 @@ const siteIcon = computed(() => {
     }
 });
 
+const thumbnailFailed = ref(false);
+const playing = ref(false); // Grid card: YouTube thumbnail was clicked and the player is shown
+
 /**
- * Embed URL if the post links to a YouTube video (watch, youtu.be, shorts, embed or live links).
+ * YouTube video info if the post links to a video (watch, youtu.be, shorts, embed or live links).
  */
-const youtubeEmbedUrl = computed(() => {
+const youtubeVideo = computed(() => {
     try {
         const url = new URL(props.post.link);
         const host = url.hostname.replace(/^(www\.|m\.)/, '');
         let videoId: string | null = null;
+        let isShort = false;
 
         if (host === 'youtu.be') {
             videoId = url.pathname.slice(1).split('/')[0];
         } else if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
-            const match = url.pathname.match(/^\/(?:shorts|embed|live)\/([\w-]+)/);
-            videoId = match ? match[1] : url.searchParams.get('v');
+            const match = url.pathname.match(/^\/(shorts|embed|live)\/([\w-]+)/);
+            videoId = match ? match[2] : url.searchParams.get('v');
+            isShort = match?.[1] === 'shorts';
         }
 
-        return videoId && /^[\w-]{11}$/.test(videoId)
-            ? `https://www.youtube-nocookie.com/embed/${videoId}`
-            : null;
+        return videoId && /^[\w-]{11}$/.test(videoId) ? { id: videoId, isShort } : null;
     } catch {
         return null;
     }
 });
 
-watch(() => props.post.id, () => { iconFailed.value = false; });
+const youtubeEmbedUrl = computed(() =>
+    youtubeVideo.value ? `https://www.youtube-nocookie.com/embed/${youtubeVideo.value.id}` : null
+);
+
+/**
+ * Parsed post description (DOMParser doesn't load images or run scripts).
+ */
+const descriptionDoc = computed(() =>
+    props.post.description ? new DOMParser().parseFromString(props.post.description, 'text/html') : null
+);
+
+/**
+ * Thumbnail for the card: the YouTube thumbnail for videos, otherwise the first image in the description.
+ */
+const thumbnailUrl = computed(() => {
+    if (thumbnailFailed.value) return null;
+    if (youtubeVideo.value) return `https://i.ytimg.com/vi/${youtubeVideo.value.id}/hqdefault.jpg`;
+
+    const src = descriptionDoc.value?.querySelector('img[src]')?.getAttribute('src');
+    return src && /^https?:\/\//.test(src) ? src : null;
+});
+
+/**
+ * Plain-text excerpt of the description.
+ */
+const excerpt = computed(() => descriptionDoc.value?.body.textContent?.replace(/\s+/g, ' ').trim() || '');
+
+/**
+ * Publication time for today's posts, otherwise the date.
+ */
+const shortDate = computed(() => {
+    if (!props.post.pubDate) return '';
+    const date = new Date(props.post.pubDate);
+    return date.toDateString() === new Date().toDateString()
+        ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : date.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+});
+
+watch(() => props.post.id, () => {
+    iconFailed.value = false;
+    thumbnailFailed.value = false;
+    playing.value = false;
+});
 
 const emit = defineEmits<{
     'post-read': [postId: string]
@@ -114,40 +188,206 @@ const handleCardClick = async () => {
 
 <style scoped>
 .custom-card {
+    display: flex;
+    flex-direction: column;
     border: 1px solid var(--border-color);
-    border-radius: 0.5rem;
+    border-radius: 1rem;
     background-color: var(--card-bg);
-    transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s, border-color 0.3s;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.3s;
     cursor: pointer;
 }
 
-.custom-card.unread-post {
-    border: 2px solid #333;
-    font-weight: bold;
-    background-color: #f8f9fa;
-}
-
-[data-bs-theme="dark"] .custom-card.unread-post {
-    border: 2px solid #6c757d;
-    background-color: #212529;
-}
-
-.custom-card.read-post {
-    border: 1px solid var(--border-color);
-}
-
-[data-bs-theme="dark"] .custom-card.read-post {
-    background-color: var(--bg-color);
-    border: 1px solid #2d3748;
+[data-bs-theme="dark"] .custom-card {
+    background-color: #16181d;
+    border-color: #2a2e36;
 }
 
 .custom-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
 
-[data-bs-theme="dark"] .custom-card:hover {
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+/* Media area */
+.card-media {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background-color: #000;
+    flex-shrink: 0;
+}
+
+.card-media iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.media-image {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Shorts: vertical frame centered over a blurred copy of itself */
+.card-media.is-short .media-image {
+    width: auto;
+    margin: 0 auto;
+    aspect-ratio: 9 / 16;
+}
+
+.media-backdrop {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(18px) brightness(0.5);
+    transform: scale(1.2);
+}
+
+.media-badge {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 0.4rem;
+    background-color: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.media-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.card-media:hover .media-play {
+    opacity: 1;
+}
+
+/* Text area */
+.card-content {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 1.25rem 1.5rem 1rem;
+}
+
+.post-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 1.15rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--text-color);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.post-title:hover {
+    color: #4d8dff;
+}
+
+.read-post .post-title {
+    opacity: 0.6;
+}
+
+.read-post .media-image {
+    opacity: 0.75;
+}
+
+.post-source {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+    color: #8b919c;
+    font-size: 0.95rem;
+    min-width: 0;
+}
+
+.source-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.post-folder {
+    flex-shrink: 1;
+    opacity: 0.8;
+}
+
+.post-excerpt {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin: 0.75rem 0 0;
+    color: #8b919c;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.post-excerpt.no-media {
+    -webkit-line-clamp: 5;
+}
+
+.card-footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 1.25rem;
+    color: #8b919c;
+}
+
+.post-time {
+    font-size: 0.95rem;
+}
+
+.footer-action {
+    display: flex;
+    color: inherit;
+    transition: color 0.2s;
+}
+
+.footer-action:hover {
+    color: var(--text-color);
+}
+
+.read-indicator {
+    width: 18px;
+    height: 18px;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+}
+
+.read-indicator.unread {
+    background: radial-gradient(circle, #4d8dff 0 4px, transparent 5px);
+    border-color: #4d8dff;
 }
 
 .custom-card.selected-post,
@@ -175,31 +415,6 @@ const handleCardClick = async () => {
     height: 16px;
     flex-shrink: 0;
     border-radius: 3px;
-}
-
-.site-icon-card {
-    width: 20px;
-    height: 20px;
-    margin-top: 0.2rem;
-}
-
-.post-title {
-    font-size: 1.25rem;
-    font-weight: bold;
-    color: var(--text-color);
-    text-decoration: none;
-    transition: color 0.3s;
-}
-
-.post-title:hover {
-    color: #007bff;
-    text-decoration: underline;
-}
-
-.feed-title-badge {
-    background-color: transparent !important;
-    color: var(--text-color) !important;
-    border: 1px solid var(--border-color);
 }
 
 .custom-summary {
@@ -294,19 +509,6 @@ const handleCardClick = async () => {
     object-fit: contain;
     border-radius: 0.25rem;
     margin: 0.5rem 0;
-}
-
-.description-content-limiter {
-    max-height: 6em;
-    /* Adjust as needed, roughly 3-4 lines depending on line-height */
-    overflow: hidden;
-    /* The following properties can help with how text breaks and is truncated,
-     but true ellipsis on multi-line v-html is complex.
-     This primarily "cuts" the content. */
-    display: block;
-    /* Ensure it behaves as a block for overflow to work reliably */
-    word-break: break-word;
-    /* Helps break long words to prevent them from overflowing */
 }
 
 /* Ensure images in post descriptions fit the card width if details are shown */
