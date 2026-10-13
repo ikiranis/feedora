@@ -1,7 +1,8 @@
 <template>
     <div v-if="showDetails" class="card h-100 shadow-sm custom-card" :class="{ 'unread-post': !post.read, 'read-post': post.read, 'selected-post': selected }" @click="handleCardClick">
         <div class="card-body d-flex flex-column">
-            <h5 class="card-title">
+            <h5 class="card-title d-flex align-items-start gap-2">
+                <img v-if="siteIcon" :src="siteIcon" class="site-icon site-icon-card" alt="" loading="lazy" @error="iconFailed = true" />
                 <a :href="post.link" target="_blank" class="post-title" @click.stop>{{ post.title }}</a>
             </h5>
             <div class="d-flex align-items-center mb-2 gap-2">
@@ -18,7 +19,8 @@
     </div>
     <div v-else class="post-summary custom-summary" :class="{ 'unread-post': !post.read, 'read-post': post.read, 'selected-post': selected }" @click="handleCardClick">
         <div class="d-flex w-100 justify-content-between align-items-center">
-            <a :href="post.link" target="_blank" class="post-title-link" @click.stop>{{ post.title }}</a>
+            <img v-if="siteIcon" :src="siteIcon" class="site-icon me-2" alt="" loading="lazy" @error="iconFailed = true" />
+            <a :href="post.link" target="_blank" class="post-title-link me-auto" @click.stop>{{ post.title }}</a>
             <span class="post-date ms-2 text-muted" v-if="post.pubDate">
                 {{ new Date(post.pubDate).toLocaleString() }}
             </span>
@@ -35,12 +37,30 @@
 <script setup lang="ts">
 import { PostType } from '@/types';
 import { markAsRead } from '@/api/post';
+import { computed, ref, watch } from 'vue';
 
 const props = defineProps<{
     post: PostType;
     showDetails: boolean;
     selected?: boolean;
 }>();
+
+const iconFailed = ref(false);
+
+/**
+ * Favicon URL of the post's site, based on the feed's website (or the post link as fallback).
+ */
+const siteIcon = computed(() => {
+    if (iconFailed.value) return null;
+    try {
+        const hostname = new URL(props.post.feed?.htmlUrl || props.post.link).hostname;
+        return `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`;
+    } catch {
+        return null;
+    }
+});
+
+watch(() => props.post.id, () => { iconFailed.value = false; });
 
 const emit = defineEmits<{
     'post-read': [postId: string]
@@ -102,6 +122,19 @@ const handleCardClick = async () => {
 .custom-summary.selected-post {
     border-color: #0d6efd !important;
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.4);
+}
+
+.site-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    border-radius: 3px;
+}
+
+.site-icon-card {
+    width: 20px;
+    height: 20px;
+    margin-top: 0.2rem;
 }
 
 .post-title {
