@@ -9,7 +9,11 @@
                 <span class="badge feed-title-badge p-1">{{ post.feed?.title }}</span>
                 <span v-if="post.feed?.folderName" class="badge bg-secondary text-light p-1">{{ post.feed.folderName }}</span>
             </div>
-            <div class="mb-2" v-if="post.description">
+            <div v-if="youtubeEmbedUrl" class="ratio ratio-16x9 mb-2 video-embed" @click.stop>
+                <iframe :src="youtubeEmbedUrl" :title="post.title" loading="lazy" allowfullscreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+            </div>
+            <div class="mb-2" v-else-if="post.description">
                 <div class="description-content-limiter" v-html="post.description"></div>
             </div>
             <div class="mt-auto">
@@ -30,6 +34,10 @@
             <span v-if="post.feed?.folderName"> &mdash; {{ post.feed.folderName }}</span>
         </div>
         <!-- Expanded details for the selected post -->
+        <div v-if="selected && youtubeEmbedUrl" class="ratio ratio-16x9 mt-3 video-embed video-embed-summary" @click.stop>
+            <iframe :src="youtubeEmbedUrl" :title="post.title" allowfullscreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        </div>
         <div v-if="selected && post.description" class="summary-description mt-3" v-html="post.description"></div>
     </div>
 </template>
@@ -55,6 +63,30 @@ const siteIcon = computed(() => {
     try {
         const hostname = new URL(props.post.feed?.htmlUrl || props.post.link).hostname;
         return `https://www.google.com/s2/favicons?domain=${hostname}&sz=32`;
+    } catch {
+        return null;
+    }
+});
+
+/**
+ * Embed URL if the post links to a YouTube video (watch, youtu.be, shorts, embed or live links).
+ */
+const youtubeEmbedUrl = computed(() => {
+    try {
+        const url = new URL(props.post.link);
+        const host = url.hostname.replace(/^(www\.|m\.)/, '');
+        let videoId: string | null = null;
+
+        if (host === 'youtu.be') {
+            videoId = url.pathname.slice(1).split('/')[0];
+        } else if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+            const match = url.pathname.match(/^\/(?:shorts|embed|live)\/([\w-]+)/);
+            videoId = match ? match[1] : url.searchParams.get('v');
+        }
+
+        return videoId && /^[\w-]{11}$/.test(videoId)
+            ? `https://www.youtube-nocookie.com/embed/${videoId}`
+            : null;
     } catch {
         return null;
     }
@@ -122,6 +154,20 @@ const handleCardClick = async () => {
 .custom-summary.selected-post {
     border-color: #0d6efd !important;
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.4);
+}
+
+.video-embed {
+    border-radius: 0.375rem;
+    overflow: hidden;
+    cursor: auto;
+}
+
+.video-embed iframe {
+    border: 0;
+}
+
+.video-embed-summary {
+    max-width: 640px;
 }
 
 .site-icon {
