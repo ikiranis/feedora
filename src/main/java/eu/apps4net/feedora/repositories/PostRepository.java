@@ -43,9 +43,11 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
            "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
     List<Post> findByUserAndReadFalseAndFeedAndTitleOrDescriptionContaining(@Param("user") User user, @Param("feedId") UUID feedId, @Param("searchTerm") String searchTerm, Pageable pageable);
 
-    // Rows of [feed id, feed title, feed website, folder id (nullable), unread count] for every feed with unread posts
-    @Query("SELECT f.id, f.title, f.htmlUrl, fo.id, COUNT(p) FROM Post p JOIN p.feed f LEFT JOIN f.folder fo " +
-           "WHERE p.user = :user AND p.read = false GROUP BY f.id, f.title, f.htmlUrl, fo.id")
+    // Rows of [feed id, feed title, feed website, folder id (nullable), unread count] for every feed of the user,
+    // including feeds without unread posts (count 0)
+    @Query("SELECT f.id, f.title, f.htmlUrl, fo.id, COUNT(p) FROM Feed f LEFT JOIN f.folder fo " +
+           "LEFT JOIN f.posts p ON p.user = :user AND p.read = false " +
+           "WHERE f.user = :user GROUP BY f.id, f.title, f.htmlUrl, fo.id")
     List<Object[]> countUnreadByFeed(@Param("user") User user);
 
     long countByUser(User user);

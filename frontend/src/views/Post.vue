@@ -198,11 +198,13 @@ const visibleFolders = computed(() => {
         .sort((a, b) => a.name.localeCompare(b.name));
 });
 
-// Feeds with unread posts grouped by folder id and sorted by title. The selected feed stays visible after its last post is read.
+// Feeds with unread posts (or all feeds when empty folders are shown) grouped by folder id and sorted by title.
+// The selected feed stays visible after its last post is read.
 const visibleFeedsByFolder = computed(() => {
     const groups: Record<string, FeedUnreadCountType[]> = {};
     for (const feed of unreadCounts.value.feeds) {
-        if (!feed.folderId || (feed.count <= 0 && feed.id !== selectedFeedId.value)) continue;
+        if (!feed.folderId) continue;
+        if (feed.count <= 0 && !showEmptyFolders.value && feed.id !== selectedFeedId.value) continue;
         (groups[feed.folderId] ||= []).push(feed);
     }
     Object.values(groups).forEach(feeds => feeds.sort((a, b) => a.title.localeCompare(b.title)));

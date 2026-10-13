@@ -264,7 +264,7 @@ public class PostService {
 
     /**
      * Returns the unread post counts for a given user, in total, per folder and per feed.
-     * Only feeds and folders with unread posts are included.
+     * All the user's feeds are included (with count 0 if they have no unread posts), but only folders with unread posts.
      * @param user The user
      * @return Map with "total" (long), "folders" (folder id → unread count)
      *         and "feeds" (list of {id, title, htmlUrl, folderId, count})
