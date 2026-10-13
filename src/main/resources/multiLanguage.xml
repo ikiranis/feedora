@@ -964,4 +964,14 @@
         <language code="el">Όλα τα άρθρα</language>
     </entry>
 
+    <entry id="Show empty folders">
+        <language code="en">Show empty folders</language>
+        <language code="el">Εμφάνιση κενών φακέλων</language>
+    </entry>
+
+    <entry id="Hide empty folders">
+        <language code="en">Hide empty folders</language>
+        <language code="el">Απόκρυψη κενών φακέλων</language>
+    </entry>
+
 </root>
