@@ -1,5 +1,5 @@
 <template>
-    <div v-if="showDetails" class="card h-100 shadow-sm custom-card" :class="{ 'unread-post': !post.read, 'read-post': post.read }" @click="handleCardClick">
+    <div v-if="showDetails" class="card h-100 shadow-sm custom-card" :class="{ 'unread-post': !post.read, 'read-post': post.read, 'selected-post': selected }" @click="handleCardClick">
         <div class="card-body d-flex flex-column">
             <h5 class="card-title">
                 <a :href="post.link" target="_blank" class="post-title" @click.stop>{{ post.title }}</a>
@@ -16,7 +16,7 @@
             </div>
         </div>
     </div>
-    <div v-else class="post-summary custom-summary" :class="{ 'unread-post': !post.read, 'read-post': post.read }" @click="handleCardClick">
+    <div v-else class="post-summary custom-summary" :class="{ 'unread-post': !post.read, 'read-post': post.read, 'selected-post': selected }" @click="handleCardClick">
         <div class="d-flex w-100 justify-content-between align-items-center">
             <a :href="post.link" target="_blank" class="post-title-link" @click.stop>{{ post.title }}</a>
             <span class="post-date ms-2 text-muted" v-if="post.pubDate">
@@ -37,6 +37,7 @@ import { markAsRead } from '@/api/post';
 const props = defineProps<{
     post: PostType;
     showDetails: boolean;
+    selected?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -93,6 +94,12 @@ const handleCardClick = async () => {
 
 [data-bs-theme="dark"] .custom-card:hover {
     box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+}
+
+.custom-card.selected-post,
+.custom-summary.selected-post {
+    border-color: #0d6efd !important;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.4);
 }
 
 .post-title {

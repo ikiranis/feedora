@@ -56,9 +56,11 @@
     <div class="scrollable-post-view" ref="scrollableContainerRef">
         <div class="container py-4">
             <div v-if="posts.length > 0" class="row g-4">
-                <div v-for="post in posts" :key="post.id" :data-post-id="post.id"
-                    :class="showDetails ? 'col-12 col-md-6 col-lg-4' : 'col-12'">
-                    <PostElement :post="post" :show-details="showDetails" @post-read="handlePostRead" />
+                <div v-for="(post, index) in posts" :key="post.id" :data-post-id="post.id"
+                    :class="showDetails ? 'col-12 col-md-6 col-lg-4' : 'col-12'"
+                    @click="selectedIndex = index">
+                    <PostElement :post="post" :show-details="showDetails" :selected="index === selectedIndex"
+                        @post-read="handlePostRead" />
                 </div>
                 <div v-if="allLoaded && posts.length > 0 && !searchTerm.trim()" class="text-center w-100 text-muted my-4">
                     {{ language.get('No more posts') || 'No more posts' }}
@@ -105,6 +107,7 @@ const observedPosts = ref<Set<string>>(new Set()); // Track which posts are bein
 const lastScrollTop = ref(0); // Track scroll position to determine scroll direction
 const searchTerm = ref('');
 const searchTimeout = ref<number | null>(null);
+const selectedIndex = ref(-1); // Index of the card selected via keyboard navigation
 
 /**
  * Fetches posts from the API. It supports pagination and resetting the post list.
@@ -117,6 +120,7 @@ const fetchPosts = async (reset = false) => {
             posts.value = [];
             page.value = 1;
             allLoaded.value = false;
+            selectedIndex.value = -1;
         }
 
         const data = await getPosts(page.value, pageSize, searchTerm.value);
@@ -349,6 +353,74 @@ const handleScroll = () => {
     }
 };
 
+/**
+ * Returns the number of cards per row by counting the cards rendered on the same line as the first one.
+ */
+const getColumnCount = (): number => {
+    if (!scrollableContainerRef.value) return 1;
+    const elements = Array.from(scrollableContainerRef.value.querySelectorAll<HTMLElement>('[data-post-id]'));
+    if (elements.length === 0) return 1;
+    const firstTop = elements[0].offsetTop;
+    return Math.max(1, elements.filter(el => el.offsetTop === firstTop).length);
+};
+
+/**
+ * Selects the card at the given index, scrolls it into view and marks it as read.
+ */
+const selectPost = (index: number) => {
+    if (index < 0 || index >= posts.value.length) return;
+    selectedIndex.value = index;
+
+    const post = posts.value[index];
+    nextTick(() => {
+        const element = scrollableContainerRef.value?.querySelector(`[data-post-id="${post.id}"]`);
+        element?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    });
+
+    if (!post.read) {
+        markPostAsReadAPI(post.id);
+    }
+};
+
+/**
+ * Handles arrow key navigation between cards. Enter opens the selected post's link.
+ */
+const handleKeydown = (event: KeyboardEvent) => {
+    const target = event.target as HTMLElement | null;
+    if (target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
+    if (event.altKey || event.ctrlKey || event.metaKey || posts.value.length === 0) return;
+
+    const current = selectedIndex.value;
+    const columns = getColumnCount();
+    let next: number;
+
+    switch (event.key) {
+        case 'ArrowRight':
+            next = current < 0 ? 0 : current + 1;
+            break;
+        case 'ArrowLeft':
+            next = current < 0 ? 0 : current - 1;
+            break;
+        case 'ArrowDown':
+            next = current < 0 ? 0 : Math.min(current + columns, posts.value.length - 1);
+            break;
+        case 'ArrowUp':
+            next = current < 0 ? 0 : current - columns;
+            break;
+        case 'Enter':
+            if (current >= 0 && posts.value[current]?.link) {
+                window.open(posts.value[current].link, '_blank');
+                event.preventDefault();
+            }
+            return;
+        default:
+            return;
+    }
+
+    event.preventDefault();
+    selectPost(next);
+};
+
 // Watch for search term changes with debouncing
 watch(searchTerm, (_) => {
     // Clear existing timeout
@@ -388,6 +460,7 @@ onMounted(() => {
     nextTick(() => {
         setupIntersectionObserver();
     });
+    window.addEventListener('keydown', handleKeydown);
     // Ensure body overflow is hidden when this component is active
     document.body.style.overflow = 'hidden';
 });
@@ -396,6 +469,7 @@ onUnmounted(() => {
     if (scrollableContainerRef.value) {
         scrollableContainerRef.value.removeEventListener('scroll', handleScroll);
     }
+    window.removeEventListener('keydown', handleKeydown);
     // Cleanup search timeout
     if (searchTimeout.value) {
         clearTimeout(searchTimeout.value);

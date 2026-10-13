@@ -1,10 +1,13 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
-import "bootstrap"
+import * as bootstrap from "bootstrap"
 import './style.scss'
 import { themeStore } from './functions/themeStore'
 import { authStore } from './functions/authStore'
+
+// Expose Bootstrap globally so components can use its Modal API (and data-bs-dismiss works)
+;(window as any).bootstrap = bootstrap
 
 // Initialize theme before creating the app
 themeStore.initializeTheme()

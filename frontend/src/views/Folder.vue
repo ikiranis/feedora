@@ -235,7 +235,7 @@ const editFolder = (folder: FolderType) => {
         try {
             // Try to use Bootstrap's Modal API if available
             if ((window as any).bootstrap && (window as any).bootstrap.Modal) {
-                const bootstrapModal = new (window as any).bootstrap.Modal(modalElement);
+                const bootstrapModal = (window as any).bootstrap.Modal.getOrCreateInstance(modalElement);
                 bootstrapModal.show();
             } else {
                 // Fallback: manually show modal
