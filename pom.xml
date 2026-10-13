@@ -82,6 +82,13 @@
             <version>1.17.2</version>
         </dependency>
 
+        <!-- Extracts the main article content from web pages (port of Mozilla's Readability) -->
+        <dependency>
+            <groupId>net.dankito.readability4j</groupId>
+            <artifactId>readability4j</artifactId>
+            <version>1.0.8</version>
+        </dependency>
+
         <!-- JWT dependencies -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

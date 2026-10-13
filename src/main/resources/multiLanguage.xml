@@ -974,4 +974,14 @@
         <language code="el">Απόκρυψη κενών φακέλων</language>
     </entry>
 
+    <entry id="Post not found">
+        <language code="en">Post not found</language>
+        <language code="el">Το άρθρο δεν βρέθηκε</language>
+    </entry>
+
+    <entry id="Loading full article...">
+        <language code="en">Loading full article...</language>
+        <language code="el">Φόρτωση πλήρους άρθρου...</language>
+    </entry>
+
 </root>

@@ -48,6 +48,18 @@ export const getUnreadCounts = async (): Promise<UnreadCountsType> => {
 };
 
 /**
+ * Fetch the full content of a post. The backend uses the content from the feed or, if missing,
+ * extracts the article from the post's page.
+ * @param {string} postId - The UUID of the post
+ * @returns {Promise<string | null>} Sanitized content HTML, or null if the post has no content
+ * @throws Error if the request fails
+ */
+export const getPostContent = async (postId: string): Promise<string | null> => {
+    const response = await axios.get(config.defaultServer() + `/api/posts/content/${postId}`);
+    return response.data.content;
+};
+
+/**
  * Trigger backend to parse all RSS feeds and update posts for the current user.
  * @returns {Promise<any>} Result message from backend
  * @throws Error if the request fails

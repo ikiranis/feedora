@@ -5,7 +5,11 @@ import eu.apps4net.feedora.models.Post;
 import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.repositories.FeedRepository;
 import eu.apps4net.feedora.repositories.PostRepository;
+import eu.apps4net.feedora.configurations.Language;
+import eu.apps4net.feedora.exceptions.NotFoundException;
+import eu.apps4net.feedora.utilities.ArticleExtractor;
 import eu.apps4net.feedora.utilities.RssFetcher;
+import com.rometools.rome.feed.synd.SyndContent;
 import com.rometools.rome.feed.synd.SyndEntry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -96,6 +100,7 @@ public class PostService {
                             entry.getAuthor(),
                             false
                         );
+                        post.setContent(getEntryContent(entry));
                         post.setFeed(feed);
                         post.setUser(user);
                         postRepository.save(post);
@@ -141,6 +146,56 @@ public class PostService {
             return b.getPubDate().compareTo(a.getPubDate());
         });
         return posts;
+    }
+
+    /**
+     * Returns the full content of a feed entry (e.g. RSS content:encoded or Atom content), sanitized.
+     * @param entry The feed entry
+     * @return Sanitized content HTML, or null if the entry has no full content
+     */
+    private String getEntryContent(SyndEntry entry) {
+        if (entry.getContents() == null || entry.getContents().isEmpty()) return null;
+
+        StringBuilder html = new StringBuilder();
+        for (SyndContent content : entry.getContents()) {
+            if (content.getValue() != null) html.append(content.getValue());
+        }
+        return ArticleExtractor.sanitize(html.toString(), entry.getLink());
+    }
+
+    /**
+     * Returns the full content of a post. Uses the content stored from the feed if it's longer than the description,
+     * otherwise downloads the post's page, extracts the article and stores it for next time.
+     * Falls back to the description if nothing better can be found.
+     * @param postId The UUID of the post
+     * @param user The user who owns the post
+     * @return Sanitized content HTML, or null if the post has no content at all
+     * @throws NotFoundException if the post doesn't exist or belongs to another user
+     */
+    public String getPostContent(UUID postId, User user) {
+        Post post = postRepository.findById(postId)
+                .filter(p -> p.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new NotFoundException(Language.getActionString("Post not found")));
+
+        String description = ArticleExtractor.sanitize(post.getDescription(), post.getLink());
+        int descriptionLength = ArticleExtractor.textLength(description);
+
+        if (post.getContent() != null && ArticleExtractor.textLength(post.getContent()) > descriptionLength) {
+            return post.getContent();
+        }
+
+        try {
+            String extracted = ArticleExtractor.extractFromUrl(post.getLink());
+            if (ArticleExtractor.textLength(extracted) > descriptionLength) {
+                post.setContent(extracted);
+                postRepository.save(post);
+                return extracted;
+            }
+        } catch (Exception e) {
+            System.err.println("[Feedora] Could not extract content from " + post.getLink() + " - " + e.getMessage());
+        }
+
+        return description;
     }
 
     /**

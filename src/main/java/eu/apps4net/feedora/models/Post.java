@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
@@ -21,6 +22,11 @@ public class Post {
     
     @Lob
     private String description;
+
+    // Full sanitized article HTML, from the feed or extracted from the page. Served by its own endpoint.
+    @Lob
+    @JsonIgnore
+    private String content;
     
     private LocalDateTime pubDate;
     private String author;
@@ -58,6 +64,9 @@ public class Post {
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
 
     public LocalDateTime getPubDate() { return pubDate; }
     public void setPubDate(LocalDateTime pubDate) { this.pubDate = pubDate; }

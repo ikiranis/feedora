@@ -594,6 +594,7 @@ const openInBackgroundTab = (url: string) => {
 
 /**
  * Handles arrow key navigation between cards.
+ * In list mode, Up/Down scroll the list instead (so long expanded posts can be read) and Left/Right move between posts.
  * Enter opens the selected post's link in a new tab, B opens it in a background tab.
  */
 const handleKeydown = (event: KeyboardEvent) => {
@@ -613,10 +614,15 @@ const handleKeydown = (event: KeyboardEvent) => {
             next = current < 0 ? 0 : current - 1;
             break;
         case 'ArrowDown':
-            next = current < 0 ? 0 : Math.min(current + columns, posts.value.length - 1);
-            break;
         case 'ArrowUp':
-            next = current < 0 ? 0 : current - columns;
+            if (!showDetails.value) {
+                scrollableContainerRef.value?.scrollBy({ top: event.key === 'ArrowDown' ? 80 : -80 });
+                event.preventDefault();
+                return;
+            }
+            next = current < 0
+                ? 0
+                : event.key === 'ArrowDown' ? Math.min(current + columns, posts.value.length - 1) : current - columns;
             break;
         case 'Enter':
             if (current >= 0 && posts.value[current]?.link) {

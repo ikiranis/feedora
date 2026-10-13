@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -72,7 +73,15 @@ public class PostController {
         return postService.getUnreadCounts(currentUser);
     }
 
-    @PutMapping("/markAsRead/{postId}")
+    @GetMapping("/content/{postId}")
+    public Map<String, String> getPostContent(@PathVariable UUID postId) {
+        User currentUser = userService.getCurrentUser();
+        Map<String, String> result = new HashMap<>();
+        result.put("content", postService.getPostContent(postId, currentUser));
+        return result;
+    }
+
+        @PutMapping("/markAsRead/{postId}")
     public ResponseEntity<String> markPostAsRead(@PathVariable UUID postId) {
         try {
             User currentUser = userService.getCurrentUser();

@@ -77,14 +77,19 @@
                 <iframe :src="youtubeEmbedUrl" :title="post.title" allowfullscreen
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
             </div>
-            <div v-if="post.description" class="summary-description" v-html="post.description"></div>
+            <div v-if="contentLoading" class="content-loading">
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+                {{ language.get('Loading full article...') || 'Loading full article...' }}
+            </div>
+            <div v-if="fullContent || post.description" class="summary-description"
+                :class="{ 'post-content': fullContent }" v-html="fullContent || post.description"></div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
 import { PostType } from '@/types';
-import { markAsRead } from '@/api/post';
+import { markAsRead, getPostContent } from '@/api/post';
 import { language } from '@/functions/languageStore';
 import { computed, ref, watch } from 'vue';
 
@@ -178,7 +183,35 @@ watch(() => props.post.id, () => {
     iconFailed.value = false;
     thumbnailFailed.value = false;
     playing.value = false;
+    fullContent.value = null;
+    contentRequested = false;
 });
+
+const fullContent = ref<string | null>(null); // Full article HTML, loaded when the post is opened in list mode
+const contentLoading = ref(false);
+let contentRequested = false;
+
+/**
+ * Loads the full article content when the post is opened (expanded) in list mode.
+ * Waits briefly so posts skipped over with the keyboard don't trigger requests. Skipped for YouTube videos.
+ */
+watch(() => props.selected && !props.showDetails, (opened) => {
+    if (!opened || contentRequested || youtubeVideo.value) return;
+
+    setTimeout(async () => {
+        if (!props.selected || props.showDetails || contentRequested) return;
+        contentRequested = true;
+        contentLoading.value = true;
+        try {
+            fullContent.value = await getPostContent(props.post.id);
+        } catch (error) {
+            console.error('Failed to load post content:', error);
+            contentRequested = false; // Retry the next time the post is opened
+        } finally {
+            contentLoading.value = false;
+        }
+    }, 300);
+}, { immediate: true });
 
 const emit = defineEmits<{
     'post-read': [postId: string]
@@ -570,6 +603,61 @@ const handleCardClick = async () => {
     object-fit: contain;
     border-radius: 0.25rem;
     margin: 0.5rem 0;
+}
+
+.content-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    color: #8b919c;
+    font-size: 0.9rem;
+}
+
+/* Full article content: readable line length and paragraph spacing */
+.post-content {
+    max-width: 80ch;
+    line-height: 1.7;
+    font-size: 1rem;
+}
+
+.post-content :deep(p) {
+    margin: 0 0 1em;
+}
+
+.post-content :deep(h1),
+.post-content :deep(h2),
+.post-content :deep(h3),
+.post-content :deep(h4) {
+    margin: 1.4em 0 0.6em;
+    font-size: 1.15rem;
+    font-weight: 600;
+}
+
+.post-content :deep(ul),
+.post-content :deep(ol) {
+    margin: 0 0 1em;
+    padding-left: 1.5em;
+}
+
+.post-content :deep(blockquote) {
+    margin: 0 0 1em;
+    padding-left: 1em;
+    border-left: 3px solid var(--border-color);
+    color: #8b919c;
+}
+
+.post-content :deep(figure) {
+    margin: 0 0 1em;
+}
+
+.post-content :deep(figcaption) {
+    font-size: 0.85rem;
+    color: #8b919c;
+}
+
+.post-content :deep(img) {
+    max-height: 450px !important;
 }
 
 /* Ensure images in post descriptions fit the card width if details are shown */
