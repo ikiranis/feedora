@@ -42,3 +42,6 @@ feeds.xml
 # Security - sensitive configuration files
 application-secrets.properties
 src/main/resources/application-secrets.properties
+
+### Mac OS ###
+.DS_Store
