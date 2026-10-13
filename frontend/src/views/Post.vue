@@ -383,7 +383,35 @@ const selectPost = (index: number) => {
 };
 
 /**
- * Handles arrow key navigation between cards. Enter opens the selected post's link.
+ * Opens a link in a background tab. Uses the Feedora Companion extension (see /extension) when installed,
+ * otherwise simulates a Cmd/Ctrl+click, which browsers may open as a regular new tab instead.
+ */
+const openInBackgroundTab = (url: string) => {
+    if (document.documentElement.dataset.feedoraExtension) {
+        window.postMessage({ type: 'FEEDORA_OPEN_BACKGROUND_TAB', url }, window.location.origin);
+        return;
+    }
+
+    const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.target = '_blank';
+    anchor.rel = 'noopener noreferrer';
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    anchor.dispatchEvent(new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+        ctrlKey: !isMac,
+        metaKey: isMac,
+    }));
+    anchor.remove();
+};
+
+/**
+ * Handles arrow key navigation between cards.
+ * Enter opens the selected post's link in a new tab, B opens it in a background tab.
  */
 const handleKeydown = (event: KeyboardEvent) => {
     const target = event.target as HTMLElement | null;
@@ -410,6 +438,13 @@ const handleKeydown = (event: KeyboardEvent) => {
         case 'Enter':
             if (current >= 0 && posts.value[current]?.link) {
                 window.open(posts.value[current].link, '_blank');
+                event.preventDefault();
+            }
+            return;
+        case 'b':
+        case 'B':
+            if (current >= 0 && posts.value[current]?.link) {
+                openInBackgroundTab(posts.value[current].link);
                 event.preventDefault();
             }
             return;

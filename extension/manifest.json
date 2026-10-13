@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Feedora Companion",
+  "version": "1.0.0",
+  "description": "Lets Feedora open posts in background tabs (press B on a post).",
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://localhost/*", "http://127.0.0.1/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "feedora-companion@feedora.local",
+      "strict_min_version": "121.0"
+    }
+  }
+}
