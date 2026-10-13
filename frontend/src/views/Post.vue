@@ -134,7 +134,7 @@
                     <div v-if="posts.length > 0" class="row" :class="showDetails ? 'g-4' : 'g-0'">
                         <div v-for="(post, index) in posts" :key="post.id" :data-post-id="post.id"
                             :class="showDetails ? 'col-12 col-md-6 col-lg-4' : 'col-12'"
-                            @click="selectedIndex = index">
+                            @click="selectedIndex = !showDetails && selectedIndex === index ? -1 : index">
                             <PostElement :post="post" :show-details="showDetails" :selected="index === selectedIndex"
                                 @post-read="handlePostRead" @toggle-saved="toggleSaved" />
                         </div>
