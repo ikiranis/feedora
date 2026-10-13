@@ -27,6 +27,8 @@
             <span v-if="post.feed?.title">{{ post.feed.title }}</span>
             <span v-if="post.feed?.folderName"> &mdash; {{ post.feed.folderName }}</span>
         </div>
+        <!-- Expanded details for the selected post -->
+        <div v-if="selected && post.description" class="summary-description mt-3" v-html="post.description"></div>
     </div>
 </template>
 
@@ -191,6 +193,28 @@ const handleCardClick = async () => {
     font-size: 0.85em;
     text-align: right;
     white-space: nowrap;
+}
+
+.summary-description {
+    font-weight: normal;
+    word-break: break-word;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+    overflow-x: hidden;
+}
+
+/* Keep media in the expanded description small enough to fit the row */
+.summary-description :deep(img),
+.summary-description :deep(video),
+.summary-description :deep(iframe) {
+    display: block;
+    max-width: 100% !important;
+    max-height: 300px !important;
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain;
+    border-radius: 0.25rem;
+    margin: 0.5rem 0;
 }
 
 .description-content-limiter {
