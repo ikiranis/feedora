@@ -180,7 +180,6 @@ const page = ref(1);
 const pageSize = 50;
 const loading = ref(false);
 const allLoaded = ref(false);
-const showDetails = ref(localStorage.getItem('posts-show-details') !== 'false'); // Cards (true) or list (false) mode, persisted in localStorage
 const scrollableContainerRef = ref<HTMLElement | null>(null); // Ref for the scrollable container
 const intersectionObserver = ref<IntersectionObserver | null>(null);
 const observedPosts = ref<Set<string>>(new Set()); // Track which posts are being observed
@@ -196,6 +195,45 @@ const showSaved = ref(false); // Shows the saved posts (read or unread) instead 
 const expandedFolders = ref<Set<string>>(new Set());
 const failedFeedIcons = ref<Set<string>>(new Set());
 const showEmptyFolders = ref(localStorage.getItem('posts-show-empty-folders') === 'true'); // Persisted in localStorage
+
+// Cards (true) or list (false) mode of each view (all, saved, a folder or a feed), persisted in localStorage
+const VIEW_MODES_KEY = 'posts-view-modes';
+const defaultShowDetails = localStorage.getItem('posts-show-details') !== 'false'; // Legacy global setting
+const viewModes = ref<Record<string, boolean>>((() => {
+    try {
+        return JSON.parse(localStorage.getItem(VIEW_MODES_KEY) || '{}');
+    } catch {
+        return {};
+    }
+})());
+
+// Key of the view mode for the current filter
+const viewModeKey = computed(() => {
+    if (showSaved.value) return 'saved';
+    if (selectedFeedId.value) return `feed:${selectedFeedId.value}`;
+    if (selectedFolderId.value) return `folder:${selectedFolderId.value}`;
+    return 'all';
+});
+
+// Mode of the current view. A feed without its own mode uses its folder's one, then list mode.
+const showDetails = computed<boolean>({
+    get: () => {
+        const own = viewModes.value[viewModeKey.value];
+        if (own !== undefined) return own;
+        if (selectedFeedId.value) {
+            const folderId = unreadCounts.value.feeds.find(f => f.id === selectedFeedId.value)?.folderId;
+            const folderMode = folderId ? viewModes.value[`folder:${folderId}`] : undefined;
+            if (folderMode !== undefined) return folderMode;
+        }
+        // Folders and feeds default to list mode
+        if (selectedFeedId.value || selectedFolderId.value) return false;
+        return defaultShowDetails;
+    },
+    set: (value) => {
+        viewModes.value = { ...viewModes.value, [viewModeKey.value]: value };
+        localStorage.setItem(VIEW_MODES_KEY, JSON.stringify(viewModes.value));
+    },
+});
 
 // Folders with unread posts, sorted by name. The selected folder (or the folder of the selected feed)
 // stays visible after its last post is read.
@@ -693,11 +731,6 @@ watch([selectedIndex, showDetails, () => posts.value.length], () => {
     if (showDetails.value) return;
     const start = Math.max(0, selectedIndex.value);
     postContentStore.prefetch(posts.value.slice(start, start + PREFETCH_COUNT));
-});
-
-// Persist the cards/list mode
-watch(showDetails, (value) => {
-    localStorage.setItem('posts-show-details', String(value));
 });
 
 // Persist the visibility of folders without unread posts
