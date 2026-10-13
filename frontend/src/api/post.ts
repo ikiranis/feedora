@@ -9,10 +9,11 @@ import type { UnreadCountsType } from "@/types";
  * @param search - Optional search term to filter posts by title
  * @param folderId - Optional folder id to only return posts of that folder's feeds
  * @param feedId - Optional feed id to only return posts of that feed
+ * @param saved - If true, return the saved posts (read or unread) instead of the unread ones
  * @returns {Promise<any>} List of posts
  * @throws Error if the request fails
  */
-export const getPosts = async (page: number, pageSize: number, search?: string, folderId?: string | null, feedId?: string | null) => {
+export const getPosts = async (page: number, pageSize: number, search?: string, folderId?: string | null, feedId?: string | null, saved?: boolean) => {
     try {
         const params: any = { page, pageSize };
         if (search && search.trim()) {
@@ -23,6 +24,9 @@ export const getPosts = async (page: number, pageSize: number, search?: string, 
         }
         if (feedId) {
             params.feedId = feedId;
+        }
+        if (saved) {
+            params.saved = true;
         }
         
         const response = await axios.get(config.defaultServer() + '/api/posts/getPosts', {
@@ -39,7 +43,7 @@ export const getPosts = async (page: number, pageSize: number, search?: string, 
 
 /**
  * Fetch the unread post counts for the current user, in total, per folder and per feed.
- * @returns {Promise<UnreadCountsType>} Total unread count, a map of folder id to unread count and the feeds with unread posts
+ * @returns {Promise<UnreadCountsType>} Total unread count, saved posts count, a map of folder id to unread count and the feeds with unread posts
  * @throws Error if the request fails
  */
 export const getUnreadCounts = async (): Promise<UnreadCountsType> => {
@@ -106,4 +110,14 @@ export const markAsRead = async (postId: string) => {
     } catch (error: any) {
         throw error;
     }
+};
+
+/**
+ * Save a post for later, or remove it from the saved posts.
+ * @param {string} postId - The UUID of the post
+ * @param {boolean} saved - true to save the post, false to remove it from the saved posts
+ * @throws Error if the request fails
+ */
+export const setPostSaved = async (postId: string, saved: boolean) => {
+    await axios.put(config.defaultServer() + `/api/posts/saved/${postId}`, null, { params: { saved } });
 };

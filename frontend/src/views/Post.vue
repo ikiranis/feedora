@@ -2,7 +2,7 @@
     <div class="d-flex posts-layout">
         <aside class="folder-sidebar d-none d-md-block">
             <nav class="folder-sidebar-inner py-4">
-                <div class="folder-item" :class="{ active: !selectedFolderId && !selectedFeedId }"
+                <div class="folder-item" :class="{ active: !showSaved && !selectedFolderId && !selectedFeedId }"
                     role="button" @click="selectAll" :title="language.get('All Posts') || 'All Posts'">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-collection flex-shrink-0" viewBox="0 0 16 16">
@@ -26,6 +26,16 @@
                             <path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>
                         </svg>
                     </button>
+                </div>
+
+                <div class="folder-item" :class="{ active: showSaved }"
+                    role="button" @click="selectSaved" :title="language.get('Saved') || 'Saved'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-bookmark flex-shrink-0" viewBox="0 0 16 16">
+                        <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z"/>
+                    </svg>
+                    <span class="folder-name">{{ language.get('Saved') || 'Saved' }}</span>
+                    <span class="folder-count">{{ unreadCounts.saved }}</span>
                 </div>
 
                 <hr class="my-2" />
@@ -126,14 +136,14 @@
                             :class="showDetails ? 'col-12 col-md-6 col-lg-4' : 'col-12'"
                             @click="selectedIndex = index">
                             <PostElement :post="post" :show-details="showDetails" :selected="index === selectedIndex"
-                                @post-read="handlePostRead" />
+                                @post-read="handlePostRead" @toggle-saved="toggleSaved" />
                         </div>
                         <div v-if="allLoaded && posts.length > 0 && !searchTerm.trim()" class="text-center w-100 text-muted my-4">
                             {{ language.get('No more posts') || 'No more posts' }}
                         </div>
                     </div>
                     <div v-else-if="!loading && posts.length === 0 && !searchTerm.trim()" class="text-center text-muted mt-5">
-                        {{ language.get('No posts found') }}
+                        {{ showSaved ? (language.get('No saved posts') || 'No saved posts') : language.get('No posts found') }}
                     </div>
                     <div v-else-if="!loading && posts.length === 0 && searchTerm.trim()" class="text-center text-muted mt-5">
                         {{ language.get('No posts match your search') || 'No posts match your search' }}
@@ -155,7 +165,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
-import { getPosts, parseFeeds, deleteAllPosts, markAsRead, getUnreadCounts } from '@/api/post';
+import { getPosts, parseFeeds, deleteAllPosts, markAsRead, getUnreadCounts, setPostSaved } from '@/api/post';
 import { getFeedOperationStatus } from '@/api/feed';
 import { getFolders } from '@/api/folder';
 import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType } from '@/types';
@@ -179,9 +189,10 @@ const searchTerm = ref('');
 const searchTimeout = ref<number | null>(null);
 const selectedIndex = ref(-1); // Index of the card selected via keyboard navigation
 const folders = ref<FolderType[]>([]);
-const unreadCounts = ref<UnreadCountsType>({ total: 0, folders: {}, feeds: [] });
+const unreadCounts = ref<UnreadCountsType>({ total: 0, saved: 0, folders: {}, feeds: [] });
 const selectedFolderId = ref<string | null>(null); // null shows the posts of all folders
 const selectedFeedId = ref<string | null>(null); // null shows the posts of all feeds
+const showSaved = ref(false); // Shows the saved posts (read or unread) instead of the unread ones
 const expandedFolders = ref<Set<string>>(new Set());
 const failedFeedIcons = ref<Set<string>>(new Set());
 const showEmptyFolders = ref(localStorage.getItem('posts-show-empty-folders') === 'true'); // Persisted in localStorage
@@ -258,12 +269,13 @@ const fetchUnreadCounts = async () => {
 };
 
 /**
- * Changes the folder/feed filter of the posts list and reloads it.
+ * Changes the folder/feed/saved filter of the posts list and reloads it.
  */
-const applyFilter = (folderId: string | null, feedId: string | null) => {
-    if (selectedFolderId.value === folderId && selectedFeedId.value === feedId) return;
+const applyFilter = (folderId: string | null, feedId: string | null, saved = false) => {
+    if (selectedFolderId.value === folderId && selectedFeedId.value === feedId && showSaved.value === saved) return;
     selectedFolderId.value = folderId;
     selectedFeedId.value = feedId;
+    showSaved.value = saved;
     scrollableContainerRef.value?.scrollTo({ top: 0 });
     handleRefreshPosts();
 };
@@ -271,6 +283,7 @@ const applyFilter = (folderId: string | null, feedId: string | null) => {
 const selectAll = () => applyFilter(null, null);
 const selectFolder = (folderId: string) => applyFilter(folderId, null);
 const selectFeed = (feedId: string) => applyFilter(null, feedId);
+const selectSaved = () => applyFilter(null, null, true);
 
 /**
  * Fetches posts from the API. It supports pagination and resetting the post list.
@@ -286,7 +299,7 @@ const fetchPosts = async (reset = false) => {
             selectedIndex.value = -1;
         }
 
-        const data = await getPosts(page.value, pageSize, searchTerm.value, selectedFolderId.value, selectedFeedId.value);
+        const data = await getPosts(page.value, pageSize, searchTerm.value, selectedFolderId.value, selectedFeedId.value, showSaved.value);
 
         if (data.length < pageSize) {
             allLoaded.value = true;
@@ -440,6 +453,24 @@ const markPostAsReadAPI = async (postId: string) => {
         handlePostRead(postId); // Update local state
     } catch (error) {
         console.error('Failed to mark post as read:', error);
+    }
+};
+
+/**
+ * Saves a post for later, or removes it from the saved posts.
+ * In the saved view the post stays listed until the next refresh, so it can be saved again.
+ */
+const toggleSaved = async (postId: string) => {
+    const post = posts.value.find(p => p.id === postId);
+    if (!post) return;
+    const saved = !post.saved;
+    try {
+        await setPostSaved(postId, saved);
+        post.saved = saved;
+        unreadCounts.value.saved = Math.max(0, unreadCounts.value.saved + (saved ? 1 : -1));
+    } catch (e: any) {
+        console.error('Failed to save post:', e);
+        errorStore.set(true, e.response?.data?.message || language.get('Failed to save post') || 'Failed to save post.', e.response?.status || 500);
     }
 };
 
@@ -598,7 +629,7 @@ const openInBackgroundTab = (url: string) => {
 /**
  * Handles arrow key navigation between cards.
  * In list mode, Up/Down scroll the list instead (so long expanded posts can be read) and Left/Right move between posts.
- * Enter opens the selected post's link in a new tab, B opens it in a background tab.
+ * Enter opens the selected post's link in a new tab, B opens it in a background tab, F saves it for later (or unsaves it).
  */
 const handleKeydown = (event: KeyboardEvent) => {
     const target = event.target as HTMLElement | null;
@@ -637,6 +668,13 @@ const handleKeydown = (event: KeyboardEvent) => {
         case 'B':
             if (current >= 0 && posts.value[current]?.link) {
                 openInBackgroundTab(posts.value[current].link);
+                event.preventDefault();
+            }
+            return;
+        case 'f':
+        case 'F':
+            if (current >= 0 && posts.value[current]) {
+                toggleSaved(posts.value[current].id);
                 event.preventDefault();
             }
             return;

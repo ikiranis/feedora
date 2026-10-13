@@ -228,7 +228,7 @@ public class PostService {
      * @return List of unread posts
      */
     public List<Post> getPostsForUser(User user, int page, int pageSize, String searchTerm) {
-        return getPostsForUser(user, page, pageSize, searchTerm, null, null);
+        return getPostsForUser(user, page, pageSize, searchTerm, null, null, false);
     }
 
     /**
@@ -239,11 +239,18 @@ public class PostService {
      * @param searchTerm The search term to filter posts by title or description (case-insensitive)
      * @param folderId The folder whose feeds' posts to return, or null for all folders
      * @param feedId The feed whose posts to return, or null for all feeds. Takes precedence over folderId.
-     * @return List of unread posts
+     * @param saved If true, returns the saved posts (read or unread) instead. Takes precedence over feedId and folderId.
+     * @return List of unread posts, or of saved posts
      */
-    public List<Post> getPostsForUser(User user, int page, int pageSize, String searchTerm, UUID folderId, UUID feedId) {
+    public List<Post> getPostsForUser(User user, int page, int pageSize, String searchTerm, UUID folderId, UUID feedId, boolean saved) {
         Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "pubDate"));
         boolean hasSearch = searchTerm != null && !searchTerm.trim().isEmpty();
+
+        if (saved) {
+            return hasSearch
+                    ? postRepository.findByUserAndSavedTrueAndTitleOrDescriptionContaining(user, searchTerm.trim(), pageable)
+                    : postRepository.findByUserAndSavedTrue(user, pageable);
+        }
 
         if (feedId != null) {
             return hasSearch
@@ -266,8 +273,8 @@ public class PostService {
      * Returns the unread post counts for a given user, in total, per folder and per feed.
      * All the user's feeds are included (with count 0 if they have no unread posts), but only folders with unread posts.
      * @param user The user
-     * @return Map with "total" (long), "folders" (folder id → unread count)
-     *         and "feeds" (list of {id, title, htmlUrl, folderId, count})
+     * @return Map with "total" (long), "saved" (long, number of saved posts read or unread),
+     *         "folders" (folder id → unread count) and "feeds" (list of {id, title, htmlUrl, folderId, count})
      */
     public Map<String, Object> getUnreadCounts(User user) {
         long total = 0;
@@ -294,6 +301,7 @@ public class PostService {
 
         Map<String, Object> result = new HashMap<>();
         result.put("total", total);
+        result.put("saved", postRepository.countByUserAndSavedTrue(user));
         result.put("folders", folderCounts);
         result.put("feeds", feedCounts);
         return result;
@@ -307,11 +315,11 @@ public class PostService {
     }
 
     /**
-     * Delete all posts for a specific user.
+     * Delete all posts for a specific user, except the saved ones.
      * @param user The user whose posts should be deleted
      */
     public void deleteAllPostsForUser(User user) {
-        List<Post> userPosts = postRepository.findByUser(user);
+        List<Post> userPosts = postRepository.findByUserAndSavedFalse(user);
         postRepository.deleteAll(userPosts);
     }
 
@@ -333,5 +341,20 @@ public class PostService {
             }
         }
         return false;
+    }
+
+    /**
+     * Save a post for later, or remove it from the saved posts, for a specific user.
+     * @param postId The UUID of the post
+     * @param user The user who owns the post
+     * @param saved true to save the post, false to remove it from the saved posts
+     * @throws NotFoundException if the post doesn't exist or belongs to another user
+     */
+    public void setPostSaved(UUID postId, User user, boolean saved) {
+        Post post = postRepository.findById(postId)
+                .filter(p -> p.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new NotFoundException(Language.getActionString("Post not found")));
+        post.setSaved(saved);
+        postRepository.save(post);
     }
 }

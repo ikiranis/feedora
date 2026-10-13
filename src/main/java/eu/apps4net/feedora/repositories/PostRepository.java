@@ -43,6 +43,17 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
            "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
     List<Post> findByUserAndReadFalseAndFeedAndTitleOrDescriptionContaining(@Param("user") User user, @Param("feedId") UUID feedId, @Param("searchTerm") String searchTerm, Pageable pageable);
 
+    // Saved posts are returned whether read or not
+    List<Post> findByUserAndSavedTrue(User user, Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.saved = true AND " +
+           "(LOWER(p.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
+    List<Post> findByUserAndSavedTrueAndTitleOrDescriptionContaining(@Param("user") User user, @Param("searchTerm") String searchTerm, Pageable pageable);
+
+    long countByUserAndSavedTrue(User user);
+    List<Post> findByUserAndSavedFalse(User user);
+
     // Rows of [feed id, feed title, feed website, folder id (nullable), unread count] for every feed of the user,
     // including feeds without unread posts (count 0)
     @Query("SELECT f.id, f.title, f.htmlUrl, fo.id, COUNT(p) FROM Feed f LEFT JOIN f.folder fo " +

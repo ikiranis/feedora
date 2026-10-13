@@ -984,4 +984,29 @@
         <language code="el">Φόρτωση πλήρους άρθρου...</language>
     </entry>
 
+    <entry id="Saved">
+        <language code="en">Saved</language>
+        <language code="el">Αποθηκευμένα</language>
+    </entry>
+
+    <entry id="Save for later">
+        <language code="en">Save for later</language>
+        <language code="el">Αποθήκευση για αργότερα</language>
+    </entry>
+
+    <entry id="Remove from saved">
+        <language code="en">Remove from saved</language>
+        <language code="el">Αφαίρεση από τα αποθηκευμένα</language>
+    </entry>
+
+    <entry id="No saved posts">
+        <language code="en">No saved posts</language>
+        <language code="el">Δεν υπάρχουν αποθηκευμένα άρθρα</language>
+    </entry>
+
+    <entry id="Failed to save post">
+        <language code="en">Failed to save post</language>
+        <language code="el">Αποτυχία αποθήκευσης του άρθρου</language>
+    </entry>
+
 </root>

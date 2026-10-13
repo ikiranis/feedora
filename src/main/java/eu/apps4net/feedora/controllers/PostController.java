@@ -62,9 +62,10 @@ public class PostController {
 
     @GetMapping("/getPosts")
     public List<Post> getPosts(@RequestParam int page, @RequestParam int pageSize, @RequestParam(required = false) String search,
-                               @RequestParam(required = false) UUID folderId, @RequestParam(required = false) UUID feedId) {
+                               @RequestParam(required = false) UUID folderId, @RequestParam(required = false) UUID feedId,
+                               @RequestParam(defaultValue = "false") boolean saved) {
         User currentUser = userService.getCurrentUser();
-        return postService.getPostsForUser(currentUser, page, pageSize, search, folderId, feedId);
+        return postService.getPostsForUser(currentUser, page, pageSize, search, folderId, feedId, saved);
     }
 
     @GetMapping("/unreadCounts")
@@ -81,7 +82,14 @@ public class PostController {
         return result;
     }
 
-        @PutMapping("/markAsRead/{postId}")
+    @PutMapping("/saved/{postId}")
+    public ResponseEntity<Void> setPostSaved(@PathVariable UUID postId, @RequestParam boolean saved) {
+        User currentUser = userService.getCurrentUser();
+        postService.setPostSaved(postId, currentUser, saved);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/markAsRead/{postId}")
     public ResponseEntity<String> markPostAsRead(@PathVariable UUID postId) {
         try {
             User currentUser = userService.getCurrentUser();

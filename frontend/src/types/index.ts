@@ -51,6 +51,7 @@ export interface FeedUnreadCountType {
 
 export interface UnreadCountsType {
     total: number;
+    saved: number;
     folders: Record<string, number>;
     feeds: FeedUnreadCountType[];
 }
@@ -69,6 +70,7 @@ export interface PostType {
     pubDate: string | null;
     author: string | null;
     read: boolean;
+    saved: boolean;
     feed: Feed;
     user: UserType;
 }

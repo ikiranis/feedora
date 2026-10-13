@@ -37,6 +37,15 @@
             <div class="card-footer-row">
                 <span class="post-time" :title="post.pubDate ? new Date(post.pubDate).toLocaleString() : ''">{{ shortDate }}</span>
                 <div class="d-flex align-items-center gap-3">
+                    <button type="button" class="footer-action save-button" :class="{ saved: post.saved }" @click.stop="emit('toggle-saved', post.id)"
+                        :title="post.saved ? (language.get('Remove from saved') || 'Remove from saved') : (language.get('Save for later') || 'Save for later')">
+                        <svg v-if="post.saved" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M2 2v13.5a.5.5 0 0 0 .74.439L8 13.069l5.26 2.87A.5.5 0 0 0 14 15.5V2a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
+                        </svg>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z"/>
+                        </svg>
+                    </button>
                     <a :href="post.link" target="_blank" class="footer-action" :title="language.get('Open original') || 'Open original'" @click.stop>
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                             <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
@@ -69,6 +78,15 @@
                 <a :href="post.link" target="_blank" class="list-title" @click.stop>{{ post.title }}</a>
                 <span v-if="excerpt" class="list-excerpt">{{ excerpt }}</span>
             </div>
+            <button type="button" class="list-save save-button" :class="{ saved: post.saved }" @click.stop="emit('toggle-saved', post.id)"
+                    :title="post.saved ? (language.get('Remove from saved') || 'Remove from saved') : (language.get('Save for later') || 'Save for later')">
+                    <svg v-if="post.saved" xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M2 2v13.5a.5.5 0 0 0 .74.439L8 13.069l5.26 2.87A.5.5 0 0 0 14 15.5V2a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z"/>
+                    </svg>
+                </button>
             <span class="list-time" :title="post.pubDate ? new Date(post.pubDate).toLocaleString() : ''">{{ shortDate }}</span>
         </div>
         <!-- Expanded details for the selected post -->
@@ -201,6 +219,7 @@ watch([isOpened, () => props.post.id], ([opened]) => {
 
 const emit = defineEmits<{
     'post-read': [postId: string]
+    'toggle-saved': [postId: string]
 }>();
 
 const handleCardClick = async () => {
@@ -409,6 +428,16 @@ const handleCardClick = async () => {
     color: var(--text-color);
 }
 
+.save-button {
+    padding: 0;
+    border: 0;
+    background: transparent;
+}
+
+.save-button.saved {
+    color: #4d8dff;
+}
+
 .read-indicator {
     width: 18px;
     height: 18px;
@@ -542,6 +571,29 @@ const handleCardClick = async () => {
     overflow: hidden;
     text-overflow: ellipsis;
     color: #8b919c;
+}
+
+.list-save {
+    display: flex;
+    flex-shrink: 0;
+    color: #8b919c;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.2s;
+}
+
+/* In list mode the button only shows on hover or selection, unless the post is saved */
+.list-row:hover .list-save,
+.list-row.selected-post .list-save,
+.list-save.saved {
+    opacity: 1;
+}
+
+.list-save:hover {
+    color: var(--text-color);
+}
+
+.list-save.saved {
+    color: #4d8dff;
 }
 
 .list-time {

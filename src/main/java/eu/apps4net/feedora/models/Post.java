@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @JsonIgnoreProperties({"user"}) // Only ignore user, not feed
@@ -33,6 +34,11 @@ public class Post {
 
     @Column(name = "is_read")
     private boolean read;
+
+    // Saved for later. The default lets the column be added to existing databases.
+    @Column(name = "is_saved", nullable = false)
+    @ColumnDefault("false")
+    private boolean saved;
 
     @ManyToOne
     @JoinColumn(name = "feed_id")
@@ -76,6 +82,9 @@ public class Post {
 
     public boolean isRead() { return read; }
     public void setRead(boolean read) { this.read = read; }
+
+    public boolean isSaved() { return saved; }
+    public void setSaved(boolean saved) { this.saved = saved; }
 
     public Feed getFeed() { return feed; }
     public void setFeed(Feed feed) { this.feed = feed; }
