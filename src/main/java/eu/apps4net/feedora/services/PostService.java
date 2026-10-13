@@ -15,6 +15,7 @@ import org.springframework.data.domain.Sort;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -163,21 +164,28 @@ public class PostService {
      * @return List of unread posts
      */
     public List<Post> getPostsForUser(User user, int page, int pageSize, String searchTerm) {
-        return getPostsForUser(user, page, pageSize, searchTerm, null);
+        return getPostsForUser(user, page, pageSize, searchTerm, null, null);
     }
 
     /**
-     * Returns paginated unread posts for a given user, optionally filtered by search term and folder.
+     * Returns paginated unread posts for a given user, optionally filtered by search term and by feed or folder.
      * @param user The user
      * @param page The page number (1-indexed)
      * @param pageSize The number of posts per page
      * @param searchTerm The search term to filter posts by title or description (case-insensitive)
      * @param folderId The folder whose feeds' posts to return, or null for all folders
+     * @param feedId The feed whose posts to return, or null for all feeds. Takes precedence over folderId.
      * @return List of unread posts
      */
-    public List<Post> getPostsForUser(User user, int page, int pageSize, String searchTerm, UUID folderId) {
+    public List<Post> getPostsForUser(User user, int page, int pageSize, String searchTerm, UUID folderId, UUID feedId) {
         Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "pubDate"));
         boolean hasSearch = searchTerm != null && !searchTerm.trim().isEmpty();
+
+        if (feedId != null) {
+            return hasSearch
+                    ? postRepository.findByUserAndReadFalseAndFeedAndTitleOrDescriptionContaining(user, feedId, searchTerm.trim(), pageable)
+                    : postRepository.findByUserAndReadFalseAndFeed(user, feedId, pageable);
+        }
 
         if (folderId != null) {
             return hasSearch
@@ -191,19 +199,39 @@ public class PostService {
     }
 
     /**
-     * Returns the unread post counts for a given user, in total and per folder.
+     * Returns the unread post counts for a given user, in total, per folder and per feed.
+     * Only feeds and folders with unread posts are included.
      * @param user The user
-     * @return Map with "total" (long) and "folders" (folder id → unread count)
+     * @return Map with "total" (long), "folders" (folder id → unread count)
+     *         and "feeds" (list of {id, title, htmlUrl, folderId, count})
      */
     public Map<String, Object> getUnreadCounts(User user) {
+        long total = 0;
         Map<String, Long> folderCounts = new HashMap<>();
-        for (Object[] row : postRepository.countUnreadByFolder(user)) {
-            folderCounts.put(row[0].toString(), (Long) row[1]);
+        List<Map<String, Object>> feedCounts = new ArrayList<>();
+
+        for (Object[] row : postRepository.countUnreadByFeed(user)) {
+            String folderId = row[3] != null ? row[3].toString() : null;
+            long count = (Long) row[4];
+            total += count;
+
+            if (folderId != null) {
+                folderCounts.merge(folderId, count, Long::sum);
+            }
+
+            Map<String, Object> feed = new HashMap<>();
+            feed.put("id", row[0].toString());
+            feed.put("title", row[1]);
+            feed.put("htmlUrl", row[2]);
+            feed.put("folderId", folderId);
+            feed.put("count", count);
+            feedCounts.add(feed);
         }
 
         Map<String, Object> result = new HashMap<>();
-        result.put("total", postRepository.countByUserAndReadFalse(user));
+        result.put("total", total);
         result.put("folders", folderCounts);
+        result.put("feeds", feedCounts);
         return result;
     }
 

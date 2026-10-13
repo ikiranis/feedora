@@ -41,9 +41,18 @@ export interface FolderType {
     name: string;
 }
 
+export interface FeedUnreadCountType {
+    id: string;
+    title: string;
+    htmlUrl: string | null;
+    folderId: string | null;
+    count: number;
+}
+
 export interface UnreadCountsType {
     total: number;
     folders: Record<string, number>;
+    feeds: FeedUnreadCountType[];
 }
 
 export interface UserType {

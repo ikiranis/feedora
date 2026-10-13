@@ -35,10 +35,19 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
            "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
     List<Post> findByUserAndReadFalseAndFolderAndTitleOrDescriptionContaining(@Param("user") User user, @Param("folderId") UUID folderId, @Param("searchTerm") String searchTerm, Pageable pageable);
 
-    @Query("SELECT p.feed.folder.id, COUNT(p) FROM Post p WHERE p.user = :user AND p.read = false AND p.feed.folder IS NOT NULL GROUP BY p.feed.folder.id")
-    List<Object[]> countUnreadByFolder(@Param("user") User user);
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.read = false AND p.feed.id = :feedId")
+    List<Post> findByUserAndReadFalseAndFeed(@Param("user") User user, @Param("feedId") UUID feedId, Pageable pageable);
 
-    long countByUserAndReadFalse(User user);
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.read = false AND p.feed.id = :feedId AND " +
+           "(LOWER(p.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
+    List<Post> findByUserAndReadFalseAndFeedAndTitleOrDescriptionContaining(@Param("user") User user, @Param("feedId") UUID feedId, @Param("searchTerm") String searchTerm, Pageable pageable);
+
+    // Rows of [feed id, feed title, feed website, folder id (nullable), unread count] for every feed with unread posts
+    @Query("SELECT f.id, f.title, f.htmlUrl, fo.id, COUNT(p) FROM Post p JOIN p.feed f LEFT JOIN f.folder fo " +
+           "WHERE p.user = :user AND p.read = false GROUP BY f.id, f.title, f.htmlUrl, fo.id")
+    List<Object[]> countUnreadByFeed(@Param("user") User user);
+
     long countByUser(User user);
     boolean existsByFeedAndUserAndLink(Feed feed, User user, String link);
     

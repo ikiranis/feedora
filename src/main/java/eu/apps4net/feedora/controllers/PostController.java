@@ -61,9 +61,9 @@ public class PostController {
 
     @GetMapping("/getPosts")
     public List<Post> getPosts(@RequestParam int page, @RequestParam int pageSize, @RequestParam(required = false) String search,
-                               @RequestParam(required = false) UUID folderId) {
+                               @RequestParam(required = false) UUID folderId, @RequestParam(required = false) UUID feedId) {
         User currentUser = userService.getCurrentUser();
-        return postService.getPostsForUser(currentUser, page, pageSize, search, folderId);
+        return postService.getPostsForUser(currentUser, page, pageSize, search, folderId, feedId);
     }
 
     @GetMapping("/unreadCounts")

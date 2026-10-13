@@ -2,8 +2,8 @@
     <div class="d-flex posts-layout">
         <aside class="folder-sidebar d-none d-md-block">
             <nav class="folder-sidebar-inner py-4">
-                <button type="button" class="folder-item" :class="{ active: selectedFolderId === null }"
-                    @click="selectFolder(null)" :title="language.get('All Posts') || 'All Posts'">
+                <button type="button" class="folder-item" :class="{ active: !selectedFolderId && !selectedFeedId }"
+                    @click="selectAll" :title="language.get('All Posts') || 'All Posts'">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-collection flex-shrink-0" viewBox="0 0 16 16">
                         <path d="M2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1h-11zm2-2a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7zM0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6v7zm1.5.5A.5.5 0 0 1 1 13V6a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-13z"/>
@@ -14,16 +14,37 @@
 
                 <hr class="my-2" />
 
-                <button v-for="folder in visibleFolders" :key="folder.id" type="button" class="folder-item"
-                    :class="{ active: selectedFolderId === folder.id }" @click="selectFolder(folder.id)"
-                    :title="folder.name">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                        class="bi bi-folder flex-shrink-0" viewBox="0 0 16 16">
-                        <path d="M.54 3.87.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31zM2.19 4a1 1 0 0 0-.996 1.09l.637 7a1 1 0 0 0 .995.91h10.348a1 1 0 0 0 .995-.91l.637-7A1 1 0 0 0 13.81 4H2.19zm4.69-1.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139C1.72 3.042 1.95 3 2.19 3h5.396l-.707-.707z"/>
-                    </svg>
-                    <span class="folder-name">{{ folder.name }}</span>
-                    <span class="folder-count">{{ unreadCounts.folders[folder.id] || 0 }}</span>
-                </button>
+                <template v-for="folder in visibleFolders" :key="folder.id">
+                    <div class="folder-item" :class="{ active: selectedFolderId === folder.id }"
+                        role="button" @click="selectFolder(folder.id)" :title="folder.name">
+                        <button type="button" class="folder-toggle" @click.stop="toggleFolder(folder.id)"
+                            :title="expandedFolders.has(folder.id) ? language.get('Collapse') : language.get('Expand')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor"
+                                class="bi bi-chevron-right folder-chevron" :class="{ expanded: expandedFolders.has(folder.id) }"
+                                viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                            </svg>
+                        </button>
+                        <span class="folder-name">{{ folder.name }}</span>
+                        <span class="folder-count">{{ unreadCounts.folders[folder.id] || 0 }}</span>
+                    </div>
+
+                    <template v-if="expandedFolders.has(folder.id)">
+                        <button v-for="feed in visibleFeedsByFolder[folder.id] || []" :key="feed.id" type="button"
+                            class="folder-item feed-item" :class="{ active: selectedFeedId === feed.id }"
+                            @click="selectFeed(feed.id)" :title="feed.title">
+                            <img v-if="getFeedIcon(feed)" :src="getFeedIcon(feed)!" class="feed-icon flex-shrink-0"
+                                alt="" loading="lazy" @error="failedFeedIcons.add(feed.id)" />
+                            <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                class="bi bi-rss flex-shrink-0" viewBox="0 0 16 16">
+                                <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+                                <path d="M5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm-3-8.5a1 1 0 0 1 1-1c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1-1-1zm0 4a1 1 0 0 1 1-1 6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1-1-1z"/>
+                            </svg>
+                            <span class="folder-name">{{ feed.title }}</span>
+                            <span class="folder-count">{{ feed.count }}</span>
+                        </button>
+                    </template>
+                </template>
             </nav>
         </aside>
 
@@ -121,7 +142,7 @@ import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { getPosts, parseFeeds, deleteAllPosts, markAsRead, getUnreadCounts } from '@/api/post';
 import { getFeedOperationStatus } from '@/api/feed';
 import { getFolders } from '@/api/folder';
-import { PostType, FolderType, UnreadCountsType } from '@/types';
+import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType } from '@/types';
 import { language } from '@/functions/languageStore';
 import PostElement from '@/components/PostElement.vue';
 import Error from '@/components/error/Error.vue'; // Changed from ErrorDisplay
@@ -141,15 +162,56 @@ const searchTerm = ref('');
 const searchTimeout = ref<number | null>(null);
 const selectedIndex = ref(-1); // Index of the card selected via keyboard navigation
 const folders = ref<FolderType[]>([]);
-const unreadCounts = ref<UnreadCountsType>({ total: 0, folders: {} });
+const unreadCounts = ref<UnreadCountsType>({ total: 0, folders: {}, feeds: [] });
 const selectedFolderId = ref<string | null>(null); // null shows the posts of all folders
+const selectedFeedId = ref<string | null>(null); // null shows the posts of all feeds
+const expandedFolders = ref<Set<string>>(new Set());
+const failedFeedIcons = ref<Set<string>>(new Set());
 
-// Folders with unread posts, sorted by name. The selected folder stays visible after its last post is read.
-const visibleFolders = computed(() =>
-    folders.value
-        .filter(folder => (unreadCounts.value.folders[folder.id] || 0) > 0 || folder.id === selectedFolderId.value)
-        .sort((a, b) => a.name.localeCompare(b.name))
-);
+// Folders with unread posts, sorted by name. The selected folder (or the folder of the selected feed)
+// stays visible after its last post is read.
+const visibleFolders = computed(() => {
+    const selectedFeedFolderId = unreadCounts.value.feeds.find(f => f.id === selectedFeedId.value)?.folderId;
+    return folders.value
+        .filter(folder => (unreadCounts.value.folders[folder.id] || 0) > 0
+            || folder.id === selectedFolderId.value
+            || folder.id === selectedFeedFolderId)
+        .sort((a, b) => a.name.localeCompare(b.name));
+});
+
+// Feeds with unread posts grouped by folder id and sorted by title. The selected feed stays visible after its last post is read.
+const visibleFeedsByFolder = computed(() => {
+    const groups: Record<string, FeedUnreadCountType[]> = {};
+    for (const feed of unreadCounts.value.feeds) {
+        if (!feed.folderId || (feed.count <= 0 && feed.id !== selectedFeedId.value)) continue;
+        (groups[feed.folderId] ||= []).push(feed);
+    }
+    Object.values(groups).forEach(feeds => feeds.sort((a, b) => a.title.localeCompare(b.title)));
+    return groups;
+});
+
+/**
+ * Favicon URL of the feed's website, or null if it has none or it failed to load.
+ */
+const getFeedIcon = (feed: FeedUnreadCountType): string | null => {
+    if (!feed.htmlUrl || failedFeedIcons.value.has(feed.id)) return null;
+    try {
+        return `https://www.google.com/s2/favicons?domain=${new URL(feed.htmlUrl).hostname}&sz=32`;
+    } catch {
+        return null;
+    }
+};
+
+/**
+ * Expands or collapses the feed list of a folder in the sidebar.
+ */
+const toggleFolder = (folderId: string) => {
+    if (expandedFolders.value.has(folderId)) {
+        expandedFolders.value.delete(folderId);
+    } else {
+        expandedFolders.value.add(folderId);
+    }
+};
 
 /**
  * Fetches the user's folders for the sidebar.
@@ -175,14 +237,19 @@ const fetchUnreadCounts = async () => {
 };
 
 /**
- * Shows only the posts of the given folder, or of all folders when folderId is null.
+ * Changes the folder/feed filter of the posts list and reloads it.
  */
-const selectFolder = (folderId: string | null) => {
-    if (selectedFolderId.value === folderId) return;
+const applyFilter = (folderId: string | null, feedId: string | null) => {
+    if (selectedFolderId.value === folderId && selectedFeedId.value === feedId) return;
     selectedFolderId.value = folderId;
+    selectedFeedId.value = feedId;
     scrollableContainerRef.value?.scrollTo({ top: 0 });
     handleRefreshPosts();
 };
+
+const selectAll = () => applyFilter(null, null);
+const selectFolder = (folderId: string) => applyFilter(folderId, null);
+const selectFeed = (feedId: string) => applyFilter(null, feedId);
 
 /**
  * Fetches posts from the API. It supports pagination and resetting the post list.
@@ -198,7 +265,7 @@ const fetchPosts = async (reset = false) => {
             selectedIndex.value = -1;
         }
 
-        const data = await getPosts(page.value, pageSize, searchTerm.value, selectedFolderId.value);
+        const data = await getPosts(page.value, pageSize, searchTerm.value, selectedFolderId.value, selectedFeedId.value);
 
         if (data.length < pageSize) {
             allLoaded.value = true;
@@ -333,6 +400,10 @@ const decrementUnreadCount = (post: PostType) => {
     const folderId = post.feed?.folderId;
     if (folderId && unreadCounts.value.folders[folderId]) {
         unreadCounts.value.folders[folderId]--;
+    }
+    const feed = unreadCounts.value.feeds.find(f => f.id === post.feed?.id);
+    if (feed && feed.count > 0) {
+        feed.count--;
     }
 };
 
@@ -651,6 +722,7 @@ onUnmounted(() => {
     background: transparent;
     color: var(--bs-body-color);
     text-align: left;
+    cursor: pointer;
 }
 
 .folder-item:hover {
@@ -661,6 +733,44 @@ onUnmounted(() => {
     background-color: var(--bs-secondary-bg);
     color: var(--bs-primary);
     font-weight: 600;
+}
+
+/* Chevron that expands a folder to show its feeds */
+.folder-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0.25rem;
+    background: transparent;
+    color: inherit;
+}
+
+.folder-toggle:hover {
+    background-color: var(--bs-secondary-bg);
+}
+
+.folder-chevron {
+    transition: transform 0.15s ease;
+}
+
+.folder-chevron.expanded {
+    transform: rotate(90deg);
+}
+
+.feed-item {
+    padding-left: 2.25rem;
+    font-size: 0.95em;
+}
+
+.feed-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
 }
 
 .folder-name {
