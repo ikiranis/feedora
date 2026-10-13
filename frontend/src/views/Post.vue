@@ -160,6 +160,9 @@
         </div>
     </div>
 
+    <PostModal v-if="modalPost" ref="postModalRef" :post="modalPost"
+        @close="modalOpen = false" @toggle-saved="toggleSaved" />
+
     <Error class="error-fixed-bottom" />
 </template>
 
@@ -172,6 +175,7 @@ import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType } from '@/t
 import { language } from '@/functions/languageStore';
 import { postContentStore } from '@/functions/postContentStore';
 import PostElement from '@/components/PostElement.vue';
+import PostModal from '@/components/PostModal.vue';
 import Error from '@/components/error/Error.vue'; // Changed from ErrorDisplay
 import { errorStore } from '@/components/error/errorStore'; // Import errorStore
 
@@ -187,6 +191,9 @@ const lastScrollTop = ref(0); // Track scroll position to determine scroll direc
 const searchTerm = ref('');
 const searchTimeout = ref<number | null>(null);
 const selectedIndex = ref(-1); // Index of the card selected via keyboard navigation
+const modalOpen = ref(false); // The selected post is shown in full in a modal
+const postModalRef = ref<InstanceType<typeof PostModal> | null>(null);
+const modalPost = computed(() => modalOpen.value ? posts.value[selectedIndex.value] ?? null : null);
 const folders = ref<FolderType[]>([]);
 const unreadCounts = ref<UnreadCountsType>({ total: 0, saved: 0, folders: {}, feeds: [] });
 const selectedFolderId = ref<string | null>(null); // null shows the posts of all folders
@@ -667,7 +674,7 @@ const openInBackgroundTab = (url: string) => {
 /**
  * Handles arrow key navigation between cards.
  * In list mode, Up/Down scroll the list instead (so long expanded posts can be read) and Left/Right move between posts.
- * Enter opens the selected post's link in a new tab, B opens it in a background tab, F saves it for later (or unsaves it).
+ * Enter or O opens the selected post in a modal (Esc closes it), B opens its link in a background tab, F saves it for later (or unsaves it).
  */
 const handleKeydown = (event: KeyboardEvent) => {
     const target = event.target as HTMLElement | null;
@@ -687,6 +694,11 @@ const handleKeydown = (event: KeyboardEvent) => {
             break;
         case 'ArrowDown':
         case 'ArrowUp':
+            if (modalOpen.value) {
+                postModalRef.value?.scrollBy(event.key === 'ArrowDown' ? 80 : -80);
+                event.preventDefault();
+                return;
+            }
             if (!showDetails.value) {
                 scrollableContainerRef.value?.scrollBy({ top: event.key === 'ArrowDown' ? 80 : -80 });
                 event.preventDefault();
@@ -697,10 +709,15 @@ const handleKeydown = (event: KeyboardEvent) => {
                 : event.key === 'ArrowDown' ? Math.min(current + columns, posts.value.length - 1) : current - columns;
             break;
         case 'Enter':
-            if (current >= 0 && posts.value[current]?.link) {
-                window.open(posts.value[current].link, '_blank');
+        case 'o':
+        case 'O':
+            if (current >= 0 && posts.value[current]) {
+                modalOpen.value = !modalOpen.value;
                 event.preventDefault();
             }
+            return;
+        case 'Escape':
+            modalOpen.value = false;
             return;
         case 'b':
         case 'B':
@@ -723,6 +740,11 @@ const handleKeydown = (event: KeyboardEvent) => {
     event.preventDefault();
     selectPost(next);
 };
+
+// Close the modal when no post is selected anymore (e.g. the posts were reloaded)
+watch(modalPost, (post) => {
+    if (!post) modalOpen.value = false;
+});
 
 // In list mode, preload the content of the selected post and the next ones (or the first ones if none is selected),
 // so opening them shows the full article right away
