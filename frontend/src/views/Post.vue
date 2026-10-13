@@ -89,7 +89,7 @@
                                 </svg>
                                 <span class="d-none d-xl-inline">{{ language.get('Mark all as read') || 'Mark all as read' }}</span>
                             </button>
-                            <button type="button" class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split"
+                            <button ref="markAsReadToggleRef" type="button" class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split"
                                 data-bs-toggle="dropdown" aria-expanded="false" :disabled="loading">
                                 <span class="visually-hidden">{{ language.get('Mark as read') || 'Mark as read' }}</span>
                             </button>
@@ -203,6 +203,7 @@ import PostModal from '@/components/PostModal.vue';
 import Error from '@/components/error/Error.vue'; // Changed from ErrorDisplay
 import { errorStore } from '@/components/error/errorStore'; // Import errorStore
 import { confirmDialog } from '@/functions/javaDialogs';
+import { Dropdown } from 'bootstrap';
 
 const posts = ref<PostType[]>([]);
 const page = ref(1);
@@ -229,6 +230,7 @@ const failedFeedIcons = ref<Set<string>>(new Set());
 const showEmptyFolders = ref(localStorage.getItem('posts-show-empty-folders') === 'true'); // Persisted in localStorage
 
 // Choices of the "Mark all as read" dropdown, by the age of the posts to mark (null marks all of them)
+const markAsReadToggleRef = ref<HTMLElement | null>(null);
 const markAsReadOptions: { label: string; days: number | null }[] = [
     { label: 'All posts', days: null },
     { label: 'Older than 1 day', days: 1 },
@@ -474,6 +476,10 @@ const handleDeleteAllPosts = async () => {
  *                        Marking all of them from the main button asks for confirmation first.
  */
 const handleMarkAllAsRead = async (olderThanDays: number | null) => {
+    // Closed explicitly, since Bootstrap doesn't close a dropdown whose toggle got disabled (by loading) during the click
+    if (markAsReadToggleRef.value) {
+        Dropdown.getOrCreateInstance(markAsReadToggleRef.value).hide();
+    }
     if (olderThanDays === null && !confirmDialog(language.get('Mark all posts of this view as read?') || 'Mark all posts of this view as read?')) {
         return;
     }

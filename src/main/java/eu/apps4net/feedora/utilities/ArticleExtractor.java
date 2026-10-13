@@ -11,7 +11,7 @@ import org.jsoup.safety.Safelist;
 public class ArticleExtractor {
 
     private static final String USER_AGENT =
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36";
     private static final int TIMEOUT_MILLIS = 15000;
 
     // Prefix of stored content made by the current extraction logic. Bump it when extraction improves,
