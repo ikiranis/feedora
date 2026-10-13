@@ -49,24 +49,36 @@
             </div>
         </div>
     </div>
-    <div v-else class="post-summary custom-summary" :class="{ 'unread-post': !post.read, 'read-post': post.read, 'selected-post': selected }" @click="handleCardClick">
-        <div class="d-flex w-100 justify-content-between align-items-center">
-            <img v-if="siteIcon" :src="siteIcon" class="site-icon me-2" alt="" loading="lazy" @error="iconFailed = true" />
-            <a :href="post.link" target="_blank" class="post-title-link me-auto" @click.stop>{{ post.title }}</a>
-            <span class="post-date ms-2 text-muted" v-if="post.pubDate">
-                {{ new Date(post.pubDate).toLocaleString() }}
-            </span>
-        </div>
-        <div class="summary-meta text-muted mt-1" style="font-size:0.95em;">
-            <span v-if="post.feed?.title">{{ post.feed.title }}</span>
-            <span v-if="post.feed?.folderName"> &mdash; {{ post.feed.folderName }}</span>
+    <div v-else class="list-row" :class="{ 'unread-post': !post.read, 'read-post': post.read, 'selected-post': selected }" @click="handleCardClick">
+        <div class="list-line">
+            <span class="read-dot" :class="{ unread: !post.read }"
+                :title="post.read ? (language.get('Read') || 'Read') : (language.get('Unread') || 'Unread')"></span>
+            <div class="list-source" :title="post.feed?.folderName ? `${post.feed?.title} — ${post.feed.folderName}` : post.feed?.title">
+                <img v-if="siteIcon" :src="siteIcon" class="site-icon list-source-icon" alt="" loading="lazy" @error="iconFailed = true" />
+                <span class="text-truncate">{{ post.feed?.title }}</span>
+            </div>
+            <div class="list-main">
+                <span v-if="youtubeVideo" class="list-video-badge">
+                    <svg v-if="youtubeVideo.isShort" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M17.77 10.32l-1.2-.5L18 9.06a3.74 3.74 0 0 0-3.5-6.62L6 6.94a3.74 3.74 0 0 0 .23 6.74l1.2.49L6 14.93a3.75 3.75 0 0 0 3.5 6.63l8.5-4.5a3.74 3.74 0 0 0-.23-6.74zM10 14.65V9.35L15 12z"/>
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.4 31.4 0 0 0 0 12a31.4 31.4 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.4 31.4 0 0 0 24 12a31.4 31.4 0 0 0-.5-5.8zM9.6 15.6V8.4l6.2 3.6z"/>
+                    </svg>
+                </span>
+                <a :href="post.link" target="_blank" class="list-title" @click.stop>{{ post.title }}</a>
+                <span v-if="excerpt" class="list-excerpt">{{ excerpt }}</span>
+            </div>
+            <span class="list-time" :title="post.pubDate ? new Date(post.pubDate).toLocaleString() : ''">{{ shortDate }}</span>
         </div>
         <!-- Expanded details for the selected post -->
-        <div v-if="selected && youtubeEmbedUrl" class="ratio ratio-16x9 mt-3 video-embed video-embed-summary" @click.stop>
-            <iframe :src="youtubeEmbedUrl" :title="post.title" allowfullscreen
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+        <div v-if="selected" class="list-details" @click.stop>
+            <div v-if="youtubeEmbedUrl" class="ratio ratio-16x9 video-embed video-embed-summary">
+                <iframe :src="youtubeEmbedUrl" :title="post.title" allowfullscreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+            </div>
+            <div v-if="post.description" class="summary-description" v-html="post.description"></div>
         </div>
-        <div v-if="selected && post.description" class="summary-description mt-3" v-html="post.description"></div>
     </div>
 </template>
 
@@ -390,8 +402,7 @@ const handleCardClick = async () => {
     border-color: #4d8dff;
 }
 
-.custom-card.selected-post,
-.custom-summary.selected-post {
+.custom-card.selected-post {
     border-color: #0d6efd !important;
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.4);
 }
@@ -417,76 +428,126 @@ const handleCardClick = async () => {
     border-radius: 3px;
 }
 
-.custom-summary {
-    padding: 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 0.5rem;
-    background-color: var(--card-bg);
-    transition: background-color 0.3s, border-color 0.3s;
+/* List mode rows */
+.list-row {
+    border-bottom: 1px solid var(--border-color);
     cursor: pointer;
+    transition: background-color 0.15s;
 }
 
-.custom-summary.unread-post {
-    border: 2px solid #333;
-    font-weight: bold;
-    background-color: #f8f9fa;
+[data-bs-theme="dark"] .list-row {
+    border-bottom-color: #2a2e36;
 }
 
-[data-bs-theme="dark"] .custom-summary.unread-post {
-    border: 2px solid #6c757d;
-    background-color: #212529;
+.list-row:hover {
+    background-color: rgba(127, 127, 127, 0.08);
 }
 
-.custom-summary.read-post {
-    border: 1px solid var(--border-color);
+.list-row.selected-post {
+    background-color: rgba(77, 141, 255, 0.1);
+    box-shadow: inset 3px 0 0 #4d8dff;
 }
 
-[data-bs-theme="dark"] .custom-summary.read-post {
-    background-color: var(--bg-color);
-    border: 1px solid #2d3748;
+.list-line {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem 0.75rem;
+    min-width: 0;
 }
 
-.custom-summary:hover {
-    background-color: #e9ecef;
+.read-dot {
+    width: 9px;
+    height: 9px;
+    flex-shrink: 0;
+    border-radius: 50%;
 }
 
-[data-bs-theme="dark"] .custom-summary:hover {
-    background-color: #495057;
+.read-dot.unread {
+    background-color: #4d8dff;
 }
 
-.post-summary {
-    padding: 0.5rem 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 0.25rem;
-    background-color: var(--card-bg);
-    margin-bottom: 0.5rem;
-    transition: background-color 0.3s, border-color 0.3s;
-    /* Remove flex to allow second line to break naturally */
+.list-source {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 200px;
+    flex-shrink: 0;
+    color: #8b919c;
+    min-width: 0;
 }
 
-[data-bs-theme="dark"] .post-summary.read-post {
-    background-color: var(--bg-color);
+.list-source-icon {
+    border-radius: 50%;
 }
 
-.post-title-link {
-    text-decoration: none;
-    color: #000000;
-    font-weight: bold;
-    transition: color 0.3s;
-}
-
-[data-bs-theme="dark"] .post-title-link {
-    color: #ffffff;
-}
-
-.post-title-link:hover {
-    text-decoration: underline;
-}
-
-.post-date {
-    font-size: 0.85em;
-    text-align: right;
+.list-main {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
     white-space: nowrap;
+}
+
+.list-video-badge {
+    display: inline-flex;
+    align-self: center;
+    flex-shrink: 0;
+    color: var(--text-color);
+}
+
+.list-title {
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 700;
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+.list-title:hover {
+    color: #4d8dff;
+}
+
+.read-post .list-title {
+    font-weight: 500;
+    opacity: 0.6;
+}
+
+.list-excerpt {
+    flex: 1 1 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #8b919c;
+}
+
+.list-time {
+    flex-shrink: 0;
+    color: #8b919c;
+    font-size: 0.95rem;
+}
+
+.list-details {
+    padding: 0.25rem 1rem 1rem calc(0.75rem + 9px + 1rem);
+    cursor: auto;
+}
+
+@media (max-width: 768px) {
+    .list-source {
+        width: auto;
+    }
+
+    .list-source span {
+        display: none;
+    }
+
+    .list-excerpt {
+        display: none;
+    }
 }
 
 .summary-description {
