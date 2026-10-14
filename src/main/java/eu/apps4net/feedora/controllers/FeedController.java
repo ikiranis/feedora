@@ -2,7 +2,9 @@ package eu.apps4net.feedora.controllers;
 
 import eu.apps4net.feedora.configurations.Language;
 import eu.apps4net.feedora.models.User;
+import eu.apps4net.feedora.models.Feed;
 import eu.apps4net.feedora.services.FeedService;
+import eu.apps4net.feedora.services.LogService;
 import eu.apps4net.feedora.services.UserService;
 import eu.apps4net.feedora.services.OperationLockService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.UUID;
 
 import eu.apps4net.feedora.models.FeedDTO;
 
@@ -29,6 +32,8 @@ public class FeedController {
     private UserService userService;
     @Autowired
     private OperationLockService operationLockService;
+    @Autowired
+    private LogService logService;
 
     /**
      * Imports feeds and folders from an uploaded OPML file.
@@ -74,12 +79,19 @@ public class FeedController {
      * @param page The page number (1-indexed)
      * @param pageSize The number of feeds per page
      * @param search Optional search term to filter feeds by title (case-insensitive)
-     * @return List of Feed entities (without user and folder details)
+     * @return List of Feed entities (without user and folder details), with their number of log entries
      */
     @GetMapping("/getFeeds")
     public List<FeedDTO> getFeeds(@RequestParam int page, @RequestParam int pageSize, @RequestParam(required = false) String search) {
         User currentUser = userService.getCurrentUser();
-        return feedService.getFeedsForUser(currentUser, page, pageSize, search).stream().map(FeedDTO::fromFeed).toList();
+        List<Feed> feeds = feedService.getFeedsForUser(currentUser, page, pageSize, search);
+        Map<UUID, Long> logCounts = logService.countLogsByFeed(currentUser, feeds.stream().map(Feed::getId).toList());
+
+        return feeds.stream().map(feed -> {
+            FeedDTO dto = FeedDTO.fromFeed(feed);
+            dto.logCount = logCounts.getOrDefault(feed.getId(), 0L);
+            return dto;
+        }).toList();
     }
 
     /**

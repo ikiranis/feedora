@@ -1169,4 +1169,9 @@
         <language code="el">Είστε σίγουροι ότι θέλετε να διαγράψετε τις καταγραφές αυτής της ροής;</language>
     </entry>
 
+    <entry id="Load more">
+        <language code="en">Load more</language>
+        <language code="el">Φόρτωση περισσότερων</language>
+    </entry>
+
 </root>

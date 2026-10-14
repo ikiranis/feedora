@@ -34,6 +34,8 @@ export interface Feed {
     type: string;
     folderName?: string;
     folderId?: string | null;
+    // Number of log entries of the feed and its posts
+    logCount?: number;
 }
 
 export interface FolderType {

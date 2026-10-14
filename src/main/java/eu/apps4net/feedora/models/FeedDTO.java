@@ -7,6 +7,8 @@ public class FeedDTO {
     public String htmlUrl;
     public String type;
     public String folderName;
+    // Number of log entries of the feed and its posts
+    public long logCount;
 
     public static FeedDTO fromFeed(Feed feed) {
         FeedDTO dto = new FeedDTO();

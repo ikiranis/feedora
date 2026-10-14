@@ -19,7 +19,10 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -93,6 +96,22 @@ public class LogService {
                 .setFirstResult(Math.max(page - 1, 0) * pageSize)
                 .setMaxResults(pageSize)
                 .getResultList();
+    }
+
+    /**
+     * Returns the number of log entries of each of the given feeds.
+     * @param user The user who owns the feeds
+     * @param feedIds The feeds to count the entries of
+     * @return Map of feed id to its number of entries. Feeds without entries are left out.
+     */
+    public Map<UUID, Long> countLogsByFeed(User user, Collection<UUID> feedIds) {
+        Map<UUID, Long> counts = new HashMap<>();
+        if (feedIds.isEmpty()) return counts;
+
+        for (Object[] row : logEntryRepository.countByFeedIds(user, feedIds)) {
+            counts.put((UUID) row[0], (Long) row[1]);
+        }
+        return counts;
     }
 
     /**

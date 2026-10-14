@@ -28,47 +28,8 @@
 
     <div class="scrollable-log-view" ref="scrollableContainerRef">
         <div class="container py-4">
-            <div v-if="logs.length > 0" class="table-responsive">
-                <table class="table table-bordered table-hover align-middle">
-                    <thead class="table-light custom-table-header">
-                        <tr>
-                            <th>{{ language.get('Date') }}</th>
-                            <th>{{ language.get('Level') }}</th>
-                            <th>{{ language.get('Feed') }}</th>
-                            <th>{{ language.get('Post') }}</th>
-                            <th>{{ language.get('Message') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="log in logs" :key="log.id">
-                            <td class="text-nowrap">{{ formatDate(log.createdAt) }}</td>
-                            <td>
-                                <span :class="'badge ' + levelClass(log.level)">{{ log.level }}</span>
-                                <div class="small text-muted">{{ log.type }}</div>
-                            </td>
-                            <td>
-                                <a v-if="log.feedId" href="#" class="text-decoration-none" @click.prevent="filterBy('feedId', log.feedId)"
-                                   :title="language.get('Show the log entries of this feed')">
-                                    {{ log.feedTitle || log.feedId }}
-                                </a>
-                            </td>
-                            <td>
-                                <a v-if="log.postId" href="#" class="text-decoration-none" @click.prevent="filterBy('postId', log.postId)"
-                                   :title="language.get('Show the log entries of this post')">
-                                    {{ log.postTitle || log.postId }}
-                                </a>
-                            </td>
-                            <td class="log-message">
-                                <div>{{ log.message }}</div>
-                                <a v-if="log.url" :href="log.url" target="_blank" class="small text-decoration-none text-break">{{ log.url }}</a>
-                                <details v-if="log.details" class="small mt-1">
-                                    <summary>{{ language.get('Details') }}</summary>
-                                    <pre class="mb-0 log-details">{{ log.details }}</pre>
-                                </details>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div v-if="logs.length > 0">
+                <LogTable :logs="logs" @filter="filterBy" />
                 <div v-if="allLoaded" class="text-center w-100 text-muted my-4">
                     {{ language.get('No more log entries') }}
                 </div>
@@ -95,6 +56,7 @@ import { getLogs, deleteLogs } from '@/api/log';
 import type { LogEntryType, LogLevel } from '@/types';
 import { language } from '@/functions/languageStore';
 import Error from '@/components/error/Error.vue';
+import LogTable from '@/components/log/LogTable.vue';
 import { errorStore } from '@/components/error/errorStore';
 
 const route = useRoute();
@@ -180,16 +142,6 @@ const clearLogs = async () => {
     }
 };
 
-const formatDate = (date: string) => new Date(date).toLocaleString();
-
-const levelClass = (logLevel: LogLevel) => {
-    switch (logLevel) {
-        case 'ERROR': return 'text-bg-danger';
-        case 'WARNING': return 'text-bg-warning';
-        default: return 'text-bg-info';
-    }
-};
-
 /**
  * Loads more entries when the user scrolls near the bottom.
  */
@@ -234,17 +186,6 @@ onUnmounted(() => {
     white-space: nowrap;
 }
 
-.log-message {
-    min-width: 300px;
-}
-
-.log-details {
-    white-space: pre-wrap;
-    word-break: break-word;
-    max-height: 300px;
-    overflow-y: auto;
-}
-
 .loading-spinner-fixed {
     position: fixed;
     bottom: 20px;
@@ -258,16 +199,5 @@ onUnmounted(() => {
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 1000;
-}
-
-[data-bs-theme="dark"] .custom-table-header {
-    background-color: #343a40 !important;
-    color: #ffffff !important;
-}
-
-[data-bs-theme="dark"] .custom-table-header th {
-    background-color: #343a40 !important;
-    color: #ffffff !important;
-    border-color: #495057 !important;
 }
 </style>
