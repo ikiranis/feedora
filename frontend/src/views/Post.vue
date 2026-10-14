@@ -160,7 +160,7 @@
                             :class="showDetails ? 'col-12 col-md-6 col-lg-4' : 'col-12'"
                             @click="selectedIndex = !showDetails && selectedIndex === index ? -1 : index">
                             <PostElement :post="post" :show-details="showDetails" :selected="index === selectedIndex"
-                                @post-read="handlePostRead" @toggle-saved="toggleSaved" />
+                                @post-read="handlePostRead" @toggle-saved="toggleSaved" @show-logs="showPostLogs" />
                         </div>
                         <div v-if="allLoaded && posts.length > 0 && !searchTerm.trim()" class="text-center w-100 text-muted my-4">
                             {{ language.get('No more posts') || 'No more posts' }}
@@ -185,7 +185,10 @@
     </div>
 
     <PostModal v-if="modalPost" ref="postModalRef" :post="modalPost"
-        @close="modalOpen = false" @toggle-saved="toggleSaved" />
+        @close="modalOpen = false" @toggle-saved="toggleSaved" @show-logs="showPostLogs" />
+
+    <LogsModal :post-id="logsPost?.id" :feed-id="logsPost?.feed?.id" :title="logsPost?.title" :show="!!logsPost"
+        @logs-cleared="handlePostLogsCleared" @modal-hidden="logsPost = null" />
 
     <Error class="error-fixed-bottom" />
 </template>
@@ -200,6 +203,7 @@ import { language } from '@/functions/languageStore';
 import { postContentStore } from '@/functions/postContentStore';
 import PostElement from '@/components/PostElement.vue';
 import PostModal from '@/components/PostModal.vue';
+import LogsModal from '@/components/log/LogsModal.vue';
 import Error from '@/components/error/Error.vue'; // Changed from ErrorDisplay
 import { errorStore } from '@/components/error/errorStore'; // Import errorStore
 import { confirmDialog } from '@/functions/javaDialogs';
@@ -220,6 +224,7 @@ const selectedIndex = ref(-1); // Index of the card selected via keyboard naviga
 const modalOpen = ref(false); // The selected post is shown in full in a modal
 const postModalRef = ref<InstanceType<typeof PostModal> | null>(null);
 const modalPost = computed(() => modalOpen.value ? posts.value[selectedIndex.value] ?? null : null);
+const logsPost = ref<PostType | null>(null); // The post whose log entries are shown in the logs modal
 const folders = ref<FolderType[]>([]);
 const unreadCounts = ref<UnreadCountsType>({ total: 0, saved: 0, folders: {}, feeds: [] });
 const selectedFolderId = ref<string | null>(null); // null shows the posts of all folders
@@ -734,11 +739,29 @@ const openInBackgroundTab = (url: string) => {
 };
 
 /**
+ * Opens the modal with the log entries of a post, e.g. why its content couldn't be retrieved.
+ */
+const showPostLogs = (post: PostType) => {
+    logsPost.value = post;
+};
+
+/**
+ * Hides the logs icon of the post whose log entries were deleted.
+ */
+const handlePostLogsCleared = () => {
+    if (logsPost.value) {
+        postContentStore.clearLogCount(logsPost.value.id);
+    }
+};
+
+/**
  * Handles arrow key navigation between cards.
  * In list mode, Up/Down scroll the list instead (so long expanded posts can be read) and Left/Right move between posts.
  * Enter or O opens the selected post in a modal (Esc closes it), B opens its link in a background tab, F saves it for later (or unsaves it).
  */
 const handleKeydown = (event: KeyboardEvent) => {
+    // The logs modal handles its own keys (Esc closes it)
+    if (logsPost.value) return;
     const target = event.target as HTMLElement | null;
     if (target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
     if (event.altKey || event.ctrlKey || event.metaKey || posts.value.length === 0) return;

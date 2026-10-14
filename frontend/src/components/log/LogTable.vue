@@ -6,7 +6,7 @@
                     <th>{{ language.get('Date') }}</th>
                     <th>{{ language.get('Level') }}</th>
                     <th v-if="showFeed">{{ language.get('Feed') }}</th>
-                    <th>{{ language.get('Post') }}</th>
+                    <th v-if="showPost">{{ language.get('Post') }}</th>
                     <th>{{ language.get('Message') }}</th>
                 </tr>
             </thead>
@@ -24,7 +24,7 @@
                         </a>
                         <span v-else-if="log.feedId">{{ log.feedTitle || log.feedId }}</span>
                     </td>
-                    <td>
+                    <td v-if="showPost">
                         <a v-if="log.postId && clickable" href="#" class="text-decoration-none" @click.prevent="emit('filter', 'postId', log.postId)"
                            :title="language.get('Show the log entries of this post')">
                             {{ log.postTitle || log.postId }}
@@ -53,12 +53,15 @@ interface Props {
     logs: LogEntryType[];
     // Show the feed column. Hidden when all the entries are of the same feed.
     showFeed?: boolean;
+    // Show the post column. Hidden when all the entries are of the same post.
+    showPost?: boolean;
     // Make the feed and post titles links that emit 'filter'
     clickable?: boolean;
 }
 
 withDefaults(defineProps<Props>(), {
     showFeed: true,
+    showPost: true,
     clickable: true
 });
 

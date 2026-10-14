@@ -115,15 +115,26 @@ public class LogService {
     }
 
     /**
-     * Deletes the log entries of a user, or only those of one of their feeds.
+     * Returns the number of log entries of a post.
+     * @param user The user who owns the post
+     * @param postId The post
+     * @return The number of entries
+     */
+    public long countLogsByPost(User user, UUID postId) {
+        return logEntryRepository.countByUserAndPostId(user, postId);
+    }
+
+    /**
+     * Deletes the log entries of a user, or only those of one of their posts or feeds.
      * @param user The user
-     * @param feedId The feed whose entries to delete, or null for all the user's entries
+     * @param feedId The feed whose entries to delete, or null
+     * @param postId The post whose entries to delete, or null. Takes precedence over feedId.
      * @return The number of entries deleted
      */
-    public int deleteLogs(User user, UUID feedId) {
-        return feedId != null
-                ? logEntryRepository.deleteByUserAndFeedId(user, feedId)
-                : logEntryRepository.deleteByUser(user);
+    public int deleteLogs(User user, UUID feedId, UUID postId) {
+        if (postId != null) return logEntryRepository.deleteByUserAndPostId(user, postId);
+        if (feedId != null) return logEntryRepository.deleteByUserAndFeedId(user, feedId);
+        return logEntryRepository.deleteByUser(user);
     }
 
     /**

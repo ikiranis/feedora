@@ -3,6 +3,7 @@ package eu.apps4net.feedora.controllers;
 import eu.apps4net.feedora.configurations.Language;
 import eu.apps4net.feedora.models.Post;
 import eu.apps4net.feedora.models.User;
+import eu.apps4net.feedora.services.LogService;
 import eu.apps4net.feedora.services.PostService;
 import eu.apps4net.feedora.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,8 @@ public class PostController {
     private PostService postService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private LogService logService;
 
     @GetMapping("/getAllPosts")
     public List<Post> getAllPosts() {
@@ -74,11 +77,13 @@ public class PostController {
         return postService.getUnreadCounts(currentUser);
     }
 
+    // The content, and the number of log entries of the post (e.g. when its page couldn't be read)
     @GetMapping("/content/{postId}")
-    public Map<String, String> getPostContent(@PathVariable UUID postId) {
+    public Map<String, Object> getPostContent(@PathVariable UUID postId) {
         User currentUser = userService.getCurrentUser();
-        Map<String, String> result = new HashMap<>();
+        Map<String, Object> result = new HashMap<>();
         result.put("content", postService.getPostContent(postId, currentUser));
+        result.put("logCount", logService.countLogsByPost(currentUser, postId));
         return result;
     }
 

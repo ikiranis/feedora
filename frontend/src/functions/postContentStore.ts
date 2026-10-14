@@ -6,6 +6,8 @@ const MAX_CONCURRENT_PREFETCHES = 2;
 
 // Loaded full contents by post id (null when the post has no content). Reactive so posts render as soon as it arrives.
 const contents = reactive(new Map<string, string | null>());
+// Number of log entries by post id, returned with the content (e.g. when the post's page couldn't be read)
+const logCounts = reactive(new Map<string, number>());
 const pending = new Map<string, Promise<void>>();
 const loadingIds = reactive(new Set<string>()); // Reactive mirror of the pending ids
 const prefetchQueue: string[] = [];
@@ -32,7 +34,10 @@ const load = (postId: string): Promise<void> => {
     let request = pending.get(postId);
     if (!request) {
         request = getPostContent(postId)
-            .then(content => { contents.set(postId, content); })
+            .then(result => {
+                contents.set(postId, result.content);
+                logCounts.set(postId, result.logCount);
+            })
             .catch(error => { console.error('Failed to load post content:', error); })
             .finally(() => {
                 pending.delete(postId);
@@ -78,6 +83,8 @@ export const postContentStore = {
     get: (postId: string) => contents.get(postId),
     has: (postId: string) => contents.has(postId),
     isLoading: (postId: string) => loadingIds.has(postId),
+    logCount: (postId: string) => logCounts.get(postId) ?? 0,
+    clearLogCount: (postId: string) => { logCounts.delete(postId); },
     load,
     prefetch,
     isYoutubeLink,

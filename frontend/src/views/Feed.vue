@@ -138,8 +138,9 @@
     />
 
     <!-- Feed Logs Modal -->
-    <FeedLogsModal
-        :feed="logsFeed"
+    <LogsModal
+        :feed-id="logsFeed?.id"
+        :title="logsFeed?.title"
         :show="showLogsModal"
         @logs-cleared="handleLogsCleared"
         @modal-hidden="showLogsModal = false"
@@ -156,7 +157,7 @@ import { language } from '@/functions/languageStore';
 import Error from '@/components/error/Error.vue';
 import AddFeedModal from '@/components/feed/AddFeedModal.vue';
 import EditFeedModal from '@/components/feed/EditFeedModal.vue';
-import FeedLogsModal from '@/components/log/FeedLogsModal.vue';
+import LogsModal from '@/components/log/LogsModal.vue';
 import { errorStore } from '@/components/error/errorStore';
 
 const feeds = ref<Feed[]>([]);

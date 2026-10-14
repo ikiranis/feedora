@@ -1174,4 +1174,24 @@
         <language code="el">Φόρτωση περισσότερων</language>
     </entry>
 
+    <entry id="Delete the log entries of this post">
+        <language code="en">Delete the log entries of this post</language>
+        <language code="el">Διαγραφή των καταγραφών αυτού του άρθρου</language>
+    </entry>
+
+    <entry id="Are you sure you want to delete the log entries of this post">
+        <language code="en">Are you sure you want to delete the log entries of this post?</language>
+        <language code="el">Είστε σίγουροι ότι θέλετε να διαγράψετε τις καταγραφές αυτού του άρθρου;</language>
+    </entry>
+
+    <entry id="The content of this post couldn't be fully retrieved">
+        <language code="en">The content of this post couldn't be fully retrieved</language>
+        <language code="el">Το περιεχόμενο αυτού του άρθρου δεν ανακτήθηκε πλήρως</language>
+    </entry>
+
+    <entry id="View logs">
+        <language code="en">View logs</language>
+        <language code="el">Προβολή καταγραφών</language>
+    </entry>
+
 </root>

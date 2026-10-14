@@ -13,6 +13,13 @@
                         </div>
                     </div>
                     <div class="d-flex align-items-start gap-2 flex-shrink-0">
+                        <button v-if="logCount" type="button" class="post-modal-action logs-action" @click="emit('show-logs', post)"
+                            :title="language.get('The content of this post couldn\'t be fully retrieved') + ' — ' + language.get('View logs')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/>
+                            <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+                        </svg>
+                        </button>
                         <button type="button" class="post-modal-action" :class="{ saved: post.saved }" @click="emit('toggle-saved', post.id)"
                             :title="post.saved ? (language.get('Remove from saved') || 'Remove from saved') : (language.get('Save for later') || 'Save for later')">
                             <svg v-if="post.saved" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
@@ -61,6 +68,7 @@ const props = defineProps<{
 const emit = defineEmits<{
     'close': []
     'toggle-saved': [postId: string]
+    'show-logs': [post: PostType]
 }>();
 
 const bodyRef = ref<HTMLElement | null>(null);
@@ -97,6 +105,8 @@ const youtubeEmbedUrl = computed(() => {
 
 const fullContent = computed(() => postContentStore.get(props.post.id) ?? null);
 const contentLoading = computed(() => postContentStore.isLoading(props.post.id));
+// Log entries of the post, e.g. when its page couldn't be read
+const logCount = computed(() => postContentStore.logCount(props.post.id));
 
 // Load the full article (videos show the player instead) and start at the top when switching posts
 watch(() => props.post.id, () => {
@@ -191,6 +201,11 @@ defineExpose({ scrollBy });
 
 .post-modal-action:hover {
     color: var(--text-color);
+}
+
+.post-modal-action.logs-action,
+.post-modal-action.logs-action:hover {
+    color: #e0a800;
 }
 
 .post-modal-action.saved {

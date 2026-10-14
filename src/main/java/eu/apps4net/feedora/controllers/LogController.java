@@ -43,14 +43,15 @@ public class LogController {
     }
 
     /**
-     * Deletes the current user's log entries, or only those of a feed.
+     * Deletes the current user's log entries, or only those of a feed or a post.
      *
      * @param feedId Optional feed id, to only delete the entries of that feed and its posts
+     * @param postId Optional post id, to only delete the entries of that post. Takes precedence over feedId.
      * @return The number of entries deleted
      */
     @DeleteMapping
-    public Map<String, Integer> deleteLogs(@RequestParam(required = false) UUID feedId) {
+    public Map<String, Integer> deleteLogs(@RequestParam(required = false) UUID feedId, @RequestParam(required = false) UUID postId) {
         User currentUser = userService.getCurrentUser();
-        return Map.of("count", logService.deleteLogs(currentUser, feedId));
+        return Map.of("count", logService.deleteLogs(currentUser, feedId, postId));
     }
 }

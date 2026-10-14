@@ -28,6 +28,13 @@ public interface LogEntryRepository extends JpaRepository<LogEntry, UUID> {
     @Query("DELETE FROM LogEntry l WHERE l.user = :user AND l.feedId = :feedId")
     int deleteByUserAndFeedId(@Param("user") User user, @Param("feedId") UUID feedId);
 
+    long countByUserAndPostId(User user, UUID postId);
+
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM LogEntry l WHERE l.user = :user AND l.postId = :postId")
+    int deleteByUserAndPostId(@Param("user") User user, @Param("postId") UUID postId);
+
     @Modifying
     @Transactional
     @Query("DELETE FROM LogEntry l WHERE l.createdAt < :before")

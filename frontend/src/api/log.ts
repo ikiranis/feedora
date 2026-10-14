@@ -28,15 +28,19 @@ export const getLogs = async (page: number, pageSize: number, feedId?: string | 
 };
 
 /**
- * Delete the log entries of the current user, or only those of a feed.
+ * Delete the log entries of the current user, or only those of a feed or a post.
  * @param feedId - Optional feed id to only delete the entries of that feed and its posts
+ * @param postId - Optional post id to only delete the entries of that post. Takes precedence over feedId.
  * @returns {Promise<number>} The number of entries deleted
  * @throws Error if the request fails
  */
-export const deleteLogs = async (feedId?: string | null): Promise<number> => {
+export const deleteLogs = async (feedId?: string | null, postId?: string | null): Promise<number> => {
     const params: any = {};
     if (feedId) {
         params.feedId = feedId;
+    }
+    if (postId) {
+        params.postId = postId;
     }
     const response = await axios.delete(config.defaultServer() + '/api/logs', { params });
     return response.data.count;

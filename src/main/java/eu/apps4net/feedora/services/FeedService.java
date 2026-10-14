@@ -330,7 +330,7 @@ public class FeedService {
         
         // Then delete the feed and its log entries
         feedRepository.delete(feed);
-        logService.deleteLogs(user, feed.getId());
+        logService.deleteLogs(user, feed.getId(), null);
         return Language.getActionString("Feed deleted successfully");
     }
 
