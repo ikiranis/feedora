@@ -9,6 +9,7 @@ import Feed from "@/views/Feed.vue"
 import Folder from "@/views/Folder.vue"
 import User from "@/views/User.vue"
 import Post from "@/views/Post.vue"
+import Log from "@/views/Log.vue"
 import Auth from "@/views/Auth.vue"
 import { authStore } from "@/functions/authStore"
 import { errorStore } from "@/components/error/errorStore"
@@ -66,6 +67,12 @@ const routes : RouteRecordRaw[] = [
         path: '/posts',
         name: 'Posts',
         component: Post,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/logs',
+        name: 'Logs',
+        component: Log,
         meta: { requiresAuth: true }
     },
 ]

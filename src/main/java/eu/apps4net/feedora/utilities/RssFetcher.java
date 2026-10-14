@@ -5,7 +5,9 @@ import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
 
+import eu.apps4net.feedora.exceptions.FeedFetchException;
 import eu.apps4net.feedora.models.Feed;
+import eu.apps4net.feedora.models.LogType;
 import eu.apps4net.feedora.services.FeedService;
 
 import org.jsoup.Jsoup;
@@ -44,9 +46,10 @@ public class RssFetcher {
      * Fetches and parses an RSS/Atom feed from the given URL.
      *
      * @param feed The Feed entity
-     * @param feedService The FeedService instance
+     * @param feedService The FeedService instance, used to remove the feed if its URL returns an HTML page
      * @return List of SyndEntry (feed posts)
-     * @throws Exception if fetching or parsing fails
+     * @throws FeedFetchException if the server responds with an error status or the feed can't be parsed
+     * @throws Exception if the feed can't be downloaded
      */
     public static List<SyndEntry> fetch(Feed feed, FeedService feedService) throws Exception {
         List<SyndEntry> entries = new ArrayList<>();
@@ -69,6 +72,10 @@ public class RssFetcher {
             redirects++;
         }
 
+        if (status >= 400) {
+            throw new FeedFetchException(LogType.FEED_FETCH, "HTTP " + status + ": " + conn.getResponseMessage(), null, null);
+        }
+
         String contentType = conn.getContentType();
         try (InputStream is = conn.getInputStream()) {
             xmlContent = new String(is.readAllBytes(), StandardCharsets.UTF_8);
@@ -77,9 +84,8 @@ public class RssFetcher {
         // Check if content is likely XML
         String xmlStart = xmlContent.trim().substring(0, Math.min(100, xmlContent.trim().length())).toLowerCase();
         if ((contentType != null && contentType.contains("html")) || xmlStart.startsWith("<html") || xmlStart.contains("<html")) {
-            System.err.println("Feed URL returned HTML, not XML: " + feed.getXmlUrl());
             if (feedService != null) {
-                feedService.removeFeedById(feed.getId());
+                feedService.removeInvalidFeed(feed, "The feed URL returned an HTML page instead of a feed");
             }
             return entries; // Return empty list
         }
@@ -90,10 +96,9 @@ public class RssFetcher {
             SyndFeed newFeed = new SyndFeedInput().build(reader);
             entries.addAll(newFeed.getEntries());
         } catch (Exception e) {
-            // Log a snippet of the problematic XML for debugging
-            System.err.println("Error parsing feed: " + feed.getXmlUrl() + " - " + e.getMessage());
-            System.err.println("XML snippet: " + fixedXml.substring(0, Math.min(1000, fixedXml.length())));
-            throw e;
+            // Keep a snippet of the problematic XML for debugging
+            throw new FeedFetchException(LogType.FEED_PARSE, "Invalid feed: " + e.getMessage(),
+                    "XML snippet:\n" + fixedXml.substring(0, Math.min(1000, fixedXml.length())), e);
         }
         return entries;
     }

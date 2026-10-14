@@ -1,5 +1,6 @@
 package eu.apps4net.feedora.configurations;
 
+import eu.apps4net.feedora.services.LogService;
 import eu.apps4net.feedora.services.PostService;
 import eu.apps4net.feedora.services.UserService;
 import eu.apps4net.feedora.models.User;
@@ -16,6 +17,8 @@ public class FeedParseWorkerConfig {
     private PostService postService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private LogService logService;
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
@@ -27,6 +30,12 @@ public class FeedParseWorkerConfig {
             try {
                 User adminUser = userService.getOrCreateAdminUser();
                 postService.parseFeeds(adminUser);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            try {
+                logService.deleteExpiredLogs();
             } catch (Exception e) {
                 e.printStackTrace();
             }

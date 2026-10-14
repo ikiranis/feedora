@@ -3,6 +3,8 @@ package eu.apps4net.feedora.services;
 import eu.apps4net.feedora.configurations.Language;
 import eu.apps4net.feedora.models.Feed;
 import eu.apps4net.feedora.models.Folder;
+import eu.apps4net.feedora.models.LogLevel;
+import eu.apps4net.feedora.models.LogType;
 import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.repositories.FeedRepository;
 import eu.apps4net.feedora.repositories.FolderRepository;
@@ -31,6 +33,8 @@ public class FeedService {
     private PostRepository postRepository;
     @Autowired
     private OperationLockService operationLockService;
+    @Autowired
+    private LogService logService;
 
     /**
      * Imports feeds and folders from an OPML file and saves them to the database.
@@ -138,20 +142,19 @@ public class FeedService {
         }
     }
 
-    public void removeFeedByXmlUrlAndUser(String xmlUrl, User user) {
-        Feed feed = feedRepository.findByUser(user).stream()
-            .filter(f -> f.getXmlUrl().equals(xmlUrl))
-            .findFirst()
-            .orElse(null);
-        if (feed != null) {
-            feedRepository.delete(feed);
-            System.out.println("[Feedora] Removed feed due to invalid (HTML) response: " + xmlUrl);
+    /**
+     * Removes a feed whose URL doesn't serve a feed anymore, and logs it.
+     *
+     * @param feed The feed to remove
+     * @param reason Why the feed is removed, for the log
+     */
+    public void removeInvalidFeed(Feed feed, String reason) {
+        try {
+            feedRepository.deleteById(feed.getId());
+            logService.logFeed(feed, LogLevel.WARNING, LogType.FEED_REMOVED, reason + ". The feed was removed.", null);
+        } catch (Exception e) {
+            logService.logFeed(feed, LogLevel.ERROR, LogType.FEED_REMOVED, reason + ". The feed couldn't be removed.", LogService.describe(e));
         }
-    }
-
-    public void removeFeedById(UUID id) {
-        feedRepository.deleteById(id);
-        System.out.println("[Feedora] Removed feed due to invalid (HTML) response: " + id);
     }
 
     /**
@@ -202,6 +205,7 @@ public class FeedService {
         }
 
         // If no title provided, fetch it from the feed
+        Exception feedInfoError = null;
         if (title == null || title.trim().isEmpty()) {
             try {
                 Map<String, Object> feedInfo = fetchFeedInfo(url);
@@ -209,11 +213,17 @@ public class FeedService {
             } catch (Exception e) {
                 // If we can't fetch title, use URL as fallback
                 title = url;
+                feedInfoError = e;
             }
         }
 
         Feed feed = new Feed(title, url, "", "rss", folder, user);
         feedRepository.save(feed);
+
+        if (feedInfoError != null) {
+            logService.logFeed(feed, LogLevel.WARNING, LogType.FEED_INFO,
+                    "Couldn't read the feed's title, the URL is used instead", LogService.describe(feedInfoError));
+        }
         
         return Language.getActionString("Feed added successfully");
     }
@@ -317,8 +327,9 @@ public class FeedService {
         // Delete posts first (due to foreign key constraints)
         postRepository.deleteByFeed(feed);
         
-        // Then delete the feed
+        // Then delete the feed and its log entries
         feedRepository.delete(feed);
+        logService.deleteLogs(user, feed.getId());
         return Language.getActionString("Feed deleted successfully");
     }
 

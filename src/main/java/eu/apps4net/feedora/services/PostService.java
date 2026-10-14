@@ -1,6 +1,9 @@
 package eu.apps4net.feedora.services;
 
+import eu.apps4net.feedora.exceptions.FeedFetchException;
 import eu.apps4net.feedora.models.Feed;
+import eu.apps4net.feedora.models.LogLevel;
+import eu.apps4net.feedora.models.LogType;
 import eu.apps4net.feedora.models.Post;
 import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.repositories.FeedRepository;
@@ -48,6 +51,8 @@ public class PostService {
     private FeedService feedService;
     @Autowired
     private OperationLockService operationLockService;
+    @Autowired
+    private LogService logService;
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -88,9 +93,13 @@ public class PostService {
                 try {
                     entries = RssFetcher.fetch(feed, feedService);
                     success = true;
+                } catch (FeedFetchException e) {
+                    synchronized (failedFeeds) { failedFeeds[0]++; }
+                    String details = e.getDetails() != null ? e.getDetails() : LogService.describe(e);
+                    logService.logFeed(feed, LogLevel.ERROR, e.getType(), e.getMessage(), details);
                 } catch (Exception e) {
                     synchronized (failedFeeds) { failedFeeds[0]++; }
-                    System.err.println("Error parsing feed: " + (feed.getTitle() != null ? feed.getTitle() : feed.getId()) + " - " + e.getMessage());
+                    logService.logFeed(feed, LogLevel.ERROR, LogType.FEED_FETCH, "Couldn't download the feed: " + e.getMessage(), LogService.describe(e));
                 }
 
                 if (success && entries != null) {
@@ -100,20 +109,25 @@ public class PostService {
                             continue;
                         }
 
-                        Post post = new Post(
-                            entry.getTitle(),
-                            entry.getLink(),
-                            entry.getDescription() != null ? entry.getDescription().getValue() : null,
-                            entry.getPublishedDate() != null
-                                ? ZonedDateTime.ofInstant(entry.getPublishedDate().toInstant(), ZoneId.systemDefault()).toLocalDateTime()
-                                : LocalDateTime.now(),
-                            entry.getAuthor(),
-                            false
-                        );
-                        post.setContent(getEntryContent(entry));
-                        post.setFeed(feed);
-                        post.setUser(user);
-                        postRepository.save(post);
+                        try {
+                            Post post = new Post(
+                                entry.getTitle(),
+                                entry.getLink(),
+                                entry.getDescription() != null ? entry.getDescription().getValue() : null,
+                                entry.getPublishedDate() != null
+                                    ? ZonedDateTime.ofInstant(entry.getPublishedDate().toInstant(), ZoneId.systemDefault()).toLocalDateTime()
+                                    : LocalDateTime.now(),
+                                entry.getAuthor(),
+                                false
+                            );
+                            post.setContent(getEntryContent(entry));
+                            post.setFeed(feed);
+                            post.setUser(user);
+                            postRepository.save(post);
+                        } catch (Exception e) {
+                            logService.logFeed(feed, LogLevel.ERROR, LogType.POST_SAVE,
+                                    "Couldn't save the post \"" + entry.getTitle() + "\" (" + entry.getLink() + ")", LogService.describe(e));
+                        }
                     }
                     synchronized (succeededFeeds) { succeededFeeds[0]++; }
                 }
@@ -198,10 +212,13 @@ public class PostService {
         }
 
         String extracted = null;
+        boolean pageRead = false;
         try {
             extracted = ArticleExtractor.extractFromUrl(post.getLink());
+            pageRead = true;
         } catch (Exception e) {
-            System.err.println("[Feedora] Could not extract content from " + post.getLink() + " - " + e.getMessage());
+            logService.logPost(post, LogLevel.ERROR, LogType.CONTENT_EXTRACT,
+                    "Couldn't read the post's page: " + e.getMessage(), LogService.describe(e));
         }
 
         // Prefer the newly extracted content, then content stored by an older version, if longer than the description
@@ -214,6 +231,11 @@ public class PostService {
             return post.getContent();
         }
 
+        // Only log when the page was read, a failed download is already logged above
+        if (pageRead) {
+            logService.logPost(post, LogLevel.WARNING, LogType.CONTENT_NOT_FOUND,
+                    "No article content was found on the post's page, the description is shown instead", null);
+        }
         return description;
     }
 

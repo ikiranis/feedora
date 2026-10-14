@@ -76,3 +76,19 @@ export interface PostType {
 }
 
 
+
+export type LogLevel = 'INFO' | 'WARNING' | 'ERROR';
+
+export interface LogEntryType {
+    id: string;
+    createdAt: string;
+    level: LogLevel;
+    type: string;
+    message: string | null;
+    details: string | null;
+    feedId: string | null;
+    feedTitle: string | null;
+    postId: string | null;
+    postTitle: string | null;
+    url: string | null;
+}

@@ -1059,4 +1059,114 @@
         <language code="el">Αποτυχία σήμανσης των άρθρων ως αναγνωσμένα</language>
     </entry>
 
+    <entry id="Logs">
+        <language code="en">Logs</language>
+        <language code="el">Αρχείο καταγραφής</language>
+    </entry>
+
+    <entry id="Filter by level">
+        <language code="en">Filter by level</language>
+        <language code="el">Φιλτράρισμα κατά επίπεδο</language>
+    </entry>
+
+    <entry id="All levels">
+        <language code="en">All levels</language>
+        <language code="el">Όλα τα επίπεδα</language>
+    </entry>
+
+    <entry id="Errors">
+        <language code="en">Errors</language>
+        <language code="el">Σφάλματα</language>
+    </entry>
+
+    <entry id="Warnings">
+        <language code="en">Warnings</language>
+        <language code="el">Προειδοποιήσεις</language>
+    </entry>
+
+    <entry id="Info">
+        <language code="en">Info</language>
+        <language code="el">Πληροφορίες</language>
+    </entry>
+
+    <entry id="Post">
+        <language code="en">Post</language>
+        <language code="el">Άρθρο</language>
+    </entry>
+
+    <entry id="Level">
+        <language code="en">Level</language>
+        <language code="el">Επίπεδο</language>
+    </entry>
+
+    <entry id="Message">
+        <language code="en">Message</language>
+        <language code="el">Μήνυμα</language>
+    </entry>
+
+    <entry id="Details">
+        <language code="en">Details</language>
+        <language code="el">Λεπτομέρειες</language>
+    </entry>
+
+    <entry id="Remove filter">
+        <language code="en">Remove filter</language>
+        <language code="el">Αφαίρεση φίλτρου</language>
+    </entry>
+
+    <entry id="Clear logs">
+        <language code="en">Clear logs</language>
+        <language code="el">Εκκαθάριση καταγραφών</language>
+    </entry>
+
+    <entry id="Delete all log entries">
+        <language code="en">Delete all log entries</language>
+        <language code="el">Διαγραφή όλων των καταγραφών</language>
+    </entry>
+
+    <entry id="Delete the log entries of this feed">
+        <language code="en">Delete the log entries of this feed</language>
+        <language code="el">Διαγραφή των καταγραφών αυτής της ροής</language>
+    </entry>
+
+    <entry id="Show the log entries of this feed">
+        <language code="en">Show the log entries of this feed</language>
+        <language code="el">Εμφάνιση των καταγραφών αυτής της ροής</language>
+    </entry>
+
+    <entry id="Show the log entries of this post">
+        <language code="en">Show the log entries of this post</language>
+        <language code="el">Εμφάνιση των καταγραφών αυτού του άρθρου</language>
+    </entry>
+
+    <entry id="No more log entries">
+        <language code="en">No more log entries</language>
+        <language code="el">Δεν υπάρχουν άλλες καταγραφές</language>
+    </entry>
+
+    <entry id="No log entries found">
+        <language code="en">No log entries found</language>
+        <language code="el">Δεν βρέθηκαν καταγραφές</language>
+    </entry>
+
+    <entry id="Failed to fetch log entries">
+        <language code="en">Failed to fetch log entries</language>
+        <language code="el">Αποτυχία λήψης των καταγραφών</language>
+    </entry>
+
+    <entry id="Failed to delete log entries">
+        <language code="en">Failed to delete log entries</language>
+        <language code="el">Αποτυχία διαγραφής των καταγραφών</language>
+    </entry>
+
+    <entry id="Are you sure you want to delete all log entries">
+        <language code="en">Are you sure you want to delete all log entries?</language>
+        <language code="el">Είστε σίγουροι ότι θέλετε να διαγράψετε όλες τις καταγραφές;</language>
+    </entry>
+
+    <entry id="Are you sure you want to delete the log entries of this feed">
+        <language code="en">Are you sure you want to delete the log entries of this feed?</language>
+        <language code="el">Είστε σίγουροι ότι θέλετε να διαγράψετε τις καταγραφές αυτής της ροής;</language>
+    </entry>
+
 </root>
