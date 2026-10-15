@@ -13,8 +13,12 @@ const languages: Array<Language> = [
         }
     ]
 
+/**
+ * The backend URL. In the production build the app is served by the backend itself, so the API is on
+ * the same origin (works with any host/IP/port, e.g. behind Docker). The Vite dev server needs the full URL.
+ */
 const defaultServer = () => {
-    return 'http://localhost:9999'
+    return import.meta.env.DEV ? 'http://localhost:9999' : window.location.origin
 }
 
 /**

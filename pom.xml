@@ -28,6 +28,8 @@
     </scm>
     <properties>
         <java.version>21</java.version>
+        <!-- Newer Byte Buddy so Mockito inline mocks work when building on JDK 25+ -->
+        <byte-buddy.version>1.18.15</byte-buddy.version>
     </properties>
     <dependencies>
         <dependency>
