@@ -82,7 +82,7 @@
                         <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.4 31.4 0 0 0 0 12a31.4 31.4 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.4 31.4 0 0 0 24 12a31.4 31.4 0 0 0-.5-5.8zM9.6 15.6V8.4l6.2 3.6z"/>
                     </svg>
                 </span>
-                <a :href="post.link" target="_blank" class="list-title" @click.stop>{{ post.title }}</a>
+                <a :href="post.link" target="_blank" class="list-title" @click="handleTitleClick">{{ post.title }}</a>
                 <span v-if="excerpt" class="list-excerpt">{{ excerpt }}</span>
             </div>
             <button type="button" class="list-save save-button" :class="{ saved: post.saved }" @click.stop="emit('toggle-saved', post.id)"
@@ -238,6 +238,18 @@ const emit = defineEmits<{
     'toggle-saved': [postId: string]
     'show-logs': [post: PostType]
 }>();
+
+/**
+ * List mode title: a plain click expands the post in the app (the row's click handler);
+ * Ctrl/Cmd/Shift-click (and middle-click) still open the original link.
+ */
+const handleTitleClick = (event: MouseEvent) => {
+    if (event.ctrlKey || event.metaKey || event.shiftKey) {
+        event.stopPropagation();
+    } else {
+        event.preventDefault();
+    }
+};
 
 const handleCardClick = async () => {
     // Only mark as read if it's currently unread
