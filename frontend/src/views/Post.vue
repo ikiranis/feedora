@@ -357,9 +357,9 @@ const fetchUnreadCounts = async () => {
 
 /**
  * Changes the folder/feed/saved filter of the posts list and reloads it.
+ * Selecting the current filter again also reloads it, to fetch the latest posts.
  */
 const applyFilter = (folderId: string | null, feedId: string | null, saved = false) => {
-    if (selectedFolderId.value === folderId && selectedFeedId.value === feedId && showSaved.value === saved) return;
     selectedFolderId.value = folderId;
     selectedFeedId.value = feedId;
     showSaved.value = saved;
