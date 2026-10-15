@@ -65,7 +65,7 @@ const handleLogout = async () => {
             <router-link :to="{ name: 'Posts' }" title="Feedora" :class="menuItemClasses">
                 <h2 class="d-flex">
                     <span>
-                        <img src="/feedora.svg?v=7" alt="Feedora" :width="getIconSize + 8" :height="getIconSize + 8"
+                        <img src="/feedora.svg?v=8" alt="Feedora" :width="getIconSize + 8" :height="getIconSize + 8"
                             class="my-auto" />
                     </span>
 
