@@ -20,28 +20,30 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     List<Post> findByUser(User user);
     List<Post> findByUser(User user, Pageable pageable);
     List<Post> findByUserAndReadFalse(User user);
-    List<Post> findByUserAndReadFalse(User user, Pageable pageable);
-    
-    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.read = false AND " +
+    // Posts of the user, only the unread ones unless includeRead is true
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND (p.read = false OR :includeRead = true)")
+    List<Post> findByUser(@Param("user") User user, @Param("includeRead") boolean includeRead, Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND (p.read = false OR :includeRead = true) AND " +
            "(LOWER(p.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
            "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
-    List<Post> findByUserAndReadFalseAndTitleOrDescriptionContaining(@Param("user") User user, @Param("searchTerm") String searchTerm, Pageable pageable);
-    
-    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.read = false AND p.feed.folder.id = :folderId")
-    List<Post> findByUserAndReadFalseAndFolder(@Param("user") User user, @Param("folderId") UUID folderId, Pageable pageable);
+    List<Post> findByUserAndTitleOrDescriptionContaining(@Param("user") User user, @Param("includeRead") boolean includeRead, @Param("searchTerm") String searchTerm, Pageable pageable);
 
-    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.read = false AND p.feed.folder.id = :folderId AND " +
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND (p.read = false OR :includeRead = true) AND p.feed.folder.id = :folderId")
+    List<Post> findByUserAndFolder(@Param("user") User user, @Param("includeRead") boolean includeRead, @Param("folderId") UUID folderId, Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND (p.read = false OR :includeRead = true) AND p.feed.folder.id = :folderId AND " +
            "(LOWER(p.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
            "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
-    List<Post> findByUserAndReadFalseAndFolderAndTitleOrDescriptionContaining(@Param("user") User user, @Param("folderId") UUID folderId, @Param("searchTerm") String searchTerm, Pageable pageable);
+    List<Post> findByUserAndFolderAndTitleOrDescriptionContaining(@Param("user") User user, @Param("includeRead") boolean includeRead, @Param("folderId") UUID folderId, @Param("searchTerm") String searchTerm, Pageable pageable);
 
-    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.read = false AND p.feed.id = :feedId")
-    List<Post> findByUserAndReadFalseAndFeed(@Param("user") User user, @Param("feedId") UUID feedId, Pageable pageable);
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND (p.read = false OR :includeRead = true) AND p.feed.id = :feedId")
+    List<Post> findByUserAndFeed(@Param("user") User user, @Param("includeRead") boolean includeRead, @Param("feedId") UUID feedId, Pageable pageable);
 
-    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.read = false AND p.feed.id = :feedId AND " +
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND (p.read = false OR :includeRead = true) AND p.feed.id = :feedId AND " +
            "(LOWER(p.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
            "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
-    List<Post> findByUserAndReadFalseAndFeedAndTitleOrDescriptionContaining(@Param("user") User user, @Param("feedId") UUID feedId, @Param("searchTerm") String searchTerm, Pageable pageable);
+    List<Post> findByUserAndFeedAndTitleOrDescriptionContaining(@Param("user") User user, @Param("includeRead") boolean includeRead, @Param("feedId") UUID feedId, @Param("searchTerm") String searchTerm, Pageable pageable);
 
     // Saved posts are returned whether read or not
     List<Post> findByUserAndSavedTrue(User user, Pageable pageable);

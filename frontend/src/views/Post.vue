@@ -78,6 +78,19 @@
             <div class="container py-4">
                 <div class="row justify-content-end mb-4 align-items-center">
                     <div class="col-auto d-flex align-items-center">
+                        <div v-if="!showSaved" class="btn-group me-3" role="group"
+                            :aria-label="language.get('Posts to show') || 'Posts to show'">
+                            <button type="button" class="btn btn-outline-secondary" :class="{ active: !showRead }"
+                                @click="showRead = false" :disabled="loading"
+                                :title="language.get('Show only unread posts') || 'Show only unread posts'">
+                                {{ language.get('Unread') || 'Unread' }}
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" :class="{ active: showRead }"
+                                @click="showRead = true" :disabled="loading"
+                                :title="language.get('Show all posts') || 'Show all posts'">
+                                {{ language.get('All') || 'All' }}
+                            </button>
+                        </div>
                         <div v-if="!showSaved" class="btn-group me-3">
                             <button type="button" class="btn btn-outline-primary d-flex align-items-center gap-2"
                                 @click="handleMarkAllAsRead(null)" :disabled="loading"
@@ -129,11 +142,13 @@
                                     d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z" />
                             </svg>
                         </button>
-                        <button @click="handleParseFeeds" class="btn btn-primary me-2">
-                            {{ language.get('Parse RSS Feeds') }}
-                        </button>
-                        <button @click="handleDeleteAllPosts" class="btn btn-danger me-3">
-                            {{ language.get('Delete All Posts') }}
+                        <button @click="handleParseFeeds" class="btn btn-outline-primary me-3"
+                            :title="language.get('Parse RSS Feeds') || 'Parse RSS Feeds'" :disabled="loading">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                class="bi bi-cloud-arrow-down" viewBox="0 0 16 16">
+                                <path fill-rule="evenodd" d="M7.646 10.854a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 9.293V5.5a.5.5 0 0 0-1 0v3.793L6.354 8.146a.5.5 0 1 0-.708.708l2 2z"/>
+                                <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/>
+                            </svg>
                         </button>
                         <div class="input-group" style="width: 250px;">
                             <span class="input-group-text">
@@ -195,7 +210,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
-import { getPosts, parseFeeds, deleteAllPosts, markAsRead, markAllAsRead, getUnreadCounts, setPostSaved } from '@/api/post';
+import { getPosts, parseFeeds, markAsRead, markAllAsRead, getUnreadCounts, setPostSaved } from '@/api/post';
 import { getFeedOperationStatus } from '@/api/feed';
 import { getFolders } from '@/api/folder';
 import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType } from '@/types';
@@ -233,6 +248,7 @@ const showSaved = ref(false); // Shows the saved posts (read or unread) instead 
 const expandedFolders = ref<Set<string>>(new Set());
 const failedFeedIcons = ref<Set<string>>(new Set());
 const showEmptyFolders = ref(localStorage.getItem('posts-show-empty-folders') === 'true'); // Persisted in localStorage
+const showRead = ref(localStorage.getItem('posts-show-read') === 'true'); // Lists the read posts too, persisted in localStorage
 
 // Choices of the "Mark all as read" dropdown, by the age of the posts to mark (null marks all of them)
 const markAsReadToggleRef = ref<HTMLElement | null>(null);
@@ -386,7 +402,7 @@ const fetchPosts = async (reset = false) => {
             selectedIndex.value = -1;
         }
 
-        const data = await getPosts(page.value, pageSize, searchTerm.value, selectedFolderId.value, selectedFeedId.value, showSaved.value);
+        const data = await getPosts(page.value, pageSize, searchTerm.value, selectedFolderId.value, selectedFeedId.value, showSaved.value, showRead.value);
 
         if (data.length < pageSize) {
             allLoaded.value = true;
@@ -446,29 +462,6 @@ const handleParseFeeds = async () => {
             errorStore.set(true, e.response.data.message, e.response.data.status);
         } else {
             errorStore.set(true, language.get('Failed to parse feeds') || 'Failed to parse feeds.', 500);
-        }
-    } finally {
-        loading.value = false;
-    }
-};
-
-/**
- * Handles the action of deleting all posts. It calls the deleteAllPosts API,
- * then refreshes the post list and shows an alert with the result.
- */
-const handleDeleteAllPosts = async () => {
-    try {
-        loading.value = true;
-        const result = await deleteAllPosts();
-        await fetchPosts(true); // Refresh posts
-        fetchUnreadCounts();
-        errorStore.set(true, result, 200); // Use errorStore for success
-    } catch (e: any) { // Added :any to e for response access
-        console.error("Error deleting all posts:", e);
-        if (e.response && e.response.data && e.response.data.message && typeof e.response.data.status === 'number') {
-            errorStore.set(true, e.response.data.message, e.response.data.status);
-        } else {
-            errorStore.set(true, language.get('Failed to delete posts') || 'Failed to delete posts.', 500);
         }
     } finally {
         loading.value = false;
@@ -856,6 +849,13 @@ watch([selectedIndex, showDetails, () => posts.value.length], () => {
 // Persist the visibility of folders without unread posts
 watch(showEmptyFolders, (value) => {
     localStorage.setItem('posts-show-empty-folders', String(value));
+});
+
+// Persist the unread/all posts choice and reload the list with it
+watch(showRead, (value) => {
+    localStorage.setItem('posts-show-read', String(value));
+    scrollableContainerRef.value?.scrollTo({ top: 0 });
+    handleRefreshPosts();
 });
 
 // Watch for search term changes with debouncing

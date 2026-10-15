@@ -1194,4 +1194,29 @@
         <language code="el">Προβολή καταγραφών</language>
     </entry>
 
+    <entry id="Unread">
+        <language code="en">Unread</language>
+        <language code="el">Μη αναγνωσμένα</language>
+    </entry>
+
+    <entry id="All">
+        <language code="en">All</language>
+        <language code="el">Όλα</language>
+    </entry>
+
+    <entry id="Show only unread posts">
+        <language code="en">Show only unread posts</language>
+        <language code="el">Εμφάνιση μόνο των μη αναγνωσμένων άρθρων</language>
+    </entry>
+
+    <entry id="Show all posts">
+        <language code="en">Show all posts</language>
+        <language code="el">Εμφάνιση όλων των άρθρων</language>
+    </entry>
+
+    <entry id="Posts to show">
+        <language code="en">Posts to show</language>
+        <language code="el">Άρθρα προς εμφάνιση</language>
+    </entry>
+
 </root>

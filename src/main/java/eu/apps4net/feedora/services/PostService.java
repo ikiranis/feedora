@@ -242,29 +242,28 @@ public class PostService {
     /**
      * Returns paginated unread posts for a given user.
      * @param user The user
-     * @param page The page number (0-indexed)
+     * @param page The page number (1-indexed)
      * @param pageSize The number of posts per page
      * @return List of unread posts
      */
     public List<Post> getPostsForUser(User user, int page, int pageSize) {
-        Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "pubDate")); // Sorting included in Pageable
-        return postRepository.findByUserAndReadFalse(user, pageable);
+        return getPostsForUser(user, page, pageSize, null);
     }
 
     /**
      * Returns paginated unread posts for a given user with search functionality.
      * @param user The user
-     * @param page The page number (0-indexed)
+     * @param page The page number (1-indexed)
      * @param pageSize The number of posts per page
      * @param searchTerm The search term to filter posts by title or description (case-insensitive)
      * @return List of unread posts
      */
     public List<Post> getPostsForUser(User user, int page, int pageSize, String searchTerm) {
-        return getPostsForUser(user, page, pageSize, searchTerm, null, null, false);
+        return getPostsForUser(user, page, pageSize, searchTerm, null, null, false, false);
     }
 
     /**
-     * Returns paginated unread posts for a given user, optionally filtered by search term and by feed or folder.
+     * Returns paginated posts for a given user, optionally filtered by search term and by feed or folder.
      * @param user The user
      * @param page The page number (1-indexed)
      * @param pageSize The number of posts per page
@@ -272,9 +271,11 @@ public class PostService {
      * @param folderId The folder whose feeds' posts to return, or null for all folders
      * @param feedId The feed whose posts to return, or null for all feeds. Takes precedence over folderId.
      * @param saved If true, returns the saved posts (read or unread) instead. Takes precedence over feedId and folderId.
-     * @return List of unread posts, or of saved posts
+     * @param includeRead If true, returns the read posts too, otherwise only the unread ones
+     * @return List of posts, or of saved posts
      */
-    public List<Post> getPostsForUser(User user, int page, int pageSize, String searchTerm, UUID folderId, UUID feedId, boolean saved) {
+    public List<Post> getPostsForUser(User user, int page, int pageSize, String searchTerm, UUID folderId, UUID feedId,
+                                      boolean saved, boolean includeRead) {
         Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "pubDate"));
         boolean hasSearch = searchTerm != null && !searchTerm.trim().isEmpty();
 
@@ -286,19 +287,19 @@ public class PostService {
 
         if (feedId != null) {
             return hasSearch
-                    ? postRepository.findByUserAndReadFalseAndFeedAndTitleOrDescriptionContaining(user, feedId, searchTerm.trim(), pageable)
-                    : postRepository.findByUserAndReadFalseAndFeed(user, feedId, pageable);
+                    ? postRepository.findByUserAndFeedAndTitleOrDescriptionContaining(user, includeRead, feedId, searchTerm.trim(), pageable)
+                    : postRepository.findByUserAndFeed(user, includeRead, feedId, pageable);
         }
 
         if (folderId != null) {
             return hasSearch
-                    ? postRepository.findByUserAndReadFalseAndFolderAndTitleOrDescriptionContaining(user, folderId, searchTerm.trim(), pageable)
-                    : postRepository.findByUserAndReadFalseAndFolder(user, folderId, pageable);
+                    ? postRepository.findByUserAndFolderAndTitleOrDescriptionContaining(user, includeRead, folderId, searchTerm.trim(), pageable)
+                    : postRepository.findByUserAndFolder(user, includeRead, folderId, pageable);
         }
 
         return hasSearch
-                ? postRepository.findByUserAndReadFalseAndTitleOrDescriptionContaining(user, searchTerm.trim(), pageable)
-                : postRepository.findByUserAndReadFalse(user, pageable);
+                ? postRepository.findByUserAndTitleOrDescriptionContaining(user, includeRead, searchTerm.trim(), pageable)
+                : postRepository.findByUser(user, includeRead, pageable);
     }
 
     /**

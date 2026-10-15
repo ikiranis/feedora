@@ -10,10 +10,11 @@ import type { UnreadCountsType } from "@/types";
  * @param folderId - Optional folder id to only return posts of that folder's feeds
  * @param feedId - Optional feed id to only return posts of that feed
  * @param saved - If true, return the saved posts (read or unread) instead of the unread ones
+ * @param includeRead - If true, return the read posts too, not only the unread ones
  * @returns {Promise<any>} List of posts
  * @throws Error if the request fails
  */
-export const getPosts = async (page: number, pageSize: number, search?: string, folderId?: string | null, feedId?: string | null, saved?: boolean) => {
+export const getPosts = async (page: number, pageSize: number, search?: string, folderId?: string | null, feedId?: string | null, saved?: boolean, includeRead?: boolean) => {
     try {
         const params: any = { page, pageSize };
         if (search && search.trim()) {
@@ -27,6 +28,9 @@ export const getPosts = async (page: number, pageSize: number, search?: string, 
         }
         if (saved) {
             params.saved = true;
+        }
+        if (includeRead) {
+            params.includeRead = true;
         }
         
         const response = await axios.get(config.defaultServer() + '/api/posts/getPosts', {
@@ -72,22 +76,6 @@ export const getPostContent = async (postId: string): Promise<{ content: string 
 export const parseFeeds = async () => {
     try {
         const response = await axios.post(config.defaultServer() + '/api/posts/parseFeeds');
-        if (response.status === 200) {
-            return response.data;
-        }
-    } catch (error: any) {
-        throw error;
-    }
-};
-
-/**
- * Delete all posts from the backend.
- * @returns {Promise<any>} Result message from backend
- * @throws Error if the request fails
- */
-export const deleteAllPosts = async () => {
-    try {
-        const response = await axios.delete(config.defaultServer() + '/api/posts/deleteAll');
         if (response.status === 200) {
             return response.data;
         }
