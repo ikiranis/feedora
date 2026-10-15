@@ -108,10 +108,11 @@ public class FeedService {
     /**
      * Returns all feeds in the database.
      *
-     * @return List of all Feed entities
+     * @param user The user who owns the feeds
+     * @return List of the user's Feed entities
      */
-    public List<Feed> getAllFeeds() {
-        return feedRepository.findAll();
+    public List<Feed> getAllFeeds(User user) {
+        return feedRepository.findByUser(user);
     }
 
     /**

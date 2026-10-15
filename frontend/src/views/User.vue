@@ -4,6 +4,7 @@
             <div class="col-auto">
                 <div class="d-flex align-items-center gap-3">
                     <button
+                        v-if="authStore.isAdmin.value"
                         class="btn btn-primary"
                         style="white-space: nowrap;"
                         @click="userModalRef?.open()"
@@ -11,7 +12,7 @@
                     >
                         {{ language.get('Add User') || 'Add User' }}
                     </button>
-                    <div class="input-group" style="width: 250px;">
+                    <div v-if="authStore.isAdmin.value" class="input-group" style="width: 250px;">
                         <span class="input-group-text">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
                                 <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
@@ -33,7 +34,7 @@
     <div class="scrollable-user-view">
         <div class="container py-4">
             <!-- Totals over all users -->
-            <div v-if="users.length > 0" class="row row-cols-2 row-cols-md-3 row-cols-xl-6 g-3 mb-4">
+            <div v-if="users.length > 0 && authStore.isAdmin.value" class="row row-cols-2 row-cols-md-3 row-cols-xl-6 g-3 mb-4">
                 <div class="col" v-for="stat in statCards" :key="stat.label">
                     <div class="card text-center h-100">
                         <div class="card-body py-2">
@@ -50,6 +51,7 @@
                         <tr>
                             <th>{{ language.get('Username') || 'Username' }}</th>
                             <th>{{ language.get('Email') || 'Email' }}</th>
+                            <th>{{ language.get('Role') || 'Role' }}</th>
                             <th class="text-end">{{ language.get('Folders') || 'Folders' }}</th>
                             <th class="text-end">{{ language.get('Feeds') || 'Feeds' }}</th>
                             <th class="text-end">{{ language.get('Posts') || 'Posts' }}</th>
@@ -66,6 +68,21 @@
                                 <span v-if="isCurrentUser(user)" class="badge bg-primary ms-2">{{ language.get('You') || 'You' }}</span>
                             </td>
                             <td>{{ user.email }}</td>
+                            <td>
+                                <select
+                                    v-if="authStore.isAdmin.value && !isCurrentUser(user)"
+                                    class="form-select form-select-sm"
+                                    :value="user.role"
+                                    @change="changeRole(user, ($event.target as HTMLSelectElement).value as Role)"
+                                    :title="language.get('Change the role of this user') || 'Change the role of this user'"
+                                >
+                                    <option value="ADMIN">{{ roleLabel('ADMIN') }}</option>
+                                    <option value="USER">{{ roleLabel('USER') }}</option>
+                                </select>
+                                <span v-else class="badge" :class="user.role === 'ADMIN' ? 'bg-danger' : 'bg-secondary'">
+                                    {{ roleLabel(user.role) }}
+                                </span>
+                            </td>
                             <td class="text-end">{{ user.folderCount.toLocaleString() }}</td>
                             <td class="text-end">{{ user.feedCount.toLocaleString() }}</td>
                             <td class="text-end">{{ user.postCount.toLocaleString() }}</td>
@@ -84,6 +101,7 @@
                                         </svg>
                                     </button>
                                     <button
+                                        v-if="authStore.isAdmin.value"
                                         class="btn btn-danger btn-sm"
                                         @click="deleteUser(user)"
                                         :disabled="isCurrentUser(user)"
@@ -125,8 +143,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { getUsers, deleteUser as deleteUserApi } from '@/api/user';
-import type { UserWithStatisticsType } from '@/types';
+import { getUsers, deleteUser as deleteUserApi, changeUserRole } from '@/api/user';
+import type { Role, UserWithStatisticsType } from '@/types';
 import { language } from '@/functions/languageStore';
 import { authStore } from '@/functions/authStore';
 import { errorStore } from '@/components/error/errorStore';
@@ -160,8 +178,31 @@ const statCards = computed(() => [
     { label: language.get('Saved') || 'Saved', value: sum('savedCount') },
 ]);
 
-// authStore types the id as a number, but the backend sends a UUID string
-const isCurrentUser = (user: UserWithStatisticsType) => String(authStore.user.value?.id) === user.id;
+const isCurrentUser = (user: UserWithStatisticsType) => authStore.user.value?.id === user.id;
+
+const roleLabel = (role: Role) => role === 'ADMIN'
+    ? (language.get('Admin') || 'Admin')
+    : (language.get('User') || 'User');
+
+/**
+ * Changes the role of a user; only the admin can, and not for themselves
+ */
+const changeRole = async (user: UserWithStatisticsType, role: Role) => {
+    try {
+        loading.value = true;
+        const result = await changeUserRole(user.id, role);
+        errorStore.set(true, result, 200);
+    } catch (e: any) {
+        if (e.response && e.response.data) {
+            errorStore.set(true, e.response.data, e.response.status || 500);
+        } else {
+            errorStore.set(true, language.get('Failed to save user') || 'Failed to save user.', 500);
+        }
+    } finally {
+        // Reload, so a failed change doesn't stay selected
+        await fetchUsers();
+    }
+};
 
 const fetchUsers = async () => {
     try {

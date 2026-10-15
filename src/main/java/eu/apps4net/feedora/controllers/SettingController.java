@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import eu.apps4net.feedora.configurations.Language;
+import eu.apps4net.feedora.exceptions.NotFoundException;
 import eu.apps4net.feedora.exceptions.ProcessingErrorException;
 import eu.apps4net.feedora.models.Setting;
 import eu.apps4net.feedora.services.SettingService;
@@ -52,8 +53,12 @@ public class SettingController {
 	public void updateSetting(@RequestBody Map<String, String> request) {
 		Setting setting = settingService.getSetting(Long.parseLong(request.get("id")));
 
-		// Validate fields
-		if (!settingService.fieldValidation(request.get("settingName"), request.get("settingValue"))) {
+		if (setting == null) {
+			throw new NotFoundException(Language.getString("Setting not found"));
+		}
+
+		// Validate fields, against the stored name, since the name can't change
+		if (!settingService.fieldValidation(setting.getSettingName(), request.get("settingValue"))) {
 			throw new ProcessingErrorException(Language.getString("Invalid setting value"));
 		}
 
@@ -66,7 +71,7 @@ public class SettingController {
 			throw new ProcessingErrorException(e.getMessage());
 		}
 
-		if (request.get("settingName").equals("defaultActionsLanguage")) {
+		if (setting.getSettingName().equals("defaultActionsLanguage")) {
 			Language.setActionsLanguage(request.get("settingValue"));
 		}
 

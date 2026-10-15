@@ -81,10 +81,13 @@ export interface UnreadCountsType {
     feeds: FeedUnreadCountType[];
 }
 
+export type Role = 'ADMIN' | 'USER';
+
 export interface UserType {
     id: string;
     username: string;
     email: string;
+    role: Role;
 }
 
 export interface UserWithStatisticsType extends UserType {

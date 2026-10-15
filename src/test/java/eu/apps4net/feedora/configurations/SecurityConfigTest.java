@@ -20,6 +20,7 @@ class SecurityConfigTest extends ApiTestBase {
     void publicEndpointsDontNeedAToken() throws Exception {
         mockMvc.perform(get("/api/general/appAlive")).andExpect(status().isOk());
         mockMvc.perform(get("/api/language/all/en")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/auth/status")).andExpect(status().isOk());
     }
 
     @Test

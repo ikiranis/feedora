@@ -28,8 +28,8 @@ public class Feedora {
     }
 
     @EventListener(ApplicationReadyEvent.class)
-    public void initAdminUser() {
-        userService.getOrCreateAdminUser();
+    public void initApp() {
+        userService.migrateUserRoles();
         
         // Initialize Language configuration after Spring context is ready
         try {

@@ -2,6 +2,7 @@ package eu.apps4net.feedora.controllers;
 
 import eu.apps4net.feedora.configurations.Language;
 import eu.apps4net.feedora.models.Setting;
+import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.repositories.SettingRepository;
 import eu.apps4net.feedora.support.ApiTestBase;
 import org.junit.jupiter.api.AfterEach;
@@ -26,13 +27,39 @@ class SettingControllerTest extends ApiTestBase {
         language.setSettingValue("en");
         settingRepository.save(language);
         Language.setActionsLanguage("en");
+        Setting registration = settingRepository.getBySettingName("registrationEnabled");
+        registration.setSettingValue("true");
+        settingRepository.save(registration);
     }
 
     @Test
     void returnsTheDefaultSettings() throws Exception {
         mockMvc.perform(auth(get("/api/setting/all")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].settingName", hasItems("uploadDir", "defaultActionsLanguage")));
+                .andExpect(jsonPath("$[*].settingName", hasItems("uploadDir", "defaultActionsLanguage", "registrationEnabled")));
+    }
+
+    @Test
+    void simpleUsersCantAccessTheSettings() throws Exception {
+        User simple = createUser("simple", "simple@example.com", "secret123");
+        Setting setting = settingRepository.getBySettingName("registrationEnabled");
+        String body = "{\"id\":\"" + setting.getId() + "\",\"settingValue\":\"false\"}";
+
+        mockMvc.perform(authAs(simple, get("/api/setting/all"))).andExpect(status().isForbidden());
+        mockMvc.perform(authAs(simple, put("/api/setting")).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
+        assertThat(settingRepository.getBySettingName("registrationEnabled").getSettingValue()).isEqualTo("true");
+    }
+
+    @Test
+    void registrationEnabledOnlyAcceptsBooleans() throws Exception {
+        Setting setting = settingRepository.getBySettingName("registrationEnabled");
+        // The name in the request is ignored, so it can't skip the validation
+        String body = "{\"id\":\"" + setting.getId() + "\",\"settingName\":\"uploadDir\",\"settingValue\":\"maybe\"}";
+
+        mockMvc.perform(auth(put("/api/setting")).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest());
+        assertThat(settingRepository.getBySettingName("registrationEnabled").getSettingValue()).isEqualTo("true");
     }
 
     @Test

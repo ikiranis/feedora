@@ -1,15 +1,19 @@
 package eu.apps4net.feedora.controllers;
 
 import eu.apps4net.feedora.configurations.Language;
+import eu.apps4net.feedora.exceptions.RegistrationDisabledException;
 import eu.apps4net.feedora.models.*;
+import eu.apps4net.feedora.services.SettingService;
 import eu.apps4net.feedora.services.UserService;
 import eu.apps4net.feedora.utilities.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -20,7 +24,23 @@ public class AuthController {
     private UserService userService;
     
     @Autowired
+    private SettingService settingService;
+    
+    @Autowired
     private JwtUtil jwtUtil;
+    
+    /**
+     * Tells the login page whether there are users yet, so the first visit shows the register page,
+     * and whether new users can register.
+     */
+    @GetMapping("/status")
+    public Map<String, Boolean> getStatus() {
+        boolean hasUsers = userService.hasUsers();
+        return Map.of(
+                "hasUsers", hasUsers,
+                "registrationEnabled", !hasUsers || settingService.isRegistrationEnabled()
+        );
+    }
     
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
@@ -36,20 +56,23 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(Language.getString("Password must be at least 6 characters long"));
             }
             
-            // Register user
+            // Register user; the first one becomes the admin
             User user = userService.registerUser(
                 request.getUsername().trim(), 
                 request.getEmail().trim().toLowerCase(), 
-                request.getPassword()
+                request.getPassword(),
+                settingService.isRegistrationEnabled()
             );
             
             // Generate token
             String token = jwtUtil.generateToken(user.getEmail(), user.getId());
             
             // Return response
-            AuthResponse response = new AuthResponse(token, user.getEmail(), user.getUsername(), user.getId());
+            AuthResponse response = new AuthResponse(token, user);
             return ResponseEntity.ok(response);
             
+        } catch (RegistrationDisabledException e) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
@@ -85,7 +108,7 @@ public class AuthController {
             String token = jwtUtil.generateToken(user.getEmail(), user.getId());
             
             // Return response
-            AuthResponse response = new AuthResponse(token, user.getEmail(), user.getUsername(), user.getId());
+            AuthResponse response = new AuthResponse(token, user);
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
@@ -103,7 +126,7 @@ public class AuthController {
                 User user = (User) authentication.getPrincipal();
                 
                 // Return user info (without password)
-                AuthResponse response = new AuthResponse(null, user.getEmail(), user.getUsername(), user.getId());
+                AuthResponse response = new AuthResponse(null, user);
                 return ResponseEntity.ok(response);
             }
             

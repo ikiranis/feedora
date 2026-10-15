@@ -2,6 +2,7 @@ package eu.apps4net.feedora.controllers;
 
 import eu.apps4net.feedora.configurations.Language;
 import eu.apps4net.feedora.models.RegisterRequest;
+import eu.apps4net.feedora.models.Role;
 import eu.apps4net.feedora.models.UserDTO;
 import eu.apps4net.feedora.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -17,9 +19,12 @@ public class UserController {
     @Autowired
     private UserService userService;
 
+    /**
+     * Returns every user for the admin, and only themselves for a simple user.
+     */
     @GetMapping
-    public List<UserDTO> getAllUsers() {
-        return userService.getAllUsersWithStatistics();
+    public List<UserDTO> getUsers() {
+        return userService.getVisibleUsersWithStatistics(userService.getCurrentUser());
     }
 
     @PostMapping
@@ -37,6 +42,22 @@ public class UserController {
         try {
             userService.updateUser(userId, request.getUsername(), request.getEmail(), request.getPassword(), userService.getCurrentUser());
             return ResponseEntity.ok(Language.getString("User updated successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/{userId}/role")
+    public ResponseEntity<String> changeRole(@PathVariable UUID userId, @RequestBody Map<String, String> request) {
+        try {
+            Role role;
+            try {
+                role = Role.valueOf(String.valueOf(request.get("role")));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException(Language.getString("Invalid role"));
+            }
+            userService.changeRole(userId, role, userService.getCurrentUser());
+            return ResponseEntity.ok(Language.getString("User role changed successfully"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }

@@ -163,10 +163,11 @@ class FeedServiceTest {
     }
 
     @Test
-    void getAllFeedsReturnsEveryFeed() {
+    void getAllFeedsReturnsTheUsersFeeds() {
+        User user = new User();
         List<Feed> feeds = List.of(new Feed());
-        when(feedRepository.findAll()).thenReturn(feeds);
+        when(feedRepository.findByUser(user)).thenReturn(feeds);
 
-        assertThat(feedService.getAllFeeds()).isSameAs(feeds);
+        assertThat(feedService.getAllFeeds(user)).isSameAs(feeds);
     }
 }

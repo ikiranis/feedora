@@ -1,6 +1,8 @@
 package eu.apps4net.feedora.services;
 
 import eu.apps4net.feedora.configurations.Language;
+import eu.apps4net.feedora.exceptions.RegistrationDisabledException;
+import eu.apps4net.feedora.models.Role;
 import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.models.UserDTO;
 import eu.apps4net.feedora.repositories.FeedRepository;
@@ -9,6 +11,7 @@ import eu.apps4net.feedora.repositories.LogEntryRepository;
 import eu.apps4net.feedora.repositories.PostRepository;
 import eu.apps4net.feedora.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -42,18 +45,35 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    public User getOrCreateAdminUser() {
-        String adminEmail = "rocean@error.gr";
-        String adminUsername = "admin";
-        String adminPassword = "111111";
-        Optional<User> userOpt = userRepository.findByEmail(adminEmail);
-        if (userOpt.isPresent()) {
-            return userOpt.get();
-        } else {
-            // Encode password when creating admin user
-            String encodedPassword = passwordEncoder.encode(adminPassword);
-            return userRepository.save(new User(adminUsername, adminEmail, encodedPassword));
+    // The admin user that older versions created automatically, promoted when migrating to roles
+    private static final String LEGACY_ADMIN_EMAIL = "rocean@error.gr";
+
+    /**
+     * Gives a role to the users created before roles existed.
+     * If there's no admin yet, the legacy admin, or else the first user by username, becomes the admin.
+     */
+    @Transactional
+    public void migrateUserRoles() {
+        List<User> withoutRole = userRepository.findByRoleIsNull();
+        if (!userRepository.existsByRole(Role.ADMIN) && !withoutRole.isEmpty()) {
+            User admin = withoutRole.stream()
+                    .filter(user -> LEGACY_ADMIN_EMAIL.equals(user.getEmail()))
+                    .findFirst()
+                    .orElseGet(() -> withoutRole.stream()
+                            .min(Comparator.comparing(User::getUsername, String.CASE_INSENSITIVE_ORDER))
+                            .orElseThrow());
+            admin.setRole(Role.ADMIN);
         }
+        for (User user : withoutRole) {
+            if (user.getRole() != Role.ADMIN) {
+                user.setRole(Role.USER);
+            }
+        }
+        userRepository.saveAll(withoutRole);
+    }
+
+    public boolean hasUsers() {
+        return userRepository.count() > 0;
     }
 
     public Optional<User> findById(UUID id) {
@@ -76,21 +96,28 @@ public class UserService {
             return (User) authentication.getPrincipal();
         }
         
-        // Fallback to admin user if no authenticated user (for backward compatibility)
-        return getOrCreateAdminUser();
+        throw new AuthenticationCredentialsNotFoundException(Language.getString("Please log in"));
     }
-    
-    public User registerUser(String username, String email, String password) {
+
+    /**
+     * Registers a new user. The first user becomes the admin, the next ones simple users.
+     * Synchronized, so two simultaneous first registrations can't both become admins.
+     *
+     * @param registrationEnabled whether new users can register; ignored for the first user
+     * @throws RegistrationDisabledException if there are users already and registration is disabled
+     */
+    public synchronized User registerUser(String username, String email, String password, boolean registrationEnabled) {
+        boolean firstUser = !hasUsers();
+        if (!firstUser && !registrationEnabled) {
+            throw new RegistrationDisabledException(Language.getString("Registration of new users is disabled"));
+        }
+
         // Check if user already exists
         if (userRepository.findByEmail(email).isPresent()) {
             throw new RuntimeException("User with email " + email + " already exists");
         }
-        
-        // Encode password
-        String encodedPassword = passwordEncoder.encode(password);
-        
-        // Create and save user
-        User user = new User(username, email, encodedPassword);
+
+        User user = new User(username, email, passwordEncoder.encode(password), firstUser ? Role.ADMIN : Role.USER);
         return userRepository.save(user);
     }
     
@@ -99,9 +126,10 @@ public class UserService {
     }
 
     /**
-     * Returns all users together with the number of folders, feeds, posts and log entries each one has.
+     * Returns the users the current user can see, together with the number of folders, feeds, posts
+     * and log entries each one has. The admin sees every user, a simple user only themselves.
      */
-    public List<UserDTO> getAllUsersWithStatistics() {
+    public List<UserDTO> getVisibleUsersWithStatistics(User currentUser) {
         Map<UUID, Long> folderCounts = toCountMap(folderRepository.countGroupedByUser());
         Map<UUID, Long> feedCounts = toCountMap(feedRepository.countGroupedByUser());
         Map<UUID, Long> logCounts = toCountMap(logEntryRepository.countGroupedByUser());
@@ -110,7 +138,8 @@ public class UserService {
             postCounts.put((UUID) row[0], row);
         }
 
-        return userRepository.findAll().stream()
+        List<User> users = currentUser.isAdmin() ? userRepository.findAll() : List.of(currentUser);
+        return users.stream()
                 .sorted(Comparator.comparing(User::getUsername, String.CASE_INSENSITIVE_ORDER))
                 .map(user -> {
                     UserDTO dto = UserDTO.fromUser(user);
@@ -145,10 +174,14 @@ public class UserService {
 
     /**
      * Updates the username, email and, when given, the password of a user.
+     * A simple user can only update themselves.
      * The current user can't change their own email, because the login token is bound to it.
      */
     public User updateUser(UUID id, String username, String email, String password, User currentUser) {
         validateUsernameAndEmail(username, email);
+        if (!currentUser.isAdmin() && !currentUser.getId().equals(id)) {
+            throw new IllegalArgumentException(Language.getString("User not found"));
+        }
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException(Language.getString("User not found")));
 
@@ -173,6 +206,27 @@ public class UserService {
 
         user.setUsername(username.trim());
         user.setEmail(newEmail);
+        return userRepository.save(user);
+    }
+
+    /**
+     * Changes the role of a user. Only the admin can do it, and not for their own user,
+     * so there's always at least one admin.
+     */
+    public User changeRole(UUID id, Role role, User currentUser) {
+        if (!currentUser.isAdmin()) {
+            throw new IllegalArgumentException(Language.getString("Only the admin can change user roles"));
+        }
+        if (role == null) {
+            throw new IllegalArgumentException(Language.getString("Role is required"));
+        }
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException(Language.getString("User not found")));
+        if (user.getId().equals(currentUser.getId())) {
+            throw new IllegalArgumentException(Language.getString("You can't change your own role"));
+        }
+
+        user.setRole(role);
         return userRepository.save(user);
     }
 

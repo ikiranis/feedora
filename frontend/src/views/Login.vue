@@ -52,7 +52,7 @@
                     </button>
                 </form>
                 
-                <div class="text-center">
+                <div v-if="registrationEnabled" class="text-center">
                     <p class="mb-0">
                         {{ language.get('Don\'t have an account?') }}
                         <a href="#" @click.prevent="$emit('showRegister')" class="text-decoration-none">
@@ -73,6 +73,10 @@ import { authStore } from '@/functions/authStore';
 
 // Router
 const router = useRouter();
+
+defineProps<{
+    registrationEnabled: boolean
+}>();
 
 // Emits
 defineEmits<{

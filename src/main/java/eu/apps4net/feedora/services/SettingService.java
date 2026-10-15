@@ -11,6 +11,8 @@ import java.util.List;
 @Service
 public class SettingService {
 
+	public static final String REGISTRATION_ENABLED = "registrationEnabled";
+
 	private final SettingRepository settingRepository;
 
 	@Autowired
@@ -31,6 +33,10 @@ public class SettingService {
 		if (settings.isEmpty() || settingRepository.getBySettingName("defaultActionsLanguage") == null) {
 			settingRepository.save(new Setting("defaultActionsLanguage", "en"));
 		}
+
+		if (settings.isEmpty() || settingRepository.getBySettingName(REGISTRATION_ENABLED) == null) {
+			settingRepository.save(new Setting(REGISTRATION_ENABLED, "true"));
+		}
 	}
 
 	/**
@@ -44,6 +50,16 @@ public class SettingService {
 
 	public String getDefaultActionsLanguage() {
 		return settingRepository.getBySettingName("defaultActionsLanguage").getSettingValue();
+	}
+
+	/**
+	 * Returns whether new users can register. The very first user can always register.
+	 *
+	 * @return true when the registration of new users is enabled
+	 */
+	public boolean isRegistrationEnabled() {
+		Setting setting = settingRepository.getBySettingName(REGISTRATION_ENABLED);
+		return setting == null || !"false".equalsIgnoreCase(setting.getSettingValue());
 	}
 
 	/**
@@ -75,6 +91,9 @@ public class SettingService {
 	}
 
 	public Boolean fieldValidation(String settingName, String settingValue) {
+		if (REGISTRATION_ENABLED.equals(settingName)) {
+			return "true".equals(settingValue) || "false".equals(settingValue);
+		}
 		return true;
 	}
 }

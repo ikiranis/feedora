@@ -1,8 +1,12 @@
 package eu.apps4net.feedora.controllers;
 
+import eu.apps4net.feedora.models.Role;
+import eu.apps4net.feedora.models.Setting;
 import eu.apps4net.feedora.models.User;
+import eu.apps4net.feedora.repositories.SettingRepository;
 import eu.apps4net.feedora.support.ApiTestBase;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,6 +19,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class AuthControllerTest extends ApiTestBase {
+    @Autowired
+    private SettingRepository settingRepository;
 
     private String json(String username, String email, String password) {
         StringBuilder body = new StringBuilder("{");
@@ -26,6 +32,58 @@ class AuthControllerTest extends ApiTestBase {
     }
 
     @Test
+    void statusTellsWhetherThereAreUsersAndRegistrationIsEnabled() throws Exception {
+        mockMvc.perform(get("/api/auth/status"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.hasUsers").value(true))
+                .andExpect(jsonPath("$.registrationEnabled").value(true));
+
+        userRepository.deleteAll();
+
+        mockMvc.perform(get("/api/auth/status"))
+                .andExpect(jsonPath("$.hasUsers").value(false))
+                .andExpect(jsonPath("$.registrationEnabled").value(true));
+    }
+
+    @Test
+    void firstRegisteredUserIsAdmin() throws Exception {
+        userRepository.deleteAll();
+
+        mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
+                        .content(json("first", "first@example.com", "password1")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("ADMIN"));
+
+        mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
+                        .content(json("second", "second@example.com", "password1")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.role").value("USER"));
+
+        assertThat(userRepository.findByEmail("first@example.com").orElseThrow().getRole()).isEqualTo(Role.ADMIN);
+        assertThat(userRepository.findByEmail("second@example.com").orElseThrow().getRole()).isEqualTo(Role.USER);
+    }
+
+    @Test
+    void registerIsForbiddenWhenRegistrationIsDisabled() throws Exception {
+        Setting registration = settingRepository.getBySettingName("registrationEnabled");
+        registration.setSettingValue("false");
+        settingRepository.save(registration);
+        try {
+            mockMvc.perform(get("/api/auth/status"))
+                    .andExpect(jsonPath("$.registrationEnabled").value(false));
+
+            mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
+                            .content(json("newbie", "newbie@example.com", "password1")))
+                    .andExpect(status().isForbidden())
+                    .andExpect(content().string("Registration of new users is disabled"));
+            assertThat(userRepository.findByEmail("newbie@example.com")).isEmpty();
+        } finally {
+            registration.setSettingValue("true");
+            settingRepository.save(registration);
+        }
+    }
+
+    @Test
     void registerCreatesUserAndReturnsToken() throws Exception {
         mockMvc.perform(post("/api/auth/register").contentType(MediaType.APPLICATION_JSON)
                         .content(json("  newbie ", " NewBie@Example.com ", "password1")))
@@ -33,7 +91,8 @@ class AuthControllerTest extends ApiTestBase {
                 .andExpect(jsonPath("$.token", not(emptyOrNullString())))
                 .andExpect(jsonPath("$.email").value("newbie@example.com"))
                 .andExpect(jsonPath("$.username").value("newbie"))
-                .andExpect(jsonPath("$.userId").isNotEmpty());
+                .andExpect(jsonPath("$.userId").isNotEmpty())
+                .andExpect(jsonPath("$.role").value("USER"));
 
         User saved = userRepository.findByEmail("newbie@example.com").orElseThrow();
         assertThat(saved.getPassword()).isNotEqualTo("password1");
@@ -112,6 +171,7 @@ class AuthControllerTest extends ApiTestBase {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.email").value("tester@example.com"))
                 .andExpect(jsonPath("$.username").value("tester"))
+                .andExpect(jsonPath("$.role").value("ADMIN"))
                 .andExpect(jsonPath("$.token").doesNotExist());
     }
 

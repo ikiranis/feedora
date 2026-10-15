@@ -124,7 +124,7 @@ const handleLogout = async () => {
                 </span>
                 <span class="mx-2" v-if="!collapsed">{{ language.get('Logs') }}</span>
             </router-link>
-            <router-link :to="{ name: 'Settings' }" :class="checkCurrentPage('Settings') + ' ' + menuItemClasses"
+            <router-link v-if="authStore.isAdmin.value" :to="{ name: 'Settings' }" :class="checkCurrentPage('Settings') + ' ' + menuItemClasses"
                 :title="language.get('Settings')">
                 <span>
                     <svg xmlns="http://www.w3.org/2000/svg" :width="getIconSize" fill="currentColor"

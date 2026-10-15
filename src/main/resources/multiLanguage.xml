@@ -1463,4 +1463,84 @@
         <language code="el">Σύνολο</language>
     </entry>
 
+    <entry id="Please log in">
+        <language code="en">Please log in</language>
+        <language code="el">Συνδεθείτε</language>
+    </entry>
+
+    <entry id="Registration of new users is disabled">
+        <language code="en">Registration of new users is disabled</language>
+        <language code="el">Η εγγραφή νέων χρηστών είναι απενεργοποιημένη</language>
+    </entry>
+
+    <entry id="Only the admin can change user roles">
+        <language code="en">Only the admin can change user roles</language>
+        <language code="el">Μόνο ο διαχειριστής μπορεί να αλλάξει τους ρόλους των χρηστών</language>
+    </entry>
+
+    <entry id="Role is required">
+        <language code="en">Role is required</language>
+        <language code="el">Ο ρόλος είναι υποχρεωτικός</language>
+    </entry>
+
+    <entry id="Invalid role">
+        <language code="en">Invalid role</language>
+        <language code="el">Μη έγκυρος ρόλος</language>
+    </entry>
+
+    <entry id="You can't change your own role">
+        <language code="en">You can't change your own role</language>
+        <language code="el">Δεν μπορείτε να αλλάξετε τον δικό σας ρόλο</language>
+    </entry>
+
+    <entry id="User role changed successfully">
+        <language code="en">User role changed successfully</language>
+        <language code="el">Ο ρόλος του χρήστη άλλαξε με επιτυχία</language>
+    </entry>
+
+    <entry id="Setting not found">
+        <language code="en">Setting not found</language>
+        <language code="el">Η ρύθμιση δεν βρέθηκε</language>
+    </entry>
+
+    <entry id="Role">
+        <language code="en">Role</language>
+        <language code="el">Ρόλος</language>
+    </entry>
+
+    <entry id="Admin">
+        <language code="en">Admin</language>
+        <language code="el">Διαχειριστής</language>
+    </entry>
+
+    <entry id="User">
+        <language code="en">User</language>
+        <language code="el">Χρήστης</language>
+    </entry>
+
+    <entry id="Change the role of this user">
+        <language code="en">Change the role of this user</language>
+        <language code="el">Αλλάξτε τον ρόλο αυτού του χρήστη</language>
+    </entry>
+
+    <entry id="Create Admin Account">
+        <language code="en">Create Admin Account</language>
+        <language code="el">Δημιουργία Λογαριασμού Διαχειριστή</language>
+    </entry>
+
+    <entry id="Welcome! The first account will be the administrator">
+        <language code="en">Welcome! The first account will be the administrator</language>
+        <language code="el">Καλώς ήρθατε! Ο πρώτος λογαριασμός θα είναι ο διαχειριστής</language>
+    </entry>
+
+    <entry id="Enabled">
+        <language code="en">Enabled</language>
+        <language code="el">Ενεργοποιημένο</language>
+    </entry>
+
+    <entry id="Disabled">
+        <language code="en">Disabled</language>
+        <language code="el">Απενεργοποιημένο</language>
+    </entry>
+
 </root>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import {onMounted, reactive, ref} from "vue";
+import {computed, onMounted, reactive, ref} from "vue";
 import router from "@/router";
 import {getSetting, updateSetting} from "@/api/setting.ts";
 import {errorStore} from "@/components/error/errorStore.ts";
@@ -21,6 +21,9 @@ const setting = reactive({
 })
 
 const loading = ref(false)
+
+// Settings with a true/false value are edited with a switch
+const isBoolean = computed(() => setting.settingValue === 'true' || setting.settingValue === 'false')
 
 const loadingSetting = ref(false)
 
@@ -79,7 +82,15 @@ const saveSetting = async () => {
         <div class="row">
             <div class="col-12 my-2">
                 <label for="settingValue" class="text-left">{{ setting.settingName }}</label>
-                <input type="text" v-model="setting.settingValue" class="form-control input-group-prepend" name="settingValue">
+                <div v-if="isBoolean" class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="settingValue"
+                           :checked="setting.settingValue === 'true'"
+                           @change="setting.settingValue = String(($event.target as HTMLInputElement).checked)">
+                    <label class="form-check-label" for="settingValue">
+                        {{ setting.settingValue === 'true' ? (language.get("Enabled") || "Enabled") : (language.get("Disabled") || "Disabled") }}
+                    </label>
+                </div>
+                <input v-else type="text" v-model="setting.settingValue" class="form-control input-group-prepend" name="settingValue" id="settingValue">
             </div>
         </div>
 

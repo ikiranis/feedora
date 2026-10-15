@@ -16,6 +16,10 @@ public class User {
     private String email;
     private String password;
 
+    // Nullable so the column can be added to an existing database; a missing role counts as USER
+    @Enumerated(EnumType.STRING)
+    private Role role;
+
     @OneToMany(mappedBy = "user")
     @JsonIgnore
     private List<Folder> folders;
@@ -31,9 +35,14 @@ public class User {
     public User() {}
 
     public User(String username, String email, String password) {
+        this(username, email, password, Role.USER);
+    }
+
+    public User(String username, String email, String password, Role role) {
         this.username = username;
         this.email = email;
         this.password = password;
+        this.role = role;
     }
 
     public UUID getId() { return id; }
@@ -47,6 +56,12 @@ public class User {
 
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
+
+    public Role getRole() { return role == null ? Role.USER : role; }
+    public void setRole(Role role) { this.role = role; }
+
+    @JsonIgnore
+    public boolean isAdmin() { return getRole() == Role.ADMIN; }
 
     public List<Folder> getFolders() { return folders; }
     public void setFolders(List<Folder> folders) { this.folders = folders; }

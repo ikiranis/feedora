@@ -42,14 +42,14 @@ const routes : RouteRecordRaw[] = [
         path: '/settings',
         name: 'Settings',
         component: Settings,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, requiresAdmin: true }
     },
     {
         path: '/setting/:id',
         name: 'Setting',
         component: Setting,
         props: true,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, requiresAdmin: true }
     },
     {
         path: '/folders',
@@ -94,6 +94,12 @@ router.beforeEach(async (to, from, next) => {
     // Routes that require authentication
     if (to.meta.requiresAuth && !isAuthenticated) {
         next({ name: 'Auth' });
+        return;
+    }
+    
+    // Routes only for the admin
+    if (to.meta.requiresAdmin && !authStore.isAdmin.value) {
+        next({ path: '/posts' });
         return;
     }
     

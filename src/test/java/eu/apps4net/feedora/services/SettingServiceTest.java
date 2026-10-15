@@ -33,11 +33,12 @@ class SettingServiceTest {
         settingService.setDefaultSettings();
 
         ArgumentCaptor<Setting> saved = ArgumentCaptor.forClass(Setting.class);
-        verify(settingRepository, times(2)).save(saved.capture());
+        verify(settingRepository, times(3)).save(saved.capture());
         assertThat(saved.getAllValues()).extracting(Setting::getSettingName, Setting::getSettingValue)
                 .containsExactly(
                         org.assertj.core.groups.Tuple.tuple("uploadDir", "uploads"),
-                        org.assertj.core.groups.Tuple.tuple("defaultActionsLanguage", "en"));
+                        org.assertj.core.groups.Tuple.tuple("defaultActionsLanguage", "en"),
+                        org.assertj.core.groups.Tuple.tuple("registrationEnabled", "true"));
     }
 
     @Test
@@ -46,6 +47,7 @@ class SettingServiceTest {
         when(settingRepository.findAll()).thenReturn(List.of(uploadDir));
         when(settingRepository.getBySettingName("uploadDir")).thenReturn(uploadDir);
         when(settingRepository.getBySettingName("defaultActionsLanguage")).thenReturn(null);
+        when(settingRepository.getBySettingName("registrationEnabled")).thenReturn(new Setting("registrationEnabled", "true"));
 
         settingService.setDefaultSettings();
 
@@ -59,6 +61,7 @@ class SettingServiceTest {
         when(settingRepository.findAll()).thenReturn(List.of(new Setting("uploadDir", "files")));
         when(settingRepository.getBySettingName("uploadDir")).thenReturn(new Setting("uploadDir", "files"));
         when(settingRepository.getBySettingName("defaultActionsLanguage")).thenReturn(new Setting("defaultActionsLanguage", "el"));
+        when(settingRepository.getBySettingName("registrationEnabled")).thenReturn(new Setting("registrationEnabled", "false"));
 
         settingService.setDefaultSettings();
 
@@ -94,5 +97,21 @@ class SettingServiceTest {
     @Test
     void everyValueIsValid() {
         assertThat(settingService.fieldValidation("anything", "anything")).isTrue();
+    }
+
+    @Test
+    void registrationEnabledMustBeABoolean() {
+        assertThat(settingService.fieldValidation("registrationEnabled", "true")).isTrue();
+        assertThat(settingService.fieldValidation("registrationEnabled", "false")).isTrue();
+        assertThat(settingService.fieldValidation("registrationEnabled", "yes")).isFalse();
+    }
+
+    @Test
+    void registrationIsEnabledUnlessSetToFalse() {
+        when(settingRepository.getBySettingName("registrationEnabled")).thenReturn(null);
+        assertThat(settingService.isRegistrationEnabled()).isTrue();
+
+        when(settingRepository.getBySettingName("registrationEnabled")).thenReturn(new Setting("registrationEnabled", "false"));
+        assertThat(settingService.isRegistrationEnabled()).isFalse();
     }
 }

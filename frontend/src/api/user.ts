@@ -1,6 +1,6 @@
 import axios from "axios";
 import config from "@/functions/config";
-import type { UserFormType, UserWithStatisticsType } from "@/types";
+import type { Role, UserFormType, UserWithStatisticsType } from "@/types";
 
 export const getUsers = async (): Promise<UserWithStatisticsType[]> => {
     const response = await axios.get(config.defaultServer() + "/api/users");
@@ -14,6 +14,11 @@ export const addUser = async (user: UserFormType): Promise<string> => {
 
 export const updateUser = async (userId: string, user: UserFormType): Promise<string> => {
     const response = await axios.put(config.defaultServer() + "/api/users/" + userId, user);
+    return response.data;
+};
+
+export const changeUserRole = async (userId: string, role: Role): Promise<string> => {
+    const response = await axios.put(config.defaultServer() + "/api/users/" + userId + "/role", { role });
     return response.data;
 };
 

@@ -4,6 +4,7 @@ public class UserDTO {
     public String id;
     public String username;
     public String email;
+    public Role role;
     public long folderCount;
     public long feedCount;
     public long postCount;
@@ -16,6 +17,7 @@ public class UserDTO {
         dto.id = user.getId().toString();
         dto.username = user.getUsername();
         dto.email = user.getEmail();
+        dto.role = user.getRole();
         return dto;
     }
 }

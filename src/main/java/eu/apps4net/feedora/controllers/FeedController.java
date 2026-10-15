@@ -37,7 +37,7 @@ public class FeedController {
 
     /**
      * Imports feeds and folders from an uploaded OPML file.
-     * Replaces all existing feeds and folders for the admin user with the new ones from the OPML file.
+     * Replaces all existing feeds and folders for the current user with the new ones from the OPML file.
      *
      * @param file The OPML file uploaded by the user
      * @return A message indicating the number of feeds imported or an error message.
@@ -64,17 +64,17 @@ public class FeedController {
     }
 
     /**
-     * Returns all feeds in the database as JSON, excluding user and folder objects from the response.
+     * Returns all feeds of the current user as JSON, excluding user and folder objects from the response.
      *
-     * @return List of all Feed entities (without user and folder details)
+     * @return List of the user's Feed entities (without user and folder details)
      */
     @GetMapping("/getAllFeeds")
     public List<FeedDTO> getAll() {
-        return feedService.getAllFeeds().stream().map(FeedDTO::fromFeed).toList();
+        return feedService.getAllFeeds(userService.getCurrentUser()).stream().map(FeedDTO::fromFeed).toList();
     }
 
     /**
-     * Returns paginated feeds for the admin user.
+     * Returns paginated feeds for the current user.
      *
      * @param page The page number (1-indexed)
      * @param pageSize The number of feeds per page

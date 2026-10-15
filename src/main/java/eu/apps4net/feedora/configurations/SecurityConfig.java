@@ -2,6 +2,7 @@ package eu.apps4net.feedora.configurations;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -42,6 +43,11 @@ public class SecurityConfig {
                 .requestMatchers("/api/general/**").permitAll()
                 .requestMatchers("/api/language/**").permitAll()
                 .requestMatchers("/", "/index.html", "/static/**", "/assets/**", "/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg").permitAll()
+                // Settings and user management are for the admin only; users can still see and edit themselves
+                .requestMatchers("/api/setting/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/users").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/users/*/role").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

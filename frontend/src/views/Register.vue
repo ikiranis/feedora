@@ -3,8 +3,14 @@
         <div class="card shadow-lg" style="width: 100%; max-width: 400px;">
             <div class="card-body p-4">
                 <div class="text-center mb-4">
-                    <h2 class="card-title">{{ language.get('Create Account') }}</h2>
-                    <p class="text-muted">{{ language.get('Join us today') }}</p>
+                    <template v-if="firstUser">
+                        <h2 class="card-title">{{ language.get('Create Admin Account') || 'Create Admin Account' }}</h2>
+                        <p class="text-muted">{{ language.get('Welcome! The first account will be the administrator') || 'Welcome! The first account will be the administrator' }}</p>
+                    </template>
+                    <template v-else>
+                        <h2 class="card-title">{{ language.get('Create Account') }}</h2>
+                        <p class="text-muted">{{ language.get('Join us today') }}</p>
+                    </template>
                 </div>
                 
                 <form @submit.prevent="handleRegister">
@@ -83,7 +89,7 @@
                     </button>
                 </form>
                 
-                <div class="text-center">
+                <div v-if="!firstUser" class="text-center">
                     <p class="mb-0">
                         {{ language.get('Already have an account?') }}
                         <a href="#" @click.prevent="$emit('showLogin')" class="text-decoration-none">
@@ -105,9 +111,15 @@ import { authStore } from '@/functions/authStore';
 // Router
 const router = useRouter();
 
+defineProps<{
+    // No users yet, so this one becomes the admin
+    firstUser: boolean
+}>();
+
 // Emits
-defineEmits<{
+const emit = defineEmits<{
     showLogin: []
+    registrationDisabled: []
 }>();
 
 // Form data
@@ -182,7 +194,10 @@ const handleRegister = async () => {
     } catch (error: any) {
         console.error('Registration error:', error);
         
-        if (error.response?.status === 400) {
+        if (error.response?.status === 403) {
+            // Registration was disabled in the meantime
+            emit('registrationDisabled');
+        } else if (error.response?.status === 400) {
             const errorMessage = error.response?.data?.message || error.response?.data?.error;
             if (errorMessage?.includes('email')) {
                 errors.value.email = language.get('Email is already in use');

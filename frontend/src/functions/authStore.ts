@@ -1,5 +1,5 @@
 import { ref, computed } from 'vue';
-import { login as apiLogin, register as apiRegister, logout as apiLogout, getCurrentUser, LoginRequest, RegisterRequest, AuthResponse, User } from '@/api/auth';
+import { login as apiLogin, register as apiRegister, logout as apiLogout, getCurrentUser, toUser, LoginRequest, RegisterRequest, AuthResponse, User } from '@/api/auth';
 import axios from 'axios';
 import { errorStore } from '@/components/error/errorStore';
 
@@ -10,6 +10,7 @@ const isLoading = ref(false);
 
 // Computed properties
 const isAuthenticated = computed(() => !!token.value);
+const isAdmin = computed(() => user.value?.role === 'ADMIN');
 
 // Set up axios default headers when token changes
 const updateAxiosToken = (newToken: string | null) => {
@@ -33,6 +34,7 @@ export const authStore = {
     
     // Getters
     isAuthenticated,
+    isAdmin,
     
     // Actions
     async login(loginRequest: LoginRequest): Promise<void> {
@@ -46,11 +48,7 @@ export const authStore = {
             updateAxiosToken(response.token);
             
             // Set user data from response
-            user.value = {
-                id: 0, // Backend response doesn't include ID in AuthResponse
-                username: response.username,
-                email: response.email
-            };
+            user.value = toUser(response);
             
             // Clear any existing errors on successful login
             errorStore.clear();
@@ -77,11 +75,7 @@ export const authStore = {
             updateAxiosToken(response.token);
             
             // Set user data from response
-            user.value = {
-                id: 0, // Backend response doesn't include ID in AuthResponse
-                username: response.username,
-                email: response.email
-            };
+            user.value = toUser(response);
             
             // Clear any existing errors on successful registration
             errorStore.clear();

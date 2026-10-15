@@ -94,14 +94,14 @@ class FeedControllerTest extends ApiTestBase {
     }
 
     @Test
-    void getAllFeedsReturnsEveryFeed() throws Exception {
+    void getAllFeedsReturnsOnlyTheUsersFeeds() throws Exception {
         Folder folder = createFolder("News", user);
         createFeed("Mine", "http://mine.example/rss", folder, user);
         createFeed("Theirs", "http://theirs.example/rss", null, createUser("other", "other@example.com", "secret123"));
 
         mockMvc.perform(auth(get("/api/feed/getAllFeeds")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].title", containsInAnyOrder("Mine", "Theirs")))
+                .andExpect(jsonPath("$[*].title", containsInAnyOrder("Mine")))
                 .andExpect(jsonPath("$[?(@.title == 'Mine')].folderName", contains("News")));
     }
 

@@ -6,6 +6,7 @@ import eu.apps4net.feedora.models.LogEntry;
 import eu.apps4net.feedora.models.LogLevel;
 import eu.apps4net.feedora.models.LogType;
 import eu.apps4net.feedora.models.Post;
+import eu.apps4net.feedora.models.Role;
 import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.repositories.FeedRepository;
 import eu.apps4net.feedora.repositories.FeedStatisticsRepository;
@@ -27,7 +28,7 @@ import java.util.UUID;
 
 /**
  * Base for the API tests: runs the whole application against an in-memory database,
- * starts every test with an empty database and a logged-in user.
+ * starts every test with an empty database and a logged-in admin user.
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -62,17 +63,23 @@ public abstract class ApiTestBase {
         folderRepository.deleteAll();
         userRepository.deleteAll();
 
-        user = createUser("tester", "tester@example.com", "secret123");
+        user = userRepository.save(new User("tester", "tester@example.com", passwordEncoder.encode("secret123"), Role.ADMIN));
         token = jwtUtil.generateToken(user.getEmail(), user.getId());
     }
 
+    /** Creates a simple, non admin, user. */
     protected User createUser(String username, String email, String password) {
         return userRepository.save(new User(username, email, passwordEncoder.encode(password)));
     }
 
-    /** Adds the logged-in user's token to a request. */
+    /** Adds the logged-in user's token to a request. The logged-in user is the admin. */
     protected MockHttpServletRequestBuilder auth(MockHttpServletRequestBuilder request) {
         return request.header("Authorization", "Bearer " + token);
+    }
+
+    /** Adds the token of another user to a request. */
+    protected MockHttpServletRequestBuilder authAs(User other, MockHttpServletRequestBuilder request) {
+        return request.header("Authorization", "Bearer " + jwtUtil.generateToken(other.getEmail(), other.getId()));
     }
 
     protected Folder createFolder(String name, User owner) {

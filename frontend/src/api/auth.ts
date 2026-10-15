@@ -1,5 +1,6 @@
 import axios from "axios";
 import config from "@/functions/config.ts";
+import type { Role } from "@/types";
 
 export interface LoginRequest {
     email: string;
@@ -16,13 +17,30 @@ export interface AuthResponse {
     token: string;
     email: string;
     username: string;
+    userId: string;
+    role: Role;
 }
 
 export interface User {
-    id: number;
+    id: string;
     username: string;
     email: string;
+    role: Role;
 }
+
+export interface AuthStatus {
+    // False until the first user, the admin, registers
+    hasUsers: boolean;
+    registrationEnabled: boolean;
+}
+
+/**
+ * Get whether there are users yet and whether new users can register
+ */
+export const getAuthStatus = async (): Promise<AuthStatus> => {
+    const response = await axios.get(config.defaultServer() + '/api/auth/status');
+    return response.data;
+};
 
 /**
  * Login user with email and password
@@ -45,8 +63,18 @@ export const register = async (registerRequest: RegisterRequest): Promise<AuthRe
  */
 export const getCurrentUser = async (): Promise<User> => {
     const response = await axios.get(config.defaultServer() + '/api/auth/me');
-    return response.data;
+    return toUser(response.data);
 };
+
+/**
+ * Converts an auth response to the user it describes
+ */
+export const toUser = (response: AuthResponse): User => ({
+    id: response.userId,
+    username: response.username,
+    email: response.email,
+    role: response.role
+});
 
 /**
  * Logout user
