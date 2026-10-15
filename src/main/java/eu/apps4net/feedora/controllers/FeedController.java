@@ -5,9 +5,11 @@ import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.models.Feed;
 import eu.apps4net.feedora.services.FeedService;
 import eu.apps4net.feedora.services.LogService;
+import eu.apps4net.feedora.services.PostService;
 import eu.apps4net.feedora.services.UserService;
 import eu.apps4net.feedora.services.OperationLockService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import eu.apps4net.feedora.models.FeedDTO;
 
@@ -34,10 +38,20 @@ public class FeedController {
     private OperationLockService operationLockService;
     @Autowired
     private LogService logService;
+    @Autowired
+    private PostService postService;
+
+    // Parsing after an OPML import follows the feed parser switch, so it can be disabled (e.g. in tests)
+    @Value("${feedora.feed-parser.enabled:true}")
+    private boolean feedParserEnabled;
+
+    // Parses the feeds of a newly imported OPML file in the background, so the upload doesn't wait for it
+    private final ExecutorService importParseExecutor = Executors.newSingleThreadExecutor();
 
     /**
      * Imports feeds and folders from an uploaded OPML file.
-     * Replaces all existing feeds and folders for the current user with the new ones from the OPML file.
+     * Replaces all existing feeds and folders for the current user with the new ones from the OPML file,
+     * then starts parsing the new feeds in the background.
      *
      * @param file The OPML file uploaded by the user
      * @return A message indicating the number of feeds imported or an error message.
@@ -56,11 +70,26 @@ public class FeedController {
             
             User currentUser = userService.getCurrentUser();
             int feedsAdded = feedService.importOPML(file.getInputStream(), currentUser);
+            parseImportedFeeds(currentUser);
             return Language.getActionString("Successfully replaced existing feeds").replace("{0}", String.valueOf(feedsAdded));
         } catch (Exception e) {
             e.printStackTrace();
             return Language.getActionString("Error importing OPML").replace("{0}", e.getMessage());
         }
+    }
+
+    private void parseImportedFeeds(User user) {
+        if (!feedParserEnabled) {
+            return;
+        }
+
+        importParseExecutor.submit(() -> {
+            try {
+                postService.parseFeeds(user);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     /**
