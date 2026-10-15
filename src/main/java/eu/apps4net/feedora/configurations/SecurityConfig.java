@@ -42,7 +42,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/general/**").permitAll()
                 .requestMatchers("/api/language/**").permitAll()
-                .requestMatchers("/", "/index.html", "/static/**", "/assets/**", "/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg").permitAll()
+                .requestMatchers("/", "/index.html", "/static/**", "/assets/**", "/flags/**", "/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg").permitAll()
                 // Settings and user management are for the admin only; users can still see and edit themselves
                 .requestMatchers("/api/setting/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/users").hasRole("ADMIN")

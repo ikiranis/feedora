@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -21,6 +22,13 @@ class SecurityConfigTest extends ApiTestBase {
         mockMvc.perform(get("/api/general/appAlive")).andExpect(status().isOk());
         mockMvc.perform(get("/api/language/all/en")).andExpect(status().isOk());
         mockMvc.perform(get("/api/auth/status")).andExpect(status().isOk());
+    }
+
+    @Test
+    void frontendFilesInSubfoldersDontNeedAToken() throws Exception {
+        // <img> requests don't send the JWT, so e.g. the language flags must be public
+        mockMvc.perform(get("/flags/en.svg"))
+                .andExpect(result -> assertNotEquals(403, result.getResponse().getStatus()));
     }
 
     @Test
