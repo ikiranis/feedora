@@ -1344,4 +1344,119 @@
         <language code="el">Τελευταίο σφάλμα</language>
     </entry>
 
+    <entry id="A user with this email already exists">
+        <language code="en">A user with this email already exists</language>
+        <language code="el">Υπάρχει ήδη χρήστης με αυτό το email</language>
+    </entry>
+
+    <entry id="User not found">
+        <language code="en">User not found</language>
+        <language code="el">Ο χρήστης δεν βρέθηκε</language>
+    </entry>
+
+    <entry id="You can't change your own email">
+        <language code="en">You can't change your own email</language>
+        <language code="el">Δεν μπορείτε να αλλάξετε το δικό σας email</language>
+    </entry>
+
+    <entry id="You can't delete your own user">
+        <language code="en">You can't delete your own user</language>
+        <language code="el">Δεν μπορείτε να διαγράψετε τον δικό σας χρήστη</language>
+    </entry>
+
+    <entry id="User added successfully">
+        <language code="en">User added successfully</language>
+        <language code="el">Ο χρήστης προστέθηκε με επιτυχία</language>
+    </entry>
+
+    <entry id="User updated successfully">
+        <language code="en">User updated successfully</language>
+        <language code="el">Ο χρήστης ενημερώθηκε με επιτυχία</language>
+    </entry>
+
+    <entry id="User deleted successfully">
+        <language code="en">User deleted successfully</language>
+        <language code="el">Ο χρήστης διαγράφηκε με επιτυχία</language>
+    </entry>
+
+    <entry id="Add User">
+        <language code="en">Add User</language>
+        <language code="el">Προσθήκη Χρήστη</language>
+    </entry>
+
+    <entry id="Edit User">
+        <language code="en">Edit User</language>
+        <language code="el">Επεξεργασία Χρήστη</language>
+    </entry>
+
+    <entry id="Add a new user">
+        <language code="en">Add a new user</language>
+        <language code="el">Προσθήκη νέου χρήστη</language>
+    </entry>
+
+    <entry id="Edit this user">
+        <language code="en">Edit this user</language>
+        <language code="el">Επεξεργασία αυτού του χρήστη</language>
+    </entry>
+
+    <entry id="Delete this user">
+        <language code="en">Delete this user</language>
+        <language code="el">Διαγραφή αυτού του χρήστη</language>
+    </entry>
+
+    <entry id="Search users...">
+        <language code="en">Search users...</language>
+        <language code="el">Αναζήτηση χρηστών...</language>
+    </entry>
+
+    <entry id="Filter users by username or email">
+        <language code="en">Filter users by username or email</language>
+        <language code="el">Φιλτράρισμα χρηστών με όνομα χρήστη ή email</language>
+    </entry>
+
+    <entry id="No users match your search">
+        <language code="en">No users match your search</language>
+        <language code="el">Κανένας χρήστης δεν ταιριάζει με την αναζήτηση</language>
+    </entry>
+
+    <entry id="Failed to fetch users">
+        <language code="en">Failed to fetch users</language>
+        <language code="el">Αποτυχία λήψης χρηστών</language>
+    </entry>
+
+    <entry id="Failed to save user">
+        <language code="en">Failed to save user</language>
+        <language code="el">Αποτυχία αποθήκευσης χρήστη</language>
+    </entry>
+
+    <entry id="Failed to delete user">
+        <language code="en">Failed to delete user</language>
+        <language code="el">Αποτυχία διαγραφής χρήστη</language>
+    </entry>
+
+    <entry id="Are you sure you want to delete this user">
+        <language code="en">Are you sure you want to delete this user</language>
+        <language code="el">Είστε σίγουροι ότι θέλετε να διαγράψετε αυτόν τον χρήστη</language>
+    </entry>
+
+    <entry id="All of their folders, feeds, posts and logs will be deleted too">
+        <language code="en">All of their folders, feeds, posts and logs will be deleted too</language>
+        <language code="el">Θα διαγραφούν επίσης όλοι οι φάκελοι, οι ροές, οι αναρτήσεις και τα αρχεία καταγραφής του</language>
+    </entry>
+
+    <entry id="Leave empty to keep the current password">
+        <language code="en">Leave empty to keep the current password</language>
+        <language code="el">Αφήστε το κενό για να διατηρηθεί ο τρέχων κωδικός</language>
+    </entry>
+
+    <entry id="You">
+        <language code="en">You</language>
+        <language code="el">Εσείς</language>
+    </entry>
+
+    <entry id="Total">
+        <language code="en">Total</language>
+        <language code="el">Σύνολο</language>
+    </entry>
+
 </root>

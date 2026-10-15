@@ -32,6 +32,10 @@ public interface FeedRepository extends JpaRepository<Feed, UUID> {
     @Query("SELECT f FROM Feed f WHERE f.user = :user AND LOWER(f.title) LIKE LOWER(CONCAT('%', :title, '%'))" + LOGS_FIRST_ORDER)
     List<Feed> findByUserAndTitleContainingLogsFirst(@Param("user") User user, @Param("title") String title, Pageable pageable);
     
+    // Rows of [user id, number of feeds] for every user that has feeds
+    @Query("SELECT f.user.id, COUNT(f) FROM Feed f GROUP BY f.user.id")
+    List<Object[]> countGroupedByUser();
+
     @Modifying
     @Transactional
     void deleteByUser(User user);

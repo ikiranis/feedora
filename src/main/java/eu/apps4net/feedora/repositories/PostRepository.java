@@ -63,6 +63,11 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
            "WHERE f.user = :user GROUP BY f.id, f.title, f.htmlUrl, fo.id")
     List<Object[]> countUnreadByFeed(@Param("user") User user);
 
+    // Rows of [user id, number of posts, number of unread posts, number of saved posts] for every user that has posts
+    @Query("SELECT p.user.id, COUNT(p), SUM(CASE WHEN p.read = false THEN 1 ELSE 0 END), SUM(CASE WHEN p.saved = true THEN 1 ELSE 0 END) " +
+           "FROM Post p GROUP BY p.user.id")
+    List<Object[]> countGroupedByUser();
+
     long countByUser(User user);
     boolean existsByFeedAndUserAndLink(Feed feed, User user, String link);
     

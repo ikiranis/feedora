@@ -87,6 +87,22 @@ export interface UserType {
     email: string;
 }
 
+export interface UserWithStatisticsType extends UserType {
+    folderCount: number;
+    feedCount: number;
+    postCount: number;
+    unreadCount: number;
+    savedCount: number;
+    logCount: number;
+}
+
+export interface UserFormType {
+    username: string;
+    email: string;
+    // Empty on update keeps the current password
+    password: string;
+}
+
 export interface PostType {
     id: string;
     title: string;

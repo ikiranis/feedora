@@ -18,6 +18,10 @@ public interface LogEntryRepository extends JpaRepository<LogEntry, UUID> {
     @Query("SELECT l.feedId, COUNT(l) FROM LogEntry l WHERE l.user = :user AND l.feedId IN :feedIds GROUP BY l.feedId")
     List<Object[]> countByFeedIds(@Param("user") User user, @Param("feedIds") Collection<UUID> feedIds);
 
+    // Rows of [user id, number of log entries] for every user that has log entries
+    @Query("SELECT l.user.id, COUNT(l) FROM LogEntry l GROUP BY l.user.id")
+    List<Object[]> countGroupedByUser();
+
     @Modifying
     @Transactional
     @Query("DELETE FROM LogEntry l WHERE l.user = :user")

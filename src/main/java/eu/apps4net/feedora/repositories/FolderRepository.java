@@ -4,6 +4,7 @@ import eu.apps4net.feedora.models.Folder;
 import eu.apps4net.feedora.models.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -15,6 +16,10 @@ public interface FolderRepository extends JpaRepository<Folder, UUID> {
 
     List<Folder> findAllByUser(User user);
     
+    // Rows of [user id, number of folders] for every user that has folders
+    @Query("SELECT f.user.id, COUNT(f) FROM Folder f GROUP BY f.user.id")
+    List<Object[]> countGroupedByUser();
+
     @Modifying
     @Transactional
     void deleteByUser(User user);
