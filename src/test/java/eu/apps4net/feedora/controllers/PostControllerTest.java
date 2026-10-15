@@ -5,10 +5,12 @@ import eu.apps4net.feedora.models.Folder;
 import eu.apps4net.feedora.models.LogType;
 import eu.apps4net.feedora.models.Post;
 import eu.apps4net.feedora.models.User;
+import eu.apps4net.feedora.services.PostService;
 import eu.apps4net.feedora.support.ApiTestBase;
 import eu.apps4net.feedora.support.TestHttpServer;
 import eu.apps4net.feedora.utilities.ArticleExtractor;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -26,6 +28,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class PostControllerTest extends ApiTestBase {
+    @Autowired
+    private PostService postService;
+
     private final LocalDateTime now = LocalDateTime.now();
 
     private Folder news;
@@ -209,6 +214,34 @@ class PostControllerTest extends ApiTestBase {
 
         assertThat(postRepository.findByUserAndReadFalse(user)).isEmpty();
         assertThat(postRepository.findByUserAndReadFalse(other)).hasSize(1);
+        // Only the posts marked now get a read date
+        assertThat(postRepository.findAll()).filteredOn(p -> p.getReadAt() != null)
+                .extracting(Post::getTitle).containsExactlyInAnyOrder("A", "B");
+    }
+
+    @Test
+    void deleteExpiredReadPostsDeletesOnlyPostsReadBeforeTheRetentionPeriod() {
+        createFeeds();
+        Post expired = createPost("Expired", bbc, user, true, now.minusDays(60));
+        expired.setReadAt(now.minusDays(31));
+        postRepository.save(expired);
+        Post recent = createPost("Recent", bbc, user, true, now.minusDays(60));
+        recent.setReadAt(now.minusDays(29));
+        postRepository.save(recent);
+        Post saved = createPost("Saved", bbc, user, true, now.minusDays(60));
+        saved.setReadAt(now.minusDays(31));
+        saved.setSaved(true);
+        postRepository.save(saved);
+        createPost("Unread", bbc, user, false, now.minusDays(60));
+        createPost("No read date", bbc, user, true, now.minusDays(60));
+
+        assertThat(postService.deleteExpiredReadPosts()).isEqualTo(1);
+
+        assertThat(postRepository.findAll()).extracting(Post::getTitle)
+                .containsExactlyInAnyOrder("Recent", "Saved", "Unread", "No read date");
+        // Read before the date was kept, so it's deleted a full retention period from now
+        assertThat(postRepository.findAll()).filteredOn(p -> p.getTitle().equals("No read date"))
+                .allSatisfy(p -> assertThat(p.getReadAt()).isAfter(now.minusMinutes(1)));
     }
 
     @Test

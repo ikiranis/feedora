@@ -24,6 +24,7 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.PageRequest;
@@ -60,6 +61,10 @@ public class PostService {
     private LogService logService;
     @PersistenceContext
     private EntityManager entityManager;
+
+    // Read posts are deleted this many days after they were read, by the post cleanup worker
+    @Value("${feedora.posts.read-retention-days:30}")
+    private int readRetentionDays;
 
     /**
      * Checks all the feeds of a user for new posts, and adds them as Posts in the database.
@@ -103,6 +108,8 @@ public class PostService {
                     return;
                 }
             }
+            // Read posts older than this may have been deleted by the cleanup, so they must not be added again
+            LocalDateTime deletedBefore = readRetentionDays > 0 ? LocalDateTime.now().minusDays(readRetentionDays) : null;
             int threadCount = Math.min(feeds.size(), 8);
             if (threadCount == 0) threadCount = 1;
             ExecutorService executor = Executors.newFixedThreadPool(threadCount); // up to 8 threads, at least 1
@@ -137,9 +144,16 @@ public class PostService {
                 int newPosts = 0;
                 List<LocalDateTime> pubDates = new ArrayList<>();
                 if (success && entries != null) {
+                    // On a feed's first check all its entries are added, however old
+                    boolean checkedBefore = feed.getStatistics() != null && feed.getStatistics().getLastSuccessAt() != null;
                     for (SyndEntry entry : entries) {
                         if (entry.getPublishedDate() != null) {
                             pubDates.add(toLocalDateTime(entry.getPublishedDate()));
+                        }
+
+                        if (checkedBefore && deletedBefore != null && entry.getPublishedDate() != null
+                                && toLocalDateTime(entry.getPublishedDate()).isBefore(deletedBefore)) {
+                            continue;
                         }
 
                         // Modify the query to fetch only necessary fields to avoid CLOB issues
@@ -441,6 +455,10 @@ public class PostService {
             Post post = postOptional.get();
             // Verify that the post belongs to the specified user
             if (post.getUser().getId().equals(user.getId())) {
+                // Keep the first read date if the post is marked again
+                if (!post.isRead() || post.getReadAt() == null) {
+                    post.setReadAt(LocalDateTime.now());
+                }
                 post.setRead(true);
                 postRepository.save(post);
                 return true;
@@ -481,8 +499,25 @@ public class PostService {
             predicates.add(cb.lessThan(post.get("pubDate"), LocalDateTime.now().minusDays(olderThanDays)));
         }
 
-        update.set(post.<Boolean>get("read"), true).where(predicates.toArray(new Predicate[0]));
+        update.set(post.<Boolean>get("read"), true)
+                .set(post.<LocalDateTime>get("readAt"), LocalDateTime.now())
+                .where(predicates.toArray(new Predicate[0]));
         return entityManager.createQuery(update).executeUpdate();
+    }
+
+    /**
+     * Deletes the read posts that were read more than the retention period ago (feedora.posts.read-retention-days).
+     * Saved posts are kept. Read posts without a read date (read before it was kept) get the current date,
+     * so they are deleted a full retention period from now. Runs daily from the post cleanup worker.
+     * @return The number of deleted posts
+     */
+    public int deleteExpiredReadPosts() {
+        if (readRetentionDays <= 0) {
+            return 0;
+        }
+        LocalDateTime now = LocalDateTime.now();
+        postRepository.setMissingReadAt(now);
+        return postRepository.deleteReadBefore(now.minusDays(readRetentionDays));
     }
 
     /**

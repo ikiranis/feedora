@@ -35,6 +35,9 @@ public class Post {
     @Column(name = "is_read")
     private boolean read;
 
+    // When the post was marked as read. Read posts are deleted some time after this (see PostService.deleteExpiredReadPosts)
+    private LocalDateTime readAt;
+
     // Saved for later. The default lets the column be added to existing databases.
     @Column(name = "is_saved", nullable = false)
     @ColumnDefault("false")
@@ -82,6 +85,9 @@ public class Post {
 
     public boolean isRead() { return read; }
     public void setRead(boolean read) { this.read = read; }
+
+    public LocalDateTime getReadAt() { return readAt; }
+    public void setReadAt(LocalDateTime readAt) { this.readAt = readAt; }
 
     public boolean isSaved() { return saved; }
     public void setSaved(boolean saved) { this.saved = saved; }

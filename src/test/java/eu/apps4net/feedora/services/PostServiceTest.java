@@ -21,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -167,6 +169,55 @@ class PostServiceTest {
             assertThat(brokenStats.getTotalErrors()).isEqualTo(1);
             assertThat(brokenStats.getLastError()).contains("HTTP 404");
             assertThat(brokenStats.getLastSuccessAt()).isNull();
+        }
+    }
+
+    @Test
+    void parseFeedsSkipsEntriesOlderThanTheReadRetentionOnceTheFeedWasChecked() throws Exception {
+        ReflectionTestUtils.setField(postService, "readRetentionDays", 30);
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/rss", 200, "application/rss+xml", """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <rss version="2.0"><channel><title>Feed</title>
+                    <item><title>Old</title><link>http://example.com/old</link><pubDate>Mon, 01 Jan 2024 10:00:00 GMT</pubDate></item>
+                    <item><title>Undated</title><link>http://example.com/undated</link></item>
+                    </channel></rss>
+                    """);
+            Feed checked = new Feed("Checked", server.url("/rss"), "", "rss", null, user);
+            FeedStatistics stats = new FeedStatistics(checked);
+            stats.recordSuccess(LocalDateTime.now().minusDays(1), 10, List.of(), 2, 2);
+            checked.setStatistics(stats);
+            when(operationLockService.tryLockFeedOperation()).thenReturn(true);
+            when(feedRepository.findByUser(user)).thenReturn(List.of(checked));
+
+            postService.parseFeeds(user);
+
+            // The old entry may be a read post deleted by the cleanup
+            ArgumentCaptor<Post> saved = ArgumentCaptor.forClass(Post.class);
+            verify(postRepository).save(saved.capture());
+            assertThat(saved.getValue().getTitle()).isEqualTo("Undated");
+        }
+    }
+
+    @Test
+    void parseFeedsAddsOldEntriesOnTheFeedsFirstCheck() throws Exception {
+        ReflectionTestUtils.setField(postService, "readRetentionDays", 30);
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/rss", 200, "application/rss+xml", """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <rss version="2.0"><channel><title>Feed</title>
+                    <item><title>Old</title><link>http://example.com/old</link><pubDate>Mon, 01 Jan 2024 10:00:00 GMT</pubDate></item>
+                    </channel></rss>
+                    """);
+            Feed feed = new Feed("Feed", server.url("/rss"), "", "rss", null, user);
+            when(operationLockService.tryLockFeedOperation()).thenReturn(true);
+            when(feedRepository.findByUser(user)).thenReturn(List.of(feed));
+
+            postService.parseFeeds(user);
+
+            ArgumentCaptor<Post> saved = ArgumentCaptor.forClass(Post.class);
+            verify(postRepository).save(saved.capture());
+            assertThat(saved.getValue().getTitle()).isEqualTo("Old");
         }
     }
 
@@ -312,11 +363,49 @@ class PostServiceTest {
 
         assertThat(postService.markPostAsRead(mine.getId(), user)).isTrue();
         assertThat(mine.isRead()).isTrue();
+        assertThat(mine.getReadAt()).isCloseTo(LocalDateTime.now(), within(5, java.time.temporal.ChronoUnit.SECONDS));
         verify(postRepository).save(mine);
 
         assertThat(postService.markPostAsRead(theirs.getId(), user)).isFalse();
         assertThat(theirs.isRead()).isFalse();
+        assertThat(theirs.getReadAt()).isNull();
         assertThat(postService.markPostAsRead(missing, user)).isFalse();
+    }
+
+    @Test
+    void markPostAsReadKeepsTheFirstReadDate() {
+        Post post = post("post", user, null);
+        LocalDateTime firstRead = LocalDateTime.now().minusDays(3);
+        post.setRead(true);
+        post.setReadAt(firstRead);
+        when(postRepository.findById(post.getId())).thenReturn(Optional.of(post));
+
+        postService.markPostAsRead(post.getId(), user);
+
+        assertThat(post.getReadAt()).isEqualTo(firstRead);
+    }
+
+    @Test
+    void deleteExpiredReadPostsUsesTheRetentionPeriod() {
+        ReflectionTestUtils.setField(postService, "readRetentionDays", 30);
+        when(postRepository.deleteReadBefore(any())).thenReturn(4);
+
+        assertThat(postService.deleteExpiredReadPosts()).isEqualTo(4);
+
+        ArgumentCaptor<LocalDateTime> readAt = ArgumentCaptor.forClass(LocalDateTime.class);
+        ArgumentCaptor<LocalDateTime> before = ArgumentCaptor.forClass(LocalDateTime.class);
+        verify(postRepository).setMissingReadAt(readAt.capture());
+        verify(postRepository).deleteReadBefore(before.capture());
+        assertThat(readAt.getValue()).isCloseTo(LocalDateTime.now(), within(5, java.time.temporal.ChronoUnit.SECONDS));
+        assertThat(before.getValue()).isEqualTo(readAt.getValue().minusDays(30));
+    }
+
+    @Test
+    void deleteExpiredReadPostsDoesNothingWithoutARetentionPeriod() {
+        ReflectionTestUtils.setField(postService, "readRetentionDays", 0);
+
+        assertThat(postService.deleteExpiredReadPosts()).isZero();
+        verifyNoInteractions(postRepository);
     }
 
     @Test

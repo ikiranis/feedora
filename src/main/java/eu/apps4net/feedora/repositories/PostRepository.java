@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -78,4 +79,16 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     @Modifying
     @Transactional
     void deleteByFeed(Feed feed);
+
+    // Read posts from before the read date was kept get the given date, so they are deleted a full retention period later
+    @Modifying
+    @Transactional
+    @Query("UPDATE Post p SET p.readAt = :readAt WHERE p.read = true AND p.readAt IS NULL")
+    int setMissingReadAt(@Param("readAt") LocalDateTime readAt);
+
+    // Saved posts are kept, even if read
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Post p WHERE p.read = true AND p.saved = false AND p.readAt < :before")
+    int deleteReadBefore(@Param("before") LocalDateTime before);
 }
