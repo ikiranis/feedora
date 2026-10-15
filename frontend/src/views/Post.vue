@@ -708,10 +708,13 @@ const selectPost = (index: number) => {
     selectedIndex.value = index;
 
     const post = posts.value[index];
-    nextTick(() => {
-        const element = scrollableContainerRef.value?.querySelector(`[data-post-id="${post.id}"]`);
-        element?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    });
+    // List mode scrolls the opened post to its start (see the selectedIndex watcher)
+    if (showDetails.value) {
+        nextTick(() => {
+            const element = scrollableContainerRef.value?.querySelector(`[data-post-id="${post.id}"]`);
+            element?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        });
+    }
 
     if (!post.read) {
         markPostAsReadAPI(post.id);
@@ -834,6 +837,21 @@ const handleKeydown = (event: KeyboardEvent) => {
     event.preventDefault();
     selectPost(next);
 };
+
+// In list mode, start reading the opened post from its top instead of keeping the previous post's scroll position
+watch(selectedIndex, (index) => {
+    if (showDetails.value || index < 0) return;
+    const post = posts.value[index];
+    if (!post) return;
+    // Wait for the previous post to collapse and this one to expand before measuring
+    nextTick(() => {
+        const container = scrollableContainerRef.value;
+        const element = container?.querySelector<HTMLElement>(`[data-post-id="${post.id}"]`);
+        if (!container || !element) return;
+        const top = element.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop;
+        container.scrollTo({ top });
+    });
+});
 
 // Close the modal when no post is selected anymore (e.g. the posts were reloaded)
 watch(modalPost, (post) => {
