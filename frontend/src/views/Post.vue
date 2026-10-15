@@ -186,6 +186,13 @@
                                     d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z" />
                             </svg>
                         </button>
+                        <button v-if="selectedFeedId" @click="openFeedStatistics" class="btn btn-outline-info me-3"
+                            :title="language.get('Show the statistics of this feed') || 'Show the statistics of this feed'">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                                class="bi bi-bar-chart" viewBox="0 0 16 16">
+                                <path d="M4 11H2v3h2zm5-4H7v7h2zm5-5v12h-2V2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z"/>
+                            </svg>
+                        </button>
                         <button @click="handleParseFeeds" class="btn btn-outline-primary me-3"
                             :title="language.get('Parse RSS Feeds') || 'Parse RSS Feeds'" :disabled="loading">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -257,6 +264,8 @@
     <LogsModal :post-id="logsPost?.id" :feed-id="logsPost?.feed?.id" :title="logsPost?.title" :show="!!logsPost"
         @logs-cleared="handlePostLogsCleared" @modal-hidden="logsPost = null" />
 
+    <FeedStatisticsModal :feed="statisticsFeed" :show="!!statisticsFeed" @modal-hidden="statisticsFeed = null" />
+
     <AddFolderModal @folder-added="fetchFolders" />
     <EditFolderModal :folder="editedFolder" @folder-updated="fetchFolders" />
 
@@ -266,15 +275,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { getPosts, parseFeeds, markAsRead, markAllAsRead, getUnreadCounts, setPostSaved } from '@/api/post';
-import { getFeedOperationStatus, getLastParsedAt } from '@/api/feed';
+import { getFeedOperationStatus, getLastParsedAt, getFeeds } from '@/api/feed';
 import { getFolders, deleteFolder } from '@/api/folder';
-import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType } from '@/types';
+import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType, Feed } from '@/types';
 import { language } from '@/functions/languageStore';
 import { postContentStore } from '@/functions/postContentStore';
 import PostElement from '@/components/PostElement.vue';
 import PostModal from '@/components/PostModal.vue';
 import LogsModal from '@/components/log/LogsModal.vue';
 import AddFolderModal from '@/components/folder/AddFolderModal.vue';
+import FeedStatisticsModal from '@/components/feed/FeedStatisticsModal.vue';
 import EditFolderModal from '@/components/folder/EditFolderModal.vue';
 import Error from '@/components/error/Error.vue'; // Changed from ErrorDisplay
 import { errorStore } from '@/components/error/errorStore'; // Import errorStore
@@ -309,6 +319,7 @@ const failedFeedIcons = ref<Set<string>>(new Set());
 const showEmptyFolders = ref(localStorage.getItem('posts-show-empty-folders') === 'true'); // Persisted in localStorage
 const editingFolders = ref(false); // Shows the edit/delete buttons of the folders in the sidebar
 const editedFolder = ref<FolderType | null>(null); // Folder shown in the edit folder modal
+const statisticsFeed = ref<Feed | null>(null); // Feed shown in the statistics modal
 const showRead = ref(localStorage.getItem('posts-show-read') === 'true'); // Lists the read posts too, persisted in localStorage
 
 // Choices of the "Mark all as read" dropdown, by the age of the posts to mark (null marks all of them)
@@ -419,6 +430,18 @@ const fetchFolders = async () => {
     } catch (e) {
         console.error('Error fetching folders:', e);
         folders.value = [];
+    }
+};
+
+/**
+ * Opens the statistics modal of the selected feed. The feeds are fetched on demand, to show up to date statistics.
+ */
+const openFeedStatistics = async () => {
+    try {
+        const feeds: Feed[] = await getFeeds();
+        statisticsFeed.value = feeds.find(feed => feed.id === selectedFeedId.value) || null;
+    } catch (e: any) {
+        errorStore.set(true, e.response?.data || language.get('Failed to fetch feeds') || 'Failed to fetch feeds.', e.response?.status || 500);
     }
 };
 
