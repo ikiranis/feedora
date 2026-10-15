@@ -92,8 +92,10 @@ h1 {
             background-color: var(--sidebar-hover);
         }
 
-        .currentPage {
+        &.currentPage {
             background-color: var(--sidebar-active);
+            box-shadow: inset 4px 0 0 var(--bs-primary);
+            font-weight: 600;
         }
     }
 }
