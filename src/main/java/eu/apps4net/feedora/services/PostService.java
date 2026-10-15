@@ -212,7 +212,8 @@ public class PostService {
         long newPosts = postsAfter - postsBefore;
         int totalFeedsParsed = succeededFeeds[0] + failedFeeds[0];
 
-        System.out.println("[Feedora] Parsed " + totalFeedsParsed + " feeds of user " + user.getUsername() + " in " + seconds + " seconds. Succeeded: " + succeededFeeds[0] + ", Failed: " + failedFeeds[0] + ". Total posts: " + postsAfter + ". New posts added: " + newPosts);
+        logService.logUser(user, failedFeeds[0] > 0 ? LogLevel.WARNING : LogLevel.INFO, LogType.FEED_PARSING,
+                "Parsed " + totalFeedsParsed + " feeds in " + seconds + " seconds. Succeeded: " + succeededFeeds[0] + ", Failed: " + failedFeeds[0] + ". Total posts: " + postsAfter + ". New posts added: " + newPosts, null);
         } finally {
             // Always release the lock
             operationLockService.unlockFeedOperation();

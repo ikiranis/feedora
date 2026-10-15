@@ -115,11 +115,11 @@ class FeedServiceTest {
     @Test
     void getFeedsForUserWithSearchUsesTheTrimmedSearchTerm() {
         feedService.getFeedsForUser(user, 1, 10, "  tech ");
-        verify(feedRepository).findByUserAndTitleContainingLogsFirst(eq(user), eq("tech"), any(Pageable.class));
+        verify(feedRepository).findByUserAndTitleContainingProblemsFirst(eq(user), eq("tech"), any(Pageable.class));
 
         feedService.getFeedsForUser(user, 1, 10, "   ");
         feedService.getFeedsForUser(user, 1, 10, null);
-        verify(feedRepository, org.mockito.Mockito.times(2)).findByUserLogsFirst(eq(user), any(Pageable.class));
+        verify(feedRepository, org.mockito.Mockito.times(2)).findByUserProblemsFirst(eq(user), any(Pageable.class));
     }
 
     @Test

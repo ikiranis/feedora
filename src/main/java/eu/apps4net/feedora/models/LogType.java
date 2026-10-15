@@ -16,5 +16,7 @@ public enum LogType {
     // The post's page couldn't be downloaded or its article extracted
     CONTENT_EXTRACT,
     // No content longer than the description was found for the post
-    CONTENT_NOT_FOUND
+    CONTENT_NOT_FOUND,
+    // Summary of a run of the feed parser: feeds checked, failures and new posts
+    FEED_PARSING
 }

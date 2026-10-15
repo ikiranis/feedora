@@ -106,7 +106,7 @@ class FeedControllerTest extends ApiTestBase {
     }
 
     @Test
-    void getFeedsPutsFeedsWithLogsFirstAndCountsTheirLogs() throws Exception {
+    void getFeedsPutsFeedsWithProblemsFirstAndCountsTheirLogs() throws Exception {
         Feed alpha = createFeed("Alpha", "http://alpha.example/rss", null, user);
         Feed beta = createFeed("Beta", "http://beta.example/rss", null, user);
         Feed gamma = createFeed("Gamma", "http://gamma.example/rss", null, user);

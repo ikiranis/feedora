@@ -71,6 +71,20 @@ public class LogService {
     }
 
     /**
+     * Logs something that concerns a user but no particular feed or post.
+     * @param user The user the entry is about
+     * @param level The severity
+     * @param type The kind of entry
+     * @param message Short description, shown to the user
+     * @param details Extra debugging information, or null
+     */
+    public void logUser(User user, LogLevel level, LogType type, String message, String details) {
+        LogEntry entry = newEntry(level, type, message, details);
+        entry.setUser(user);
+        save(entry);
+    }
+
+    /**
      * Returns the log entries of a user, newest first, optionally only those of a feed, a post or a level.
      * @param user The user
      * @param page The page number (1-indexed)
@@ -174,11 +188,9 @@ public class LogService {
     }
 
     /**
-     * Saves the entry and prints it to the console. Never throws, so logging can't break the operation being logged.
+     * Saves the entry. Never throws, so logging can't break the operation being logged.
      */
     private void save(LogEntry entry) {
-        String subject = entry.getPostTitle() != null ? entry.getPostTitle() : entry.getFeedTitle();
-        System.err.println("[Feedora] " + entry.getLevel() + " " + entry.getType() + " (" + subject + "): " + entry.getMessage());
         try {
             logEntryRepository.save(entry);
         } catch (Exception e) {

@@ -59,6 +59,7 @@
                             <th>{{ language.get('Title') }}</th>
                             <th>{{ language.get('XML URL') }}</th>
                             <th>{{ language.get('Folder') }}</th>
+                            <th class="text-end">{{ language.get('Posts per day') }}</th>
                             <th>{{ language.get('Actions') }}</th>
                         </tr>
                     </thead>
@@ -71,6 +72,7 @@
                                 </a>
                             </td>
                             <td>{{ feed.folderName }}</td>
+                            <td class="text-end">{{ formatPostsPerDay(feed) }}</td>
                             <td>
                                 <button 
                                     class="btn btn-warning btn-sm me-2"
@@ -166,7 +168,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
 import { getFeedsPaginated, importOPML as importOPMLApi, getFeedOperationStatus, deleteFeed as deleteFeedApi } from '@/api/feed';
 import { Feed } from '@/types';
 import { language } from '@/functions/languageStore';
@@ -209,6 +211,7 @@ const showStatisticsModal = ref(false);
  * @param {boolean} [reset=false] - If true, clears existing feeds and resets pagination.
  */
 const fetchFeeds = async (reset = false) => {
+    let succeeded = false;
     try {
         if (reset) {
             feeds.value = [];
@@ -229,6 +232,7 @@ const fetchFeeds = async (reset = false) => {
         }
 
         page.value++; // Increment page for the next fetch
+        succeeded = true;
     } catch (e: any) {
         if (e.response && e.response.data && e.response.data.message && typeof e.response.data.status === 'number') {
             errorStore.set(true, e.response.data.message, e.response.data.status);
@@ -238,7 +242,33 @@ const fetchFeeds = async (reset = false) => {
     } finally {
         loading.value = false;
     }
+
+    if (succeeded) {
+        await loadMoreIfNotScrollable();
+    }
 };
+
+/**
+ * Loads the next page while the feeds don't fill the scrollable container,
+ * since without a scrollbar the scroll event that loads more feeds never fires.
+ */
+const loadMoreIfNotScrollable = async () => {
+    await nextTick();
+    const container = scrollableContainerRef.value;
+    if (!container || loading.value || allLoaded.value) return;
+
+    if (container.scrollHeight <= container.clientHeight + 200) {
+        loading.value = true;
+        await fetchFeeds();
+    }
+};
+
+/**
+ * Posts per day of a feed, or a dash if the feed hasn't been checked yet
+ */
+const formatPostsPerDay = (feed: Feed) => feed.statistics
+    ? feed.statistics.postsPerDay.toLocaleString(undefined, { maximumFractionDigits: 1 })
+    : '—';
 
 // Watch for search term changes and implement debounced search
 watch(searchTerm, () => {

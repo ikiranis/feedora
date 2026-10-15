@@ -135,12 +135,12 @@ public class FeedService {
      * @return List of feeds
      */
     public List<Feed> getFeedsForUser(User user, int page, int pageSize, String searchTerm) {
-        // Sorted by the query: feeds with log entries first, then by title
+        // Sorted by the query: problematic feeds first, then the most frequent ones, then by title
         Pageable pageable = PageRequest.of(page - 1, pageSize);
         if (searchTerm != null && !searchTerm.trim().isEmpty()) {
-            return feedRepository.findByUserAndTitleContainingLogsFirst(user, searchTerm.trim(), pageable);
+            return feedRepository.findByUserAndTitleContainingProblemsFirst(user, searchTerm.trim(), pageable);
         } else {
-            return feedRepository.findByUserLogsFirst(user, pageable);
+            return feedRepository.findByUserProblemsFirst(user, pageable);
         }
     }
 

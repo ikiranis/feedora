@@ -2,6 +2,7 @@ package eu.apps4net.feedora.controllers;
 
 import eu.apps4net.feedora.models.Feed;
 import eu.apps4net.feedora.models.Folder;
+import eu.apps4net.feedora.models.LogLevel;
 import eu.apps4net.feedora.models.LogType;
 import eu.apps4net.feedora.models.Post;
 import eu.apps4net.feedora.models.User;
@@ -418,10 +419,16 @@ class PostControllerTest extends ApiTestBase {
 
             mockMvc.perform(auth(post("/api/posts/parseFeeds"))).andExpect(status().isOk());
 
-            assertThat(logEntryRepository.findAll()).singleElement().satisfies(log -> {
+            assertThat(logEntryRepository.findAll()).filteredOn(log -> log.getType() != LogType.FEED_PARSING).singleElement().satisfies(log -> {
                 assertThat(log.getFeedId()).isEqualTo(feed.getId());
                 assertThat(log.getType()).isEqualTo(LogType.FEED_FETCH);
                 assertThat(log.getMessage()).contains("HTTP 404");
+            });
+            // The summary of the parsing is logged too
+            assertThat(logEntryRepository.findAll()).filteredOn(log -> log.getType() == LogType.FEED_PARSING).singleElement().satisfies(log -> {
+                assertThat(log.getFeedId()).isNull();
+                assertThat(log.getLevel()).isEqualTo(LogLevel.WARNING);
+                assertThat(log.getMessage()).contains("Parsed 1 feeds").contains("Failed: 1");
             });
         }
     }
