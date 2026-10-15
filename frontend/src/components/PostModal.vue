@@ -52,7 +52,8 @@
                         <span class="spinner-border spinner-border-sm" role="status"></span>
                         {{ language.get('Loading full article...') || 'Loading full article...' }}
                     </div>
-                    <div v-else-if="fullContent || post.description" class="post-modal-content" v-html="fullContent || post.description"></div>
+                    <div v-else-if="fullContent || post.description" class="post-modal-content" v-html="fullContent || post.description"
+                        @error.capture="hideBrokenImage"></div>
                 </article>
             </div>
         </div>
@@ -62,6 +63,7 @@
 <script setup lang="ts">
 import { PostType } from '@/types';
 import { postContentStore } from '@/functions/postContentStore';
+import { hideBrokenImage } from '@/functions/hideBrokenImage';
 import { language } from '@/functions/languageStore';
 import { computed, ref, watch } from 'vue';
 

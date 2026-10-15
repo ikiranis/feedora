@@ -147,7 +147,8 @@
             </div>
             <!-- While the full content loads, show only the spinner so the description isn't swapped out (no flicker) -->
             <div v-else-if="fullContent || post.description" class="summary-description"
-                :class="{ 'post-content': fullContent }" v-html="fullContent || post.description"></div>
+                :class="{ 'post-content': fullContent }" v-html="fullContent || post.description"
+                @error.capture="hideBrokenImage"></div>
         </div>
     </div>
 </template>
@@ -156,6 +157,7 @@
 import { PostType } from '@/types';
 import { markAsRead } from '@/api/post';
 import { postContentStore } from '@/functions/postContentStore';
+import { hideBrokenImage } from '@/functions/hideBrokenImage';
 import { language } from '@/functions/languageStore';
 import { computed, ref, watch } from 'vue';
 
