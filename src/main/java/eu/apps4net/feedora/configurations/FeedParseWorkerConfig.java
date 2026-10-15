@@ -1,5 +1,6 @@
 package eu.apps4net.feedora.configurations;
 
+import eu.apps4net.feedora.models.FeedStatistics;
 import eu.apps4net.feedora.repositories.FeedRepository;
 import eu.apps4net.feedora.services.LogService;
 import eu.apps4net.feedora.services.PostService;
@@ -40,11 +41,10 @@ public class FeedParseWorkerConfig {
                         continue;
                     }
 
-                    System.out.println("[Feedora] Parsing feeds for user " + user.getUsername());
-
+                    // Only the feeds that are due, depending on how often each one posts
                     // A failure for one user must not stop parsing for the rest
                     try {
-                        postService.parseFeeds(user);
+                        postService.parseDueFeeds(user);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -58,6 +58,7 @@ public class FeedParseWorkerConfig {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }, 0, 10, TimeUnit.MINUTES);
+        // Runs at the shortest check interval, each feed is checked only when its own interval has passed
+        }, 0, FeedStatistics.FREQUENT_INTERVAL_MINUTES, TimeUnit.MINUTES);
     }
 }

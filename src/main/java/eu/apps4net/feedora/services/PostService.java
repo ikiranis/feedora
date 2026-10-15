@@ -2,11 +2,13 @@ package eu.apps4net.feedora.services;
 
 import eu.apps4net.feedora.exceptions.FeedFetchException;
 import eu.apps4net.feedora.models.Feed;
+import eu.apps4net.feedora.models.FeedStatistics;
 import eu.apps4net.feedora.models.LogLevel;
 import eu.apps4net.feedora.models.LogType;
 import eu.apps4net.feedora.models.Post;
 import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.repositories.FeedRepository;
+import eu.apps4net.feedora.repositories.FeedStatisticsRepository;
 import eu.apps4net.feedora.repositories.PostRepository;
 import eu.apps4net.feedora.configurations.Language;
 import eu.apps4net.feedora.exceptions.NotFoundException;
@@ -37,6 +39,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -48,6 +51,8 @@ public class PostService {
     @Autowired
     private PostRepository postRepository;
     @Autowired
+    private FeedStatisticsRepository feedStatisticsRepository;
+    @Autowired
     private FeedService feedService;
     @Autowired
     private OperationLockService operationLockService;
@@ -57,12 +62,25 @@ public class PostService {
     private EntityManager entityManager;
 
     /**
-     * Iterates over the current user's RSS feeds, fetches recent unread posts, and adds them as Posts in the database.
-     * (Stub: actual RSS fetching/parsing logic to be implemented)
+     * Checks all the feeds of a user for new posts, and adds them as Posts in the database.
      *
      * @param user The user whose feeds to parse
      */
     public void parseFeeds(User user) {
+        parseFeeds(user, false);
+    }
+
+    /**
+     * Checks the feeds of a user that are due, according to how often each feed posts (see FeedStatistics).
+     * Used by the scheduled parser.
+     *
+     * @param user The user whose feeds to parse
+     */
+    public void parseDueFeeds(User user) {
+        parseFeeds(user, true);
+    }
+
+    private void parseFeeds(User user, boolean onlyDue) {
         // Try to acquire lock to prevent conflicts with OPML import
         if (!operationLockService.tryLockFeedOperation()) {
             System.out.println("[Feedora] Skipping feed parsing - another feed operation is in progress (likely OPML import).");
@@ -76,6 +94,15 @@ public class PostService {
                 System.out.println("[Feedora] No feeds found in database. Skipping feed parsing task.");
                 return;
             }
+            if (onlyDue) {
+                LocalDateTime now = LocalDateTime.now();
+                feeds = feeds.stream()
+                        .filter(feed -> feed.getStatistics() == null || feed.getStatistics().isDue(now))
+                        .toList();
+                if (feeds.isEmpty()) {
+                    return;
+                }
+            }
             int threadCount = Math.min(feeds.size(), 8);
             if (threadCount == 0) threadCount = 1;
             ExecutorService executor = Executors.newFixedThreadPool(threadCount); // up to 8 threads, at least 1
@@ -87,23 +114,34 @@ public class PostService {
 
         for (Feed feed : feeds) {
             executor.submit(() -> {
+                LocalDateTime checkedAt = LocalDateTime.now();
+                long feedStartTime = System.currentTimeMillis();
                 boolean success = false;
                 List<SyndEntry> entries = null;
+                String error = null;
 
                 try {
                     entries = RssFetcher.fetch(feed, feedService);
                     success = true;
                 } catch (FeedFetchException e) {
                     synchronized (failedFeeds) { failedFeeds[0]++; }
+                    error = e.getMessage();
                     String details = e.getDetails() != null ? e.getDetails() : LogService.describe(e);
                     logService.logFeed(feed, LogLevel.ERROR, e.getType(), e.getMessage(), details);
                 } catch (Exception e) {
                     synchronized (failedFeeds) { failedFeeds[0]++; }
-                    logService.logFeed(feed, LogLevel.ERROR, LogType.FEED_FETCH, "Couldn't download the feed: " + e.getMessage(), LogService.describe(e));
+                    error = "Couldn't download the feed: " + e.getMessage();
+                    logService.logFeed(feed, LogLevel.ERROR, LogType.FEED_FETCH, error, LogService.describe(e));
                 }
 
+                int newPosts = 0;
+                List<LocalDateTime> pubDates = new ArrayList<>();
                 if (success && entries != null) {
                     for (SyndEntry entry : entries) {
+                        if (entry.getPublishedDate() != null) {
+                            pubDates.add(toLocalDateTime(entry.getPublishedDate()));
+                        }
+
                         // Modify the query to fetch only necessary fields to avoid CLOB issues
                         if (postRepository.existsByFeedAndUserAndLink(feed, user, entry.getLink())) {
                             continue;
@@ -115,7 +153,7 @@ public class PostService {
                                 entry.getLink(),
                                 entry.getDescription() != null ? entry.getDescription().getValue() : null,
                                 entry.getPublishedDate() != null
-                                    ? ZonedDateTime.ofInstant(entry.getPublishedDate().toInstant(), ZoneId.systemDefault()).toLocalDateTime()
+                                    ? toLocalDateTime(entry.getPublishedDate())
                                     : LocalDateTime.now(),
                                 entry.getAuthor(),
                                 false
@@ -124,12 +162,23 @@ public class PostService {
                             post.setFeed(feed);
                             post.setUser(user);
                             postRepository.save(post);
+                            newPosts++;
                         } catch (Exception e) {
                             logService.logFeed(feed, LogLevel.ERROR, LogType.POST_SAVE,
                                     "Couldn't save the post \"" + entry.getTitle() + "\" (" + entry.getLink() + ")", LogService.describe(e));
                         }
                     }
                     synchronized (succeededFeeds) { succeededFeeds[0]++; }
+                }
+
+                long duration = System.currentTimeMillis() - feedStartTime;
+                if (success && entries != null) {
+                    int entriesCount = entries.size();
+                    int savedPosts = newPosts;
+                    updateStatistics(feed, stats -> stats.recordSuccess(checkedAt, duration, pubDates, entriesCount, savedPosts));
+                } else {
+                    String failure = error;
+                    updateStatistics(feed, stats -> stats.recordFailure(checkedAt, duration, failure));
                 }
             });
         }
@@ -149,10 +198,34 @@ public class PostService {
         long newPosts = postsAfter - postsBefore;
         int totalFeedsParsed = succeededFeeds[0] + failedFeeds[0];
 
-        System.out.println("[Feedora] Parsed " + totalFeedsParsed + " feeds in " + seconds + " seconds. Succeeded: " + succeededFeeds[0] + ", Failed: " + failedFeeds[0] + ". Total posts: " + postsAfter + ". New posts added: " + newPosts);
+        System.out.println("[Feedora] Parsed " + totalFeedsParsed + " feeds of user " + user.getUsername() + " in " + seconds + " seconds. Succeeded: " + succeededFeeds[0] + ", Failed: " + failedFeeds[0] + ". Total posts: " + postsAfter + ". New posts added: " + newPosts);
         } finally {
             // Always release the lock
             operationLockService.unlockFeedOperation();
+        }
+    }
+
+    private static LocalDateTime toLocalDateTime(java.util.Date date) {
+        return ZonedDateTime.ofInstant(date.toInstant(), ZoneId.systemDefault()).toLocalDateTime();
+    }
+
+    /**
+     * Applies a change to the statistics of a feed and saves them, creating them on the feed's first check.
+     *
+     * @param feed The checked feed
+     * @param change What to record
+     */
+    private void updateStatistics(Feed feed, Consumer<FeedStatistics> change) {
+        try {
+            // The feed may have been removed during the check (e.g. its URL returns an HTML page)
+            if (feed.getId() != null && !feedRepository.existsById(feed.getId())) {
+                return;
+            }
+            FeedStatistics stats = feed.getStatistics() != null ? feed.getStatistics() : new FeedStatistics(feed);
+            change.accept(stats);
+            feed.setStatistics(feedStatisticsRepository.save(stats));
+        } catch (Exception e) {
+            logService.logFeed(feed, LogLevel.ERROR, LogType.FEED_STATISTICS, "Couldn't save the feed statistics", LogService.describe(e));
         }
     }
 

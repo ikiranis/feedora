@@ -36,6 +36,29 @@ export interface Feed {
     folderId?: string | null;
     // Number of log entries of the feed and its posts
     logCount?: number;
+    // Null until the feed is checked for the first time
+    statistics?: FeedStatistics | null;
+}
+
+// Parsing statistics of a feed, updated whenever the feed is parsed
+export interface FeedStatistics {
+    lastCheckedAt: string | null;
+    lastSuccessAt: string | null;
+    lastNewPostAt: string | null;
+    lastPostPubDate: string | null;
+    nextCheckAt: string | null;
+    checkIntervalMinutes: number;
+    postsPerDay: number;
+    postsPerHour: number;
+    totalChecks: number;
+    totalErrors: number;
+    consecutiveErrors: number;
+    lastErrorAt: string | null;
+    lastError: string | null;
+    lastEntriesCount: number;
+    lastNewPostsCount: number;
+    totalNewPosts: number;
+    lastFetchDurationMs: number;
 }
 
 export interface FolderType {

@@ -2,11 +2,13 @@ package eu.apps4net.feedora.services;
 
 import eu.apps4net.feedora.exceptions.NotFoundException;
 import eu.apps4net.feedora.models.Feed;
+import eu.apps4net.feedora.models.FeedStatistics;
 import eu.apps4net.feedora.models.LogLevel;
 import eu.apps4net.feedora.models.LogType;
 import eu.apps4net.feedora.models.Post;
 import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.repositories.FeedRepository;
+import eu.apps4net.feedora.repositories.FeedStatisticsRepository;
 import eu.apps4net.feedora.repositories.PostRepository;
 import eu.apps4net.feedora.support.TestHttpServer;
 import eu.apps4net.feedora.utilities.ArticleExtractor;
@@ -44,6 +46,8 @@ class PostServiceTest {
     private FeedRepository feedRepository;
     @Mock
     private PostRepository postRepository;
+    @Mock
+    private FeedStatisticsRepository feedStatisticsRepository;
     @Mock
     private FeedService feedService;
     @Mock
@@ -135,6 +139,79 @@ class PostServiceTest {
             verify(logService).logFeed(eq(feed), eq(LogLevel.ERROR), eq(LogType.FEED_PARSE), anyString(), anyString());
             verify(postRepository, never()).save(any());
         }
+    }
+
+    @Test
+    void parseFeedsRecordsTheStatisticsOfEachFeed() throws Exception {
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/rss", 200, "application/rss+xml", TestHttpServer.rss("Feed",
+                    TestHttpServer.rssItem("First", "http://example.com/1", "First"),
+                    TestHttpServer.rssItem("Second", "http://example.com/2", "Second")));
+            Feed feed = new Feed("Feed", server.url("/rss"), "", "rss", null, user);
+            Feed broken = new Feed("Broken", server.url("/missing"), "", "rss", null, user);
+            when(operationLockService.tryLockFeedOperation()).thenReturn(true);
+            when(feedRepository.findByUser(user)).thenReturn(List.of(feed, broken));
+            when(postRepository.existsByFeedAndUserAndLink(feed, user, "http://example.com/1")).thenReturn(true);
+            when(feedStatisticsRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+            postService.parseFeeds(user);
+
+            FeedStatistics stats = feed.getStatistics();
+            assertThat(stats.getFeed()).isSameAs(feed);
+            assertThat(stats.getLastEntriesCount()).isEqualTo(2);
+            assertThat(stats.getLastNewPostsCount()).isEqualTo(1);
+            assertThat(stats.getConsecutiveErrors()).isZero();
+            assertThat(stats.getNextCheckAt()).isNotNull();
+
+            FeedStatistics brokenStats = broken.getStatistics();
+            assertThat(brokenStats.getTotalErrors()).isEqualTo(1);
+            assertThat(brokenStats.getLastError()).contains("HTTP 404");
+            assertThat(brokenStats.getLastSuccessAt()).isNull();
+        }
+    }
+
+    @Test
+    void parseDueFeedsChecksOnlyTheFeedsThatAreDue() throws Exception {
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/rss", 200, "application/rss+xml", TestHttpServer.rss("Feed",
+                    TestHttpServer.rssItem("Post", "http://example.com/post", "Post")));
+            Feed newFeed = new Feed("New", server.url("/rss"), "", "rss", null, user);
+            Feed dueFeed = new Feed("Due", server.url("/rss"), "", "rss", null, user);
+            FeedStatistics dueStats = new FeedStatistics(dueFeed);
+            dueStats.setNextCheckAt(LocalDateTime.now().minusMinutes(5));
+            dueFeed.setStatistics(dueStats);
+            Feed notDueFeed = new Feed("Not due", server.url("/rss"), "", "rss", null, user);
+            FeedStatistics notDueStats = new FeedStatistics(notDueFeed);
+            notDueStats.setNextCheckAt(LocalDateTime.now().plusHours(1));
+            notDueFeed.setStatistics(notDueStats);
+            when(operationLockService.tryLockFeedOperation()).thenReturn(true);
+            when(feedRepository.findByUser(user)).thenReturn(List.of(newFeed, dueFeed, notDueFeed));
+            when(feedStatisticsRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+            postService.parseDueFeeds(user);
+
+            ArgumentCaptor<Post> saved = ArgumentCaptor.forClass(Post.class);
+            verify(postRepository, org.mockito.Mockito.times(2)).save(saved.capture());
+            assertThat(saved.getAllValues()).extracting(Post::getFeed).containsExactlyInAnyOrder(newFeed, dueFeed);
+            assertThat(newFeed.getStatistics()).isNotNull();
+            assertThat(notDueStats.getTotalChecks()).isZero();
+            verify(operationLockService).unlockFeedOperation();
+        }
+    }
+
+    @Test
+    void parseDueFeedsDoesNothingWhenNoFeedIsDue() {
+        Feed feed = new Feed("Feed", "http://example.com/rss", "", "rss", null, user);
+        FeedStatistics stats = new FeedStatistics(feed);
+        stats.setNextCheckAt(LocalDateTime.now().plusHours(1));
+        feed.setStatistics(stats);
+        when(operationLockService.tryLockFeedOperation()).thenReturn(true);
+        when(feedRepository.findByUser(user)).thenReturn(List.of(feed));
+
+        postService.parseDueFeeds(user);
+
+        verifyNoInteractions(postRepository, feedStatisticsRepository);
+        verify(operationLockService).unlockFeedOperation();
     }
 
     @Test

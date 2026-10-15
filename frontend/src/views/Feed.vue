@@ -82,6 +82,15 @@
                                     </svg>
                                 </button>
                                 <button
+                                    class="btn btn-info btn-sm me-2"
+                                    @click="showFeedStatistics(feed)"
+                                    :title="language.get('Show the statistics of this feed')"
+                                >
+                                    <svg width="16" height="16" fill="currentColor" class="bi bi-bar-chart" viewBox="0 0 16 16">
+                                        <path d="M4 11H2v3h2zm5-4H7v7h2zm5-5v12h-2V2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z"/>
+                                    </svg>
+                                </button>
+                                <button
                                     v-if="feed.logCount"
                                     class="btn btn-secondary btn-sm me-2"
                                     @click="showFeedLogs(feed)"
@@ -146,6 +155,13 @@
         @modal-hidden="showLogsModal = false"
     />
 
+    <!-- Feed Statistics Modal -->
+    <FeedStatisticsModal
+        :feed="statisticsFeed"
+        :show="showStatisticsModal"
+        @modal-hidden="showStatisticsModal = false"
+    />
+
     <Error class="error-fixed-bottom" />
 </template>
 
@@ -158,6 +174,7 @@ import Error from '@/components/error/Error.vue';
 import AddFeedModal from '@/components/feed/AddFeedModal.vue';
 import EditFeedModal from '@/components/feed/EditFeedModal.vue';
 import LogsModal from '@/components/log/LogsModal.vue';
+import FeedStatisticsModal from '@/components/feed/FeedStatisticsModal.vue';
 import { errorStore } from '@/components/error/errorStore';
 
 const feeds = ref<Feed[]>([]);
@@ -179,6 +196,10 @@ const showEditModal = ref(false);
 // Feed logs modal variables
 const logsFeed = ref<Feed | null>(null);
 const showLogsModal = ref(false);
+
+// Feed statistics modal variables
+const statisticsFeed = ref<Feed | null>(null);
+const showStatisticsModal = ref(false);
 
 // Remove the client-side filteredFeeds computed property since we'll use server-side search
 // The feeds array will now contain the already filtered results from the server
@@ -325,6 +346,14 @@ const handleEditModalHidden = () => {
 const showFeedLogs = (feed: Feed) => {
     logsFeed.value = feed;
     showLogsModal.value = true;
+};
+
+/**
+ * Opens the modal with the parsing statistics of a feed
+ */
+const showFeedStatistics = (feed: Feed) => {
+    statisticsFeed.value = feed;
+    showStatisticsModal.value = true;
 };
 
 /**

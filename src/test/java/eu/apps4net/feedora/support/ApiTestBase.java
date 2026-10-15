@@ -8,6 +8,7 @@ import eu.apps4net.feedora.models.LogType;
 import eu.apps4net.feedora.models.Post;
 import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.repositories.FeedRepository;
+import eu.apps4net.feedora.repositories.FeedStatisticsRepository;
 import eu.apps4net.feedora.repositories.FolderRepository;
 import eu.apps4net.feedora.repositories.LogEntryRepository;
 import eu.apps4net.feedora.repositories.PostRepository;
@@ -43,6 +44,8 @@ public abstract class ApiTestBase {
     protected PostRepository postRepository;
     @Autowired
     protected LogEntryRepository logEntryRepository;
+    @Autowired
+    protected FeedStatisticsRepository feedStatisticsRepository;
     @Autowired
     protected PasswordEncoder passwordEncoder;
     @Autowired

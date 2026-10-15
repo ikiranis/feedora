@@ -9,6 +9,8 @@ public class FeedDTO {
     public String folderName;
     // Number of log entries of the feed and its posts
     public long logCount;
+    // Null until the feed is checked for the first time
+    public FeedStatistics statistics;
 
     public static FeedDTO fromFeed(Feed feed) {
         FeedDTO dto = new FeedDTO();
@@ -18,6 +20,7 @@ public class FeedDTO {
         dto.htmlUrl = feed.getHtmlUrl();
         dto.type = feed.getType();
         dto.folderName = feed.getFolder() != null ? feed.getFolder().getName() : null;
+        dto.statistics = feed.getStatistics();
         return dto;
     }
 }

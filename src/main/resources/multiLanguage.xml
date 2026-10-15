@@ -1219,4 +1219,129 @@
         <language code="el">Άρθρα προς εμφάνιση</language>
     </entry>
 
+    <entry id="Statistics">
+        <language code="en">Statistics</language>
+        <language code="el">Στατιστικά</language>
+    </entry>
+
+    <entry id="Show the statistics of this feed">
+        <language code="en">Show the statistics of this feed</language>
+        <language code="el">Εμφάνιση των στατιστικών αυτής της ροής</language>
+    </entry>
+
+    <entry id="The feed has not been checked yet">
+        <language code="en">The feed has not been checked yet</language>
+        <language code="el">Η ροή δεν έχει ελεγχθεί ακόμα</language>
+    </entry>
+
+    <entry id="Never">
+        <language code="en">Never</language>
+        <language code="el">Ποτέ</language>
+    </entry>
+
+    <entry id="Every {0} minutes">
+        <language code="en">Every {0} minutes</language>
+        <language code="el">Κάθε {0} λεπτά</language>
+    </entry>
+
+    <entry id="Every {0} hours">
+        <language code="en">Every {0} hours</language>
+        <language code="el">Κάθε {0} ώρες</language>
+    </entry>
+
+    <entry id="Frequency">
+        <language code="en">Frequency</language>
+        <language code="el">Συχνότητα</language>
+    </entry>
+
+    <entry id="Posts per day">
+        <language code="en">Posts per day</language>
+        <language code="el">Άρθρα ανά ημέρα</language>
+    </entry>
+
+    <entry id="Posts per hour">
+        <language code="en">Posts per hour</language>
+        <language code="el">Άρθρα ανά ώρα</language>
+    </entry>
+
+    <entry id="Check interval">
+        <language code="en">Check interval</language>
+        <language code="el">Διάστημα ελέγχου</language>
+    </entry>
+
+    <entry id="Next check">
+        <language code="en">Next check</language>
+        <language code="el">Επόμενος έλεγχος</language>
+    </entry>
+
+    <entry id="Updates">
+        <language code="en">Updates</language>
+        <language code="el">Ενημερώσεις</language>
+    </entry>
+
+    <entry id="Last check">
+        <language code="en">Last check</language>
+        <language code="el">Τελευταίος έλεγχος</language>
+    </entry>
+
+    <entry id="Last successful check">
+        <language code="en">Last successful check</language>
+        <language code="el">Τελευταίος επιτυχής έλεγχος</language>
+    </entry>
+
+    <entry id="Last new posts found">
+        <language code="en">Last new posts found</language>
+        <language code="el">Τελευταία εύρεση νέων άρθρων</language>
+    </entry>
+
+    <entry id="Newest post published">
+        <language code="en">Newest post published</language>
+        <language code="el">Δημοσίευση νεότερου άρθρου</language>
+    </entry>
+
+    <entry id="Duration of the last check">
+        <language code="en">Duration of the last check</language>
+        <language code="el">Διάρκεια τελευταίου ελέγχου</language>
+    </entry>
+
+    <entry id="Posts in the feed">
+        <language code="en">Posts in the feed</language>
+        <language code="el">Άρθρα στη ροή</language>
+    </entry>
+
+    <entry id="New posts on the last check">
+        <language code="en">New posts on the last check</language>
+        <language code="el">Νέα άρθρα στον τελευταίο έλεγχο</language>
+    </entry>
+
+    <entry id="Total new posts">
+        <language code="en">Total new posts</language>
+        <language code="el">Σύνολο νέων άρθρων</language>
+    </entry>
+
+    <entry id="Total checks">
+        <language code="en">Total checks</language>
+        <language code="el">Σύνολο ελέγχων</language>
+    </entry>
+
+    <entry id="Failed checks">
+        <language code="en">Failed checks</language>
+        <language code="el">Αποτυχημένοι έλεγχοι</language>
+    </entry>
+
+    <entry id="Failed checks in a row">
+        <language code="en">Failed checks in a row</language>
+        <language code="el">Συνεχόμενοι αποτυχημένοι έλεγχοι</language>
+    </entry>
+
+    <entry id="Last failure">
+        <language code="en">Last failure</language>
+        <language code="el">Τελευταία αποτυχία</language>
+    </entry>
+
+    <entry id="Last error">
+        <language code="en">Last error</language>
+        <language code="el">Τελευταίο σφάλμα</language>
+    </entry>
+
 </root>

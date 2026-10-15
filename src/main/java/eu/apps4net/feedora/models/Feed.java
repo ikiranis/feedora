@@ -35,6 +35,10 @@ public class Feed {
     @JsonIgnore
     private List<Post> posts;
 
+    // Removed together with the feed
+    @OneToOne(mappedBy = "feed", cascade = CascadeType.REMOVE)
+    private FeedStatistics statistics;
+
     public Feed() {}
 
     public Feed(String title, String xmlUrl, String htmlUrl, String type, Folder folder, User user) {
@@ -69,6 +73,9 @@ public class Feed {
 
     public List<Post> getPosts() { return posts; }
     public void setPosts(List<Post> posts) { this.posts = posts; }
+
+    public FeedStatistics getStatistics() { return statistics; }
+    public void setStatistics(FeedStatistics statistics) { this.statistics = statistics; }
 
     // Expose folderName for serialization
     public String getFolderName() {

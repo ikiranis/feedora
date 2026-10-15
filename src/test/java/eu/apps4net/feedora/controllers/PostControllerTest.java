@@ -352,6 +352,33 @@ class PostControllerTest extends ApiTestBase {
     }
 
     @Test
+    void parseFeedsRecordsStatisticsThatAreRemovedWithTheFeed() throws Exception {
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/rss", 200, "application/rss+xml", TestHttpServer.rss("Feed",
+                    TestHttpServer.rssItem("First", "http://example.com/1", "First description")));
+            Feed feed = createFeed("Feed", server.url("/rss"), null, user);
+
+            mockMvc.perform(auth(post("/api/posts/parseFeeds"))).andExpect(status().isOk());
+            // Checked again: no new posts this time
+            mockMvc.perform(auth(post("/api/posts/parseFeeds"))).andExpect(status().isOk());
+
+            assertThat(feedStatisticsRepository.findAll()).singleElement().satisfies(stats -> {
+                assertThat(stats.getFeed().getId()).isEqualTo(feed.getId());
+                assertThat(stats.getTotalChecks()).isEqualTo(2);
+                assertThat(stats.getTotalNewPosts()).isEqualTo(1);
+                assertThat(stats.getLastNewPostsCount()).isZero();
+                assertThat(stats.getNextCheckAt()).isNotNull();
+            });
+
+            mockMvc.perform(auth(post("/api/feed/deleteFeed").param("feedId", feed.getId().toString())))
+                    .andExpect(status().isOk());
+
+            assertThat(feedRepository.findAll()).isEmpty();
+            assertThat(feedStatisticsRepository.findAll()).isEmpty();
+        }
+    }
+
+    @Test
     void parseFeedsLogsFeedsThatCantBeDownloaded() throws Exception {
         try (TestHttpServer server = new TestHttpServer()) {
             Feed feed = createFeed("Broken", server.url("/missing"), null, user);

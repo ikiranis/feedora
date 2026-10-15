@@ -9,6 +9,8 @@ public enum LogType {
     FEED_REMOVED,
     // The feed's information (e.g. title) couldn't be read when adding it
     FEED_INFO,
+    // The feed's parsing statistics couldn't be saved
+    FEED_STATISTICS,
     // A feed entry couldn't be saved as a post
     POST_SAVE,
     // The post's page couldn't be downloaded or its article extracted
