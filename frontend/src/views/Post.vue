@@ -216,8 +216,8 @@ const loading = ref(false);
 const allLoaded = ref(false);
 const scrollableContainerRef = ref<HTMLElement | null>(null); // Ref for the scrollable container
 const intersectionObserver = ref<IntersectionObserver | null>(null);
-const observedPosts = ref<Set<string>>(new Set()); // Track which posts are being observed
-const lastScrollTop = ref(0); // Track scroll position to determine scroll direction
+const observedPosts = ref<Set<string>>(new Set()); // Unread posts currently visible in the scrollable container
+const lastScrollTop = ref(0); // Scroll position at the previous scroll event, to detect scrolling down
 const searchTerm = ref('');
 const searchTimeout = ref<number | null>(null);
 const selectedIndex = ref(-1); // Index of the card selected via keyboard navigation
@@ -587,19 +587,15 @@ const toggleSaved = async (postId: string) => {
 };
 
 /**
- * Sets up intersection observer to track when posts are scrolled past.
- * Posts that completely disappear from the viewport are marked as read only when scrolling down.
+ * Sets up intersection observer to track which unread posts are currently visible.
+ * It doesn't mark posts as read itself: markScrolledPastPosts does, on scroll events, so posts moved
+ * out of view by layout changes (e.g. a post expanding or collapsing) stay unread.
  */
 const setupIntersectionObserver = () => {
     if (!scrollableContainerRef.value) return;
 
     intersectionObserver.value = new IntersectionObserver(
         (entries) => {
-            // Get current scroll position to determine direction
-            const currentScrollTop = scrollableContainerRef.value?.scrollTop || 0;
-            const isScrollingDown = currentScrollTop > lastScrollTop.value;
-            lastScrollTop.value = currentScrollTop;
-
             entries.forEach((entry) => {
                 const postElement = entry.target as HTMLElement;
                 const postId = postElement.getAttribute('data-post-id');
@@ -610,14 +606,9 @@ const setupIntersectionObserver = () => {
                 if (!post || post.read) return;
 
                 if (entry.isIntersecting) {
-                    // Post is visible - track it
                     observedPosts.value.add(postId);
                 } else {
-                    // Post is no longer visible - mark as read only if scrolling down and it was previously observed
-                    if (observedPosts.value.has(postId) && isScrollingDown) {
-                        observedPosts.value.delete(postId);
-                        markPostAsReadAPI(postId);
-                    }
+                    observedPosts.value.delete(postId);
                 }
             });
         },
@@ -660,7 +651,29 @@ const cleanupIntersectionObserver = () => {
         intersectionObserver.value = null;
     }
     observedPosts.value.clear();
-    lastScrollTop.value = 0;
+};
+
+/**
+ * Marks as read the visible unread posts that a downward scroll has moved completely above the top of the container,
+ * i.e. the posts the user has scrolled past and doesn't see anymore.
+ */
+const markScrolledPastPosts = () => {
+    const container = scrollableContainerRef.value;
+    if (!container) return;
+
+    const scrollTop = container.scrollTop;
+    const isScrollingDown = scrollTop > lastScrollTop.value;
+    lastScrollTop.value = scrollTop;
+    if (!isScrollingDown) return;
+
+    const containerTop = container.getBoundingClientRect().top;
+    Array.from(observedPosts.value).forEach((postId) => {
+        const element = container.querySelector(`[data-post-id="${postId}"]`);
+        if (element && element.getBoundingClientRect().bottom <= containerTop) {
+            observedPosts.value.delete(postId);
+            markPostAsReadAPI(postId);
+        }
+    });
 };
 
 /**
@@ -879,8 +892,7 @@ onMounted(() => {
     fetchPosts(true); // Initial fetch
     if (scrollableContainerRef.value) {
         scrollableContainerRef.value.addEventListener('scroll', handleScroll);
-        // Initialize scroll position
-        lastScrollTop.value = scrollableContainerRef.value.scrollTop;
+        scrollableContainerRef.value.addEventListener('scroll', markScrolledPastPosts);
     }
     // Setup intersection observer for marking posts as read when scrolled past
     nextTick(() => {
@@ -894,6 +906,7 @@ onMounted(() => {
 onUnmounted(() => {
     if (scrollableContainerRef.value) {
         scrollableContainerRef.value.removeEventListener('scroll', handleScroll);
+        scrollableContainerRef.value.removeEventListener('scroll', markScrolledPastPosts);
     }
     window.removeEventListener('keydown', handleKeydown);
     // Cleanup search timeout
