@@ -13,7 +13,7 @@ Without the extension, B still works but the browser switches to the new tab.
 3. Click **Load unpacked** and select this `extension` folder.
 4. Reload the Feedora tab.
 
-### Firefox (121+)
+### Firefox (128+)
 1. Open `about:debugging#/runtime/this-firefox`.
 2. Click **Load Temporary Add-on…** and select `manifest.json` in this folder.
 3. Reload the Feedora tab.
@@ -22,9 +22,14 @@ Temporary add-ons are removed when Firefox restarts.
 
 ## Where it runs
 
-The extension is active on `http://localhost` and `http://127.0.0.1` (any port), which covers the Vite dev
-server and the Spring Boot app on port 9999. If you host Feedora somewhere else, add its address to
-`content_scripts.matches` in `manifest.json` and reload the extension.
+The extension is always active on `http://localhost` and `http://127.0.0.1` (any port), which covers the Vite
+dev server and the Spring Boot app on port 9999.
+
+If Feedora runs somewhere else (e.g. in Docker on `http://192.168.1.10:8820`), open it and **click the extension's
+toolbar button** (pin it from the extensions menu first). Allow access to the site when the browser asks. The badge
+shows **ON**, B works right away, and the site is remembered for next time (all ports on that host).
+
+To disable it on a site, remove the extension's access to it in the browser's extension settings.
 
 ## How it works
 
