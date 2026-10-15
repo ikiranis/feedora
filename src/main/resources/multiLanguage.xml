@@ -1279,6 +1279,10 @@
         <language code="el">Ενημερώσεις</language>
     </entry>
 
+    <entry id="Last parsing">
+        <language code="en">Last parsing</language>
+        <language code="el">Τελευταία ανάκτηση</language>
+    </entry>
     <entry id="Last check">
         <language code="en">Last check</language>
         <language code="el">Τελευταίος έλεγχος</language>

@@ -81,6 +81,24 @@ export const getFeedOperationStatus = async () => {
 };
 
 /**
+ * Get when the feeds of the current user were last parsed
+ * @returns The ISO date of the last parse, or null if the feeds were never parsed
+ */
+export const getLastParsedAt = async (): Promise<string | null> => {
+    try {
+        const response = await axios.get(config.defaultServer() + '/api/feed/lastParsedAt', {
+            headers: { 'Accept': 'application/json' }
+        });
+        if (response.status === 200) {
+            return response.data.lastParsedAt;
+        }
+        return null;
+    } catch (error: any) {
+        throw error;
+    }
+};
+
+/**
  * Add a single feed
  * @param feedData - Object containing url, folderId, and optional title
  */

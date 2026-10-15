@@ -166,6 +166,13 @@
                         </div>
                     </div>
                 </div>
+                <div class="row justify-content-end mt-n3 mb-2">
+                    <div class="col-auto">
+                        <small class="text-muted last-parsed" :title="lastParsedAt ? new Date(lastParsedAt).toLocaleString() : ''">
+                            {{ language.get('Last parsing') || 'Last parsing' }}: {{ lastParsedLabel }}
+                        </small>
+                    </div>
+                </div>
             </div>
             
             <div class="scrollable-post-view" ref="scrollableContainerRef">
@@ -212,7 +219,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { getPosts, parseFeeds, markAsRead, markAllAsRead, getUnreadCounts, setPostSaved } from '@/api/post';
-import { getFeedOperationStatus } from '@/api/feed';
+import { getFeedOperationStatus, getLastParsedAt } from '@/api/feed';
 import { getFolders } from '@/api/folder';
 import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType } from '@/types';
 import { language } from '@/functions/languageStore';
@@ -230,6 +237,8 @@ const page = ref(1);
 const pageSize = 50;
 const loading = ref(false);
 const allLoaded = ref(false);
+const lastParsedAt = ref<string | null>(null); // When the feeds were last parsed, by the scheduler or manually
+let lastParsedTimer: number | null = null;
 const scrollableContainerRef = ref<HTMLElement | null>(null); // Ref for the scrollable container
 const intersectionObserver = ref<IntersectionObserver | null>(null);
 const observedPosts = ref<Set<string>>(new Set()); // Unread posts currently visible in the scrollable container
@@ -457,6 +466,7 @@ const handleParseFeeds = async () => {
         const result = await parseFeeds();
         await fetchPosts(true); // Refresh posts
         fetchUnreadCounts();
+        fetchLastParsedAt();
         errorStore.set(true, result, 200); // Use errorStore for success
     } catch (e: any) { // Added :any to e for response access
         if (e.response && e.response.data && e.response.data.message && typeof e.response.data.status === 'number') {
@@ -495,10 +505,33 @@ const handleMarkAllAsRead = async (olderThanDays: number | null) => {
 };
 
 /**
+ * Fetches when the feeds were last parsed. Failures are ignored, the label just keeps its previous value.
+ */
+const fetchLastParsedAt = async () => {
+    try {
+        lastParsedAt.value = await getLastParsedAt();
+    } catch (e) {
+        console.warn('Could not fetch the last parse time:', e);
+    }
+};
+
+// Time only for today, date and time otherwise
+const lastParsedLabel = computed(() => {
+    if (!lastParsedAt.value) {
+        return language.get('Never') || 'Never';
+    }
+    const date = new Date(lastParsedAt.value);
+    return date.toDateString() === new Date().toDateString()
+        ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        : date.toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+});
+
+/**
  * Handles refreshing the posts by fetching the latest data.
  */
 const handleRefreshPosts = async () => {
     loading.value = true;
+    fetchLastParsedAt();
     // Clean up current intersection observer
     cleanupIntersectionObserver();
     fetchUnreadCounts();
@@ -911,6 +944,9 @@ onMounted(() => {
     fetchFolders();
     fetchUnreadCounts();
     fetchPosts(true); // Initial fetch
+    fetchLastParsedAt();
+    // The scheduler parses in the background, so the time is refreshed every minute
+    lastParsedTimer = window.setInterval(fetchLastParsedAt, 60 * 1000);
     if (scrollableContainerRef.value) {
         scrollableContainerRef.value.addEventListener('scroll', handleScroll);
         scrollableContainerRef.value.addEventListener('scroll', markScrolledPastPosts);
@@ -930,6 +966,9 @@ onUnmounted(() => {
         scrollableContainerRef.value.removeEventListener('scroll', markScrolledPastPosts);
     }
     window.removeEventListener('keydown', handleKeydown);
+    if (lastParsedTimer) {
+        clearInterval(lastParsedTimer);
+    }
     // Cleanup search timeout
     if (searchTimeout.value) {
         clearTimeout(searchTimeout.value);

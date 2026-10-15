@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,6 +36,10 @@ public interface FeedRepository extends JpaRepository<Feed, UUID> {
     // Rows of [user id, number of feeds] for every user that has feeds
     @Query("SELECT f.user.id, COUNT(f) FROM Feed f GROUP BY f.user.id")
     List<Object[]> countGroupedByUser();
+
+    // Last check of any of the user's feeds, null if none was checked yet
+    @Query("SELECT MAX(s.lastCheckedAt) FROM FeedStatistics s WHERE s.feed.user = :user")
+    LocalDateTime findLastCheckedAtByUser(@Param("user") User user);
 
     @Modifying
     @Transactional

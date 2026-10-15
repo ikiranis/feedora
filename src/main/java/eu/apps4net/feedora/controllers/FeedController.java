@@ -107,6 +107,18 @@ public class FeedController {
     }
 
     /**
+     * Returns when the feeds of the current user were last parsed.
+     *
+     * @return JSON object with the last parse time, null if the feeds were never parsed
+     */
+    @GetMapping("/lastParsedAt")
+    public Map<String, Object> getLastParsedAt() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("lastParsedAt", feedService.getLastParsedAt(userService.getCurrentUser()));
+        return result;
+    }
+
+    /**
      * Adds a single feed to the database.
      *
      * @param feedRequest The feed data containing URL, folderId, and optional title

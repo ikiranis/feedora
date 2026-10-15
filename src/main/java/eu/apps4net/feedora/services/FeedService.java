@@ -21,6 +21,7 @@ import org.w3c.dom.*;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -156,6 +157,16 @@ public class FeedService {
         } catch (Exception e) {
             logService.logFeed(feed, LogLevel.ERROR, LogType.FEED_REMOVED, reason + ". The feed couldn't be removed.", LogService.describe(e));
         }
+    }
+
+    /**
+     * Returns when the feeds of a user were last parsed.
+     *
+     * @param user The user whose feeds to check
+     * @return The last check of any of the user's feeds, or null if none was checked yet
+     */
+    public LocalDateTime getLastParsedAt(User user) {
+        return feedRepository.findLastCheckedAtByUser(user);
     }
 
     /**
