@@ -19,19 +19,6 @@ import { language } from "@/functions/languageStore.ts";
                     </div>
                 </div>
             </router-link>
-            <router-link class="btn p-0 m-3" :to="{ name: 'Folders' }">
-                <div class="card">
-                    <div class="card-img-top">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-folder" viewBox="0 0 16 16">
-                            <path d="M9.828 4a.5.5 0 0 1 .354.146l.646.647H14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h4.172a.5.5 0 0 1 .354.146l1.328 1.328A.5.5 0 0 0 8.828 3H14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h4.172a.5.5 0 0 1 .354.146l1.328 1.328A.5.5 0 0 0 8.828 3z"/>
-                        </svg>
-                    </div>
-                    <div class="card-body">
-                        <h5 class="card-title">{{ language.get('Folders') }}</h5>
-                        <p class="card-text">{{ language.get('List of folders') }}</p>
-                    </div>
-                </div>
-            </router-link>
             <router-link class="btn p-0 m-3" :to="{ name: 'Users' }">
                 <div class="card">
                     <div class="card-img-top">

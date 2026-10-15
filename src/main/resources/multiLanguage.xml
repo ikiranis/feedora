@@ -1543,4 +1543,14 @@
         <language code="el">Απενεργοποιημένο</language>
     </entry>
 
+    <entry id="Edit folders">
+        <language code="en">Edit folders</language>
+        <language code="el">Επεξεργασία φακέλων</language>
+    </entry>
+
+    <entry id="Finish editing folders">
+        <language code="en">Finish editing folders</language>
+        <language code="el">Τέλος επεξεργασίας φακέλων</language>
+    </entry>
+
 </root>

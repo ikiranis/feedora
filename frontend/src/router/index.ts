@@ -6,7 +6,6 @@ import Home from "@/views/Home.vue"
 import Settings from "@/views/setting/Settings.vue"
 import Setting from "@/views/setting/Setting.vue"
 import Feed from "@/views/Feed.vue"
-import Folder from "@/views/Folder.vue"
 import User from "@/views/User.vue"
 import Post from "@/views/Post.vue"
 import Log from "@/views/Log.vue"
@@ -50,12 +49,6 @@ const routes : RouteRecordRaw[] = [
         component: Setting,
         props: true,
         meta: { requiresAuth: true, requiresAdmin: true }
-    },
-    {
-        path: '/folders',
-        name: 'Folders',
-        component: Folder,
-        meta: { requiresAuth: true }
     },
     {
         path: '/users',

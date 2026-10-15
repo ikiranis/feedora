@@ -10,7 +10,23 @@
                     </svg>
                     <span class="folder-name">{{ language.get('All Posts') || 'All Posts' }}</span>
                     <span class="folder-count">{{ unreadCounts.total }}</span>
-                    <button type="button" class="folder-toggle" @click.stop="showEmptyFolders = !showEmptyFolders"
+                </div>
+
+                <div class="folder-item" :class="{ active: showSaved }"
+                    role="button" @click="selectSaved" :title="language.get('Saved') || 'Saved'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-bookmark flex-shrink-0" viewBox="0 0 16 16">
+                        <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z"/>
+                    </svg>
+                    <span class="folder-name">{{ language.get('Saved') || 'Saved' }}</span>
+                    <span class="folder-count">{{ unreadCounts.saved }}</span>
+                </div>
+
+                <hr class="my-2" />
+
+                <div class="folder-header">
+                    <span class="folder-name">{{ language.get('Folders') || 'Folders' }}</span>
+                    <button type="button" class="folder-toggle" @click="showEmptyFolders = !showEmptyFolders"
                         :title="showEmptyFolders
                             ? (language.get('Hide empty folders') || 'Hide empty folders')
                             : (language.get('Show empty folders') || 'Show empty folders')">
@@ -26,19 +42,21 @@
                             <path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>
                         </svg>
                     </button>
+                    <button type="button" class="folder-toggle" :class="{ 'text-primary': editingFolders }"
+                        @click="editingFolders = !editingFolders"
+                        :title="editingFolders
+                            ? (language.get('Finish editing folders') || 'Finish editing folders')
+                            : (language.get('Edit folders') || 'Edit folders')">
+                        <svg v-if="editingFolders" xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                            fill="currentColor" class="bi bi-check-lg" viewBox="0 0 16 16">
+                            <path d="M12.736 3.97a.733.733 0 0 1 1.047 0c.286.289.29.756.01 1.05L7.88 12.01a.733.733 0 0 1-1.065.02L3.217 8.384a.757.757 0 0 1 0-1.06.733.733 0 0 1 1.047 0l3.052 3.093 5.4-6.425a.247.247 0 0 1 .02-.022z"/>
+                        </svg>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                            fill="currentColor" class="bi bi-pencil" viewBox="0 0 16 16">
+                            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708L10.5 8.207l-3-3L12.146.146zM11.207 1.5 1.5 11.207V14.5h3.293L14.5 4.793 11.207 1.5z"/>
+                        </svg>
+                    </button>
                 </div>
-
-                <div class="folder-item" :class="{ active: showSaved }"
-                    role="button" @click="selectSaved" :title="language.get('Saved') || 'Saved'">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                        class="bi bi-bookmark flex-shrink-0" viewBox="0 0 16 16">
-                        <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z"/>
-                    </svg>
-                    <span class="folder-name">{{ language.get('Saved') || 'Saved' }}</span>
-                    <span class="folder-count">{{ unreadCounts.saved }}</span>
-                </div>
-
-                <hr class="my-2" />
 
                 <template v-for="folder in visibleFolders" :key="folder.id">
                     <div class="folder-item" :class="{ active: selectedFolderId === folder.id }"
@@ -52,7 +70,24 @@
                             </svg>
                         </button>
                         <span class="folder-name">{{ folder.name }}</span>
-                        <span class="folder-count">{{ unreadCounts.folders[folder.id] || 0 }}</span>
+                        <template v-if="editingFolders">
+                            <button type="button" class="folder-toggle" @click.stop="openEditFolder(folder)"
+                                :title="language.get('Edit this folder') || 'Edit this folder'">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                                    class="bi bi-pencil" viewBox="0 0 16 16">
+                                    <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708L10.5 8.207l-3-3L12.146.146zM11.207 1.5 1.5 11.207V14.5h3.293L14.5 4.793 11.207 1.5z"/>
+                                </svg>
+                            </button>
+                            <button type="button" class="folder-toggle text-danger" @click.stop="removeFolder(folder)"
+                                :title="language.get('Delete this folder') || 'Delete this folder'">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor"
+                                    class="bi bi-trash" viewBox="0 0 16 16">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5Zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6Z"/>
+                                    <path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1ZM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118ZM2.5 3h11V2h-11v1Z"/>
+                                </svg>
+                            </button>
+                        </template>
+                        <span v-else class="folder-count">{{ unreadCounts.folders[folder.id] || 0 }}</span>
                     </div>
 
                     <template v-if="expandedFolders.has(folder.id)">
@@ -71,6 +106,15 @@
                         </button>
                     </template>
                 </template>
+
+                <button type="button" class="folder-item text-secondary mt-2" @click="openAddFolder"
+                    :title="language.get('Add a new folder to organize your feeds') || 'Add a new folder to organize your feeds'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-plus-lg flex-shrink-0" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2Z"/>
+                    </svg>
+                    <span class="folder-name">{{ language.get('Add Folder') || 'Add Folder' }}</span>
+                </button>
             </nav>
         </aside>
 
@@ -213,6 +257,9 @@
     <LogsModal :post-id="logsPost?.id" :feed-id="logsPost?.feed?.id" :title="logsPost?.title" :show="!!logsPost"
         @logs-cleared="handlePostLogsCleared" @modal-hidden="logsPost = null" />
 
+    <AddFolderModal @folder-added="fetchFolders" />
+    <EditFolderModal :folder="editedFolder" @folder-updated="fetchFolders" />
+
     <Error class="error-fixed-bottom" />
 </template>
 
@@ -220,17 +267,19 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { getPosts, parseFeeds, markAsRead, markAllAsRead, getUnreadCounts, setPostSaved } from '@/api/post';
 import { getFeedOperationStatus, getLastParsedAt } from '@/api/feed';
-import { getFolders } from '@/api/folder';
+import { getFolders, deleteFolder } from '@/api/folder';
 import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType } from '@/types';
 import { language } from '@/functions/languageStore';
 import { postContentStore } from '@/functions/postContentStore';
 import PostElement from '@/components/PostElement.vue';
 import PostModal from '@/components/PostModal.vue';
 import LogsModal from '@/components/log/LogsModal.vue';
+import AddFolderModal from '@/components/folder/AddFolderModal.vue';
+import EditFolderModal from '@/components/folder/EditFolderModal.vue';
 import Error from '@/components/error/Error.vue'; // Changed from ErrorDisplay
 import { errorStore } from '@/components/error/errorStore'; // Import errorStore
 import { confirmDialog } from '@/functions/javaDialogs';
-import { Dropdown } from 'bootstrap';
+import { Dropdown, Modal } from 'bootstrap';
 
 const posts = ref<PostType[]>([]);
 const page = ref(1);
@@ -258,6 +307,8 @@ const showSaved = ref(false); // Shows the saved posts (read or unread) instead 
 const expandedFolders = ref<Set<string>>(new Set());
 const failedFeedIcons = ref<Set<string>>(new Set());
 const showEmptyFolders = ref(localStorage.getItem('posts-show-empty-folders') === 'true'); // Persisted in localStorage
+const editingFolders = ref(false); // Shows the edit/delete buttons of the folders in the sidebar
+const editedFolder = ref<FolderType | null>(null); // Folder shown in the edit folder modal
 const showRead = ref(localStorage.getItem('posts-show-read') === 'true'); // Lists the read posts too, persisted in localStorage
 
 // Choices of the "Mark all as read" dropdown, by the age of the posts to mark (null marks all of them)
@@ -316,6 +367,7 @@ const visibleFolders = computed(() => {
     const selectedFeedFolderId = unreadCounts.value.feeds.find(f => f.id === selectedFeedId.value)?.folderId;
     return folders.value
         .filter(folder => showEmptyFolders.value
+            || editingFolders.value
             || (unreadCounts.value.folders[folder.id] || 0) > 0
             || folder.id === selectedFolderId.value
             || folder.id === selectedFeedFolderId)
@@ -367,6 +419,51 @@ const fetchFolders = async () => {
     } catch (e) {
         console.error('Error fetching folders:', e);
         folders.value = [];
+    }
+};
+
+/**
+ * Opens the modal that creates a new folder.
+ */
+const openAddFolder = () => {
+    const modalElement = document.getElementById('addFolderModal');
+    if (modalElement) Modal.getOrCreateInstance(modalElement).show();
+};
+
+/**
+ * Opens the modal that renames the given folder.
+ */
+const openEditFolder = (folder: FolderType) => {
+    editedFolder.value = folder;
+    const modalElement = document.getElementById('editFolderModal');
+    if (modalElement) Modal.getOrCreateInstance(modalElement).show();
+};
+
+/**
+ * Deletes a folder after confirmation. Its feeds are moved out of the folder by the server.
+ */
+const removeFolder = async (folder: FolderType) => {
+    const folderFeeds = unreadCounts.value.feeds.filter(feed => feed.folderId === folder.id);
+    const feedCount = folderFeeds.length;
+    // The deleted folder (or one of its feeds) is being shown
+    const isShown = selectedFolderId.value === folder.id || folderFeeds.some(feed => feed.id === selectedFeedId.value);
+    let message = `${language.get('Are you sure you want to delete this folder') || 'Are you sure you want to delete this folder'}?\n\n"${folder.name}"`;
+    if (feedCount > 0) {
+        message += `\n\n${language.get('This folder contains') || 'This folder contains'} ${feedCount} ${language.get('feeds') || 'feeds'}. ${language.get('These feeds will be moved to the default folder') || 'These feeds will be moved to the default folder'}.`;
+    }
+    if (!confirmDialog(message)) return;
+
+    try {
+        const result = await deleteFolder(folder.id);
+        await Promise.all([fetchFolders(), fetchUnreadCounts()]);
+        if (isShown) selectAll();
+        errorStore.set(true, result, 200);
+    } catch (e: any) {
+        if (e.response && e.response.data) {
+            errorStore.set(true, e.response.data, e.response.status || 500);
+        } else {
+            errorStore.set(true, language.get('Failed to delete folder') || 'Failed to delete folder.', 500);
+        }
     }
 };
 
@@ -1031,6 +1128,18 @@ onUnmounted(() => {
     background-color: var(--bs-secondary-bg);
     color: var(--bs-primary);
     font-weight: 600;
+}
+
+/* "Folders" header with the edit toggle */
+.folder-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--bs-secondary-color);
 }
 
 /* Chevron that expands a folder to show its feeds */

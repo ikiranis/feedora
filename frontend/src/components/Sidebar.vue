@@ -85,15 +85,6 @@ const handleLogout = async () => {
                 </span>
                 <span class="mx-2" v-if="!collapsed">{{ language.get('Feeds') }}</span>
             </router-link>
-            <router-link :to="{ name: 'Folders' }" :title="language.get('Folders')"
-                :class="checkCurrentPage('Folders') + ' ' + menuItemClasses">
-                <span>
-                    <svg xmlns="http://www.w3.org/2000/svg" :width="getIconSize" fill="currentColor" class="bi bi-folder" viewBox="0 0 16 16">
-                        <path d="M9.828 4a.5.5 0 0 1 .354.146l.646.647H14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h4.172a.5.5 0 0 1 .354.146l1.328 1.328A.5.5 0 0 0 8.828 3H14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h4.172a.5.5 0 0 1 .354.146l1.328 1.328A.5.5 0 0 0 8.828 3H14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h4.172a.5.5 0 0 1 .354.146l1.328 1.328A.5.5 0 0 0 8.828 3z"/>
-                    </svg>
-                </span>
-                <span class="mx-2" v-if="!collapsed">{{ language.get('Folders') }}</span>
-            </router-link>
             <router-link :to="{ name: 'Users' }" :title="language.get('Users')"
                 :class="checkCurrentPage('Users') + ' ' + menuItemClasses">
                 <span>
