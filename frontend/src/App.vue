@@ -41,17 +41,7 @@ const updateAppStatus = async () => {
  * Toggle collapse for sidebar
  */
 const collapse = () => {
-    const sidebar = document.querySelector('.sidebar')
-    const content = document.querySelector('.content')
-
-    if (sidebar && content) {
-        sidebar.classList.toggle('col-lg-1')
-        sidebar.classList.toggle('col-lg-2')
-        content.classList.toggle('col-lg-10')
-        content.classList.toggle('col-lg-11')
-
-        collapsed.value = !collapsed.value
-    }
+    collapsed.value = !collapsed.value
 }
 
 </script>
@@ -61,9 +51,9 @@ const collapse = () => {
     <div v-if="isAppAlive">
         <!-- Authenticated user layout with sidebar -->
         <div v-if="authStore.isAuthenticated.value" class="row vh-100">
-            <sidebar class="sidebar d-flex flex-column col-lg-2 col-12" :collapsed="collapsed"/>
+            <sidebar class="sidebar d-flex flex-column col-12" :class="collapsed ? 'sidebar-collapsed' : 'col-lg-2'" :collapsed="collapsed"/>
 
-            <div class="content col-lg-10 col-12 px-5">
+            <div class="content col-12 px-5" :class="collapsed ? 'content-expanded' : 'col-lg-10'">
                 <div class="d-none d-lg-block d-flex">
                     <span @click="collapse" class="collapseButton btn" :title="collapsed ? language.get('Expand') : language.get('Collapse')">
                         <span v-if="collapsed">

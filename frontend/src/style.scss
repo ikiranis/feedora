@@ -79,24 +79,99 @@ h1 {
     background-color: var(--sidebar-bg);
     color: var(--sidebar-text);
     transition: background-color 0.3s ease;
+    padding-top: 12px;
 
-    a {
-        padding: 10px 20px;
+    // Menu items are rounded pills inset from the sidebar edges
+    a, .logout-btn {
+        align-items: center;
+        margin: 2px 12px;
+        padding: 9px 14px;
+        border-radius: 10px;
         text-decoration: none;
-        font-size: 18px;
+        font-size: 16px;
         color: var(--sidebar-text);
-        display: block;
-        transition: 0.3s;
+        opacity: 0.75;
+        transition: background-color 0.2s, opacity 0.2s, color 0.2s;
+
+        > span {
+            display: flex;
+        }
 
         &:hover {
             background-color: var(--sidebar-hover);
+            opacity: 1;
         }
 
         &.currentPage {
-            background-color: var(--sidebar-active);
-            box-shadow: inset 4px 0 0 var(--bs-primary);
+            background-color: rgba(var(--bs-primary-rgb), 0.2);
+            color: #fff;
+            opacity: 1;
             font-weight: 600;
+
+            svg {
+                color: var(--bs-primary);
+                filter: brightness(1.4);
+            }
         }
+    }
+
+    // The logo link has no hover/active pill
+    a.brand {
+        margin-bottom: 16px;
+        opacity: 1;
+
+        &:hover {
+            background-color: transparent;
+        }
+
+        h2 {
+            align-items: center;
+            font-size: 1.5rem;
+        }
+    }
+
+    .logout-btn {
+        width: calc(100% - 24px);
+        border: none;
+        background: transparent;
+
+        &:hover {
+            background-color: rgba(var(--bs-danger-rgb), 0.15);
+            color: #ff6b6b;
+        }
+    }
+
+    .user-info {
+        margin: 0 12px;
+    }
+}
+
+// Collapsed sidebar is a slim fixed-width icon rail
+@media (min-width: 992px) {
+    // The row's negative gutter hides 12px on the left, so the left padding compensates for it
+    .sidebar.sidebar-collapsed {
+        flex: 0 0 auto;
+        width: 84px;
+        padding-left: 12px;
+        padding-right: 0;
+
+        a, .logout-btn {
+            margin: 4px 10px;
+            padding: 10px 0;
+        }
+
+        a.brand {
+            margin-bottom: 20px;
+        }
+
+        .logout-btn {
+            width: calc(100% - 20px);
+        }
+    }
+
+    .content.content-expanded {
+        flex: 0 0 auto;
+        width: calc(100% - 84px);
     }
 }
 

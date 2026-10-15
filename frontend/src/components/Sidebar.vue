@@ -41,7 +41,7 @@ const menuItemClasses: ComputedRef<string> = computed(() => {
  * Compute the icon size if collapsed or not
  */
 const getIconSize: ComputedRef<number> = computed(() => {
-    return props.collapsed ? 42 : 24
+    return props.collapsed ? 22 : 20
 })
 
 /**
@@ -62,10 +62,10 @@ const handleLogout = async () => {
 <template>
     <div>
         <div>
-            <router-link :to="{ name: 'Posts' }" title="Feedora" :class="menuItemClasses">
-                <h2 class="d-flex">
+            <router-link :to="{ name: 'Posts' }" title="Feedora" :class="'brand ' + menuItemClasses">
+                <h2 class="d-flex m-0">
                     <span>
-                        <img src="/feedora.svg?v=8" alt="Feedora" :width="getIconSize + 8" :height="getIconSize + 8"
+                        <img src="/feedora.svg?v=8" alt="Feedora" width="36" height="36"
                             class="my-auto" />
                     </span>
 
@@ -130,7 +130,7 @@ const handleLogout = async () => {
 
         <div class="mt-auto">
             <!-- User Info and Logout -->
-            <div v-if="authStore.user.value" class="user-section mb-3 px-2">
+            <div v-if="authStore.user.value" class="user-section mb-2">
                 <div v-if="!collapsed" class="user-info rounded p-2 mb-2">
                     <div class="d-flex align-items-center mb-2">
                         <div class="user-avatar me-2">
@@ -148,7 +148,7 @@ const handleLogout = async () => {
                 
                 <button 
                     @click="handleLogout" 
-                    :class="menuItemClasses + ' btn btn-outline-danger w-100'"
+                    :class="menuItemClasses + ' logout-btn'"
                     :title="language.get('Logout')"
                 >
                     <span>
@@ -191,17 +191,6 @@ const handleLogout = async () => {
         max-width: 120px;
         color: #adb5bd !important;
     }
-    
-    .btn-outline-danger {
-        border-color: #dc3545;
-        color: #dc3545;
-        
-        &:hover {
-            background-color: #dc3545;
-            border-color: #dc3545;
-            color: white;
-        }
-    }
 }
 
 [data-bs-theme="dark"] {
@@ -222,17 +211,6 @@ const handleLogout = async () => {
         
         .email {
             color: #adb5bd !important;
-        }
-        
-        .btn-outline-danger {
-            border-color: #dc3545;
-            color: #dc3545;
-            
-            &:hover {
-                background-color: #dc3545;
-                border-color: #dc3545;
-                color: white;
-            }
         }
     }
 }
