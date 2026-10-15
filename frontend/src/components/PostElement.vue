@@ -66,7 +66,8 @@
         </div>
     </div>
     <div v-else class="list-row" :class="{ 'unread-post': !post.read, 'read-post': post.read, 'selected-post': selected }" @click="handleCardClick">
-        <div class="list-line">
+        <!-- The opened post shows its title and actions in the details header instead of the row -->
+        <div v-if="!selected" class="list-line">
             <span class="read-dot" :class="{ unread: !post.read }"
                 :title="post.read ? (language.get('Read') || 'Read') : (language.get('Unread') || 'Unread')"></span>
             <div class="list-source" :title="post.feed?.folderName ? `${post.feed?.title} — ${post.feed.folderName}` : post.feed?.title">
@@ -106,6 +107,35 @@
                     <span v-if="post.author" class="text-truncate">&middot; {{ post.author }}</span>
                     <span v-if="post.pubDate" class="flex-shrink-0">&middot; {{ new Date(post.pubDate).toLocaleString() }}</span>
                 </div>
+                <div class="details-actions">
+                    <button type="button" class="details-action save-button" :class="{ saved: post.saved }" @click="emit('toggle-saved', post.id)"
+                        :title="post.saved ? (language.get('Remove from saved') || 'Remove from saved') : (language.get('Save for later') || 'Save for later')">
+                        <svg v-if="post.saved" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M2 2v13.5a.5.5 0 0 0 .74.439L8 13.069l5.26 2.87A.5.5 0 0 0 14 15.5V2a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2z"/>
+                        </svg>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z"/>
+                        </svg>
+                    </button>
+                    <a :href="post.link" target="_blank" class="details-action" :title="language.get('Open original') || 'Open original'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
+                            <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
+                        </svg>
+                    </a>
+                    <button v-if="logCount" type="button" class="details-action logs-action" @click="emit('show-logs', post)"
+                        :title="language.get('The content of this post couldn\'t be fully retrieved') + ' — ' + language.get('View logs')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/>
+                            <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
+                        </svg>
+                    </button>
+                    <button type="button" class="details-action ms-auto" :title="language.get('Close') || 'Close'" @click="emit('close')">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+                        </svg>
+                    </button>
+                </div>
             </header>
             <div v-if="youtubeEmbedUrl" class="ratio ratio-16x9 video-embed video-embed-summary">
                 <iframe :src="youtubeEmbedUrl" :title="post.title" allowfullscreen
@@ -115,13 +145,6 @@
                 <span class="spinner-border spinner-border-sm" role="status"></span>
                 {{ language.get('Loading full article...') || 'Loading full article...' }}
             </div>
-            <button v-if="!contentLoading && logCount" type="button" class="logs-notice" @click="emit('show-logs', post)">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M7.938 2.016A.13.13 0 0 1 8.002 2a.13.13 0 0 1 .063.016.15.15 0 0 1 .054.057l6.857 11.667c.036.06.035.124.002.183a.2.2 0 0 1-.054.06.1.1 0 0 1-.066.017H1.146a.1.1 0 0 1-.066-.017.2.2 0 0 1-.054-.06.18.18 0 0 1 .002-.183L7.884 2.073a.15.15 0 0 1 .054-.057m1.044-.45a1.13 1.13 0 0 0-1.96 0L.165 13.233c-.457.778.091 1.767.98 1.767h13.713c.889 0 1.438-.99.98-1.767z"/>
-                            <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
-                        </svg>
-                {{ language.get("The content of this post couldn't be fully retrieved") }} &middot; {{ language.get('View logs') }}
-            </button>
             <!-- While the full content loads, show only the spinner so the description isn't swapped out (no flicker) -->
             <div v-else-if="fullContent || post.description" class="summary-description"
                 :class="{ 'post-content': fullContent }" v-html="fullContent || post.description"></div>
@@ -246,6 +269,7 @@ const emit = defineEmits<{
     'post-read': [postId: string]
     'toggle-saved': [postId: string]
     'show-logs': [post: PostType]
+    'close': []
 }>();
 
 /**
@@ -471,22 +495,6 @@ const handleCardClick = async () => {
     color: #e0a800;
 }
 
-.logs-notice {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-bottom: 0.75rem;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    color: #e0a800;
-    font-size: 0.85rem;
-}
-
-.logs-notice:hover {
-    text-decoration: underline;
-}
-
 .save-button {
     padding: 0;
     border: 0;
@@ -665,7 +673,7 @@ const handleCardClick = async () => {
 .list-details {
     max-width: 860px;
     margin: 0 auto;
-    padding: 2rem 1.5rem 3.5rem;
+    padding: 2.5rem 1.5rem 3.5rem;
     cursor: auto;
 }
 
@@ -695,6 +703,35 @@ const handleCardClick = async () => {
     color: #8b919c;
     font-size: 1.05rem;
     min-width: 0;
+}
+
+.details-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+}
+
+.details-action {
+    display: flex;
+    padding: 0.25rem;
+    border: 0;
+    background: transparent;
+    color: #8b919c;
+    transition: color 0.2s;
+}
+
+.details-action:hover {
+    color: var(--text-color);
+}
+
+.details-action.saved {
+    color: #4d8dff;
+}
+
+.details-action.logs-action,
+.details-action.logs-action:hover {
+    color: #e0a800;
 }
 
 .details-icon {

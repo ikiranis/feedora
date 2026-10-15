@@ -175,7 +175,8 @@
                             :class="showDetails ? 'col-12 col-md-6 col-lg-4' : 'col-12'"
                             @click="selectedIndex = !showDetails && selectedIndex === index ? -1 : index">
                             <PostElement :post="post" :show-details="showDetails" :selected="index === selectedIndex"
-                                @post-read="handlePostRead" @toggle-saved="toggleSaved" @show-logs="showPostLogs" />
+                                @post-read="handlePostRead" @toggle-saved="toggleSaved" @show-logs="showPostLogs"
+                                @close="selectedIndex = -1" />
                         </div>
                         <div v-if="allLoaded && posts.length > 0 && !searchTerm.trim()" class="text-center w-100 text-muted my-4">
                             {{ language.get('No more posts') || 'No more posts' }}
@@ -808,7 +809,9 @@ const handleKeydown = (event: KeyboardEvent) => {
             }
             return;
         case 'Escape':
-            modalOpen.value = false;
+            // Close the modal, or else collapse the post opened in list mode
+            if (modalOpen.value) modalOpen.value = false;
+            else if (!showDetails.value) selectedIndex.value = -1;
             return;
         case 'b':
         case 'B':
