@@ -1,5 +1,6 @@
 package eu.apps4net.feedora.configurations;
 
+import eu.apps4net.feedora.repositories.FeedRepository;
 import eu.apps4net.feedora.services.LogService;
 import eu.apps4net.feedora.services.PostService;
 import eu.apps4net.feedora.services.UserService;
@@ -22,6 +23,8 @@ public class FeedParseWorkerConfig {
     private UserService userService;
     @Autowired
     private LogService logService;
+    @Autowired
+    private FeedRepository feedRepository;
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
@@ -31,8 +34,21 @@ public class FeedParseWorkerConfig {
             System.out.println("Starting feed parsing task...");
 
             try {
-                User adminUser = userService.getOrCreateAdminUser();
-                postService.parseFeeds(adminUser);
+                for (User user : userService.getAllUsers()) {
+                    // Skip users without feeds silently
+                    if (!feedRepository.existsByUser(user)) {
+                        continue;
+                    }
+
+                    System.out.println("[Feedora] Parsing feeds for user " + user.getUsername());
+
+                    // A failure for one user must not stop parsing for the rest
+                    try {
+                        postService.parseFeeds(user);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }

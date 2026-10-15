@@ -18,6 +18,7 @@ public interface FeedRepository extends JpaRepository<Feed, UUID> {
     boolean existsByXmlUrlAndUser(String xmlUrl, User user);
     Optional<Feed> findByXmlUrlAndUser(String xmlUrl, User user);
     List<Feed> findByUser(User user);
+    boolean existsByUser(User user);
     List<Feed> findByUser(User user, Pageable pageable);
     List<Feed> findByUserAndTitleContainingIgnoreCase(User user, String title, Pageable pageable);
     List<Feed> findByFolder(Folder folder);
