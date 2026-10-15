@@ -98,6 +98,15 @@
         </div>
         <!-- Expanded details for the selected post -->
         <div v-if="selected" class="list-details" @click.stop>
+            <header class="details-header">
+                <a :href="post.link" target="_blank" class="details-title">{{ post.title }}</a>
+                <div class="details-meta">
+                    <img v-if="siteIcon" :src="siteIcon" class="details-icon" alt="" @error="iconFailed = true" />
+                    <span class="text-truncate">{{ post.feed?.title }}</span>
+                    <span v-if="post.author" class="text-truncate">&middot; {{ post.author }}</span>
+                    <span v-if="post.pubDate" class="flex-shrink-0">&middot; {{ new Date(post.pubDate).toLocaleString() }}</span>
+                </div>
+            </header>
             <div v-if="youtubeEmbedUrl" class="ratio ratio-16x9 video-embed video-embed-summary">
                 <iframe :src="youtubeEmbedUrl" :title="post.title" allowfullscreen
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
@@ -541,9 +550,10 @@ const handleCardClick = async () => {
     background-color: rgba(127, 127, 127, 0.08);
 }
 
-.list-row.selected-post {
-    background-color: rgba(77, 141, 255, 0.1);
-    box-shadow: inset 3px 0 0 #4d8dff;
+/* The opened post reads like a page: no highlight background or side line */
+.list-row.selected-post,
+.list-row.selected-post:hover {
+    background-color: transparent;
 }
 
 .list-line {
@@ -653,8 +663,45 @@ const handleCardClick = async () => {
 }
 
 .list-details {
-    padding: 0.25rem 1rem 1rem calc(0.75rem + 9px + 1rem);
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3.5rem;
     cursor: auto;
+}
+
+.details-header {
+    margin-bottom: 2rem;
+}
+
+.details-title {
+    display: block;
+    font-size: 2.6rem;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--text-color);
+    text-decoration: none;
+}
+
+.details-title:hover {
+    color: #4d8dff;
+}
+
+.details-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+    color: #8b919c;
+    font-size: 1.05rem;
+    min-width: 0;
+}
+
+.details-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    border-radius: 50%;
 }
 
 @media (max-width: 768px) {
@@ -669,13 +716,21 @@ const handleCardClick = async () => {
     .list-excerpt {
         display: none;
     }
+
+    .list-details {
+        padding: 1.5rem 0.75rem 2.5rem;
+    }
+
+    .details-title {
+        font-size: 1.9rem;
+    }
 }
 
 .summary-description {
     font-weight: normal;
     word-break: break-word;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--border-color);
+    font-size: 1.2rem;
+    line-height: 1.65;
     overflow-x: hidden;
 }
 
@@ -685,12 +740,12 @@ const handleCardClick = async () => {
 .summary-description :deep(iframe) {
     display: block;
     max-width: 100% !important;
-    max-height: 300px !important;
+    max-height: 500px !important;
     width: auto !important;
     height: auto !important;
     object-fit: contain;
     border-radius: 0.25rem;
-    margin: 0.5rem 0;
+    margin: 1rem 0;
 }
 
 .content-loading {
@@ -699,14 +754,14 @@ const handleCardClick = async () => {
     gap: 0.5rem;
     padding: 0.5rem 0;
     color: #8b919c;
-    font-size: 0.9rem;
+    font-size: 1.1rem;
 }
 
 /* Full article content: readable line length and paragraph spacing */
 .post-content {
-    max-width: 80ch;
-    line-height: 1.7;
-    font-size: 1rem;
+    font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+    font-size: 1.35rem;
+    line-height: 1.65;
 }
 
 .post-content :deep(p) {
@@ -718,8 +773,9 @@ const handleCardClick = async () => {
 .post-content :deep(h3),
 .post-content :deep(h4) {
     margin: 1.4em 0 0.6em;
-    font-size: 1.15rem;
-    font-weight: 600;
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
 }
 
 .post-content :deep(ul),
@@ -730,22 +786,25 @@ const handleCardClick = async () => {
 
 .post-content :deep(blockquote) {
     margin: 0 0 1em;
-    padding-left: 1em;
-    border-left: 3px solid var(--border-color);
     color: #8b919c;
+    font-style: italic;
 }
 
 .post-content :deep(figure) {
     margin: 0 0 1em;
 }
 
+.post-content :deep(a) {
+    color: #4d8dff;
+}
+
 .post-content :deep(figcaption) {
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     color: #8b919c;
 }
 
 .post-content :deep(img) {
-    max-height: 450px !important;
+    max-height: 500px !important;
 }
 
 /* Ensure images in post descriptions fit the card width if details are shown */
