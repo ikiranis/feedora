@@ -47,6 +47,7 @@
 
                     <div v-if="youtubeEmbedUrl && embeddable" class="ratio ratio-16x9 mb-4">
                         <iframe :src="youtubeEmbedUrl" :title="post.title" allowfullscreen
+                            @load="youtubeEmbedStore.watchPlayer($event.target as HTMLIFrameElement, videoId!)"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
                     </div>
                     <!-- Thumbnail while checking the video, or a link to YouTube when it can't be embedded -->
@@ -125,7 +126,7 @@ const videoId = computed(() => {
     }
 });
 
-const youtubeEmbedUrl = computed(() => videoId.value ? `https://www.youtube-nocookie.com/embed/${videoId.value}` : null);
+const youtubeEmbedUrl = computed(() => videoId.value ? youtubeEmbedStore.embedUrl(videoId.value) : null);
 // Whether the video can be played embedded (undefined until checked); some uploaders disable embedding
 const embeddable = computed(() => videoId.value ? youtubeEmbedStore.isEmbeddable(videoId.value) : undefined);
 

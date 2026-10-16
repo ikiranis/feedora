@@ -2,7 +2,8 @@
     <div v-if="showDetails" class="custom-card h-100" :class="{ 'unread-post': !post.read, 'read-post': post.read, 'selected-post': selected }" @click="handleCardClick">
         <!-- Media: playing video, YouTube thumbnail or first image of the post -->
         <div v-if="playing && youtubeEmbedUrl && embeddable !== false" class="card-media" @click.stop>
-            <iframe :src="`${youtubeEmbedUrl}?autoplay=1`" :title="post.title" allowfullscreen
+            <iframe :src="youtubeEmbedStore.embedUrl(youtubeVideo!.id, true)" :title="post.title" allowfullscreen
+                @load="youtubeEmbedStore.watchPlayer($event.target as HTMLIFrameElement, youtubeVideo!.id)"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
         </div>
         <div v-else-if="thumbnailUrl" class="card-media" :class="{ 'is-short': youtubeVideo?.isShort }"
@@ -142,6 +143,7 @@
             </header>
             <div v-if="youtubeEmbedUrl && embeddable" class="ratio ratio-16x9 video-embed video-embed-summary">
                 <iframe :src="youtubeEmbedUrl" :title="post.title" allowfullscreen
+                    @load="youtubeEmbedStore.watchPlayer($event.target as HTMLIFrameElement, youtubeVideo!.id)"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
             </div>
             <!-- Thumbnail while checking the video, or a link to YouTube when it can't be embedded -->
@@ -227,7 +229,7 @@ const youtubeVideo = computed(() => {
 });
 
 const youtubeEmbedUrl = computed(() =>
-    youtubeVideo.value ? `https://www.youtube-nocookie.com/embed/${youtubeVideo.value.id}` : null
+    youtubeVideo.value ? youtubeEmbedStore.embedUrl(youtubeVideo.value.id) : null
 );
 
 const youtubeThumbnailUrl = computed(() =>
