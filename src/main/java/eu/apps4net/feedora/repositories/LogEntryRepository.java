@@ -14,8 +14,9 @@ import java.util.List;
 import java.util.UUID;
 
 public interface LogEntryRepository extends JpaRepository<LogEntry, UUID> {
-    // Rows of [feed id, number of log entries] for the given feeds that have entries
-    @Query("SELECT l.feedId, COUNT(l) FROM LogEntry l WHERE l.user = :user AND l.feedId IN :feedIds GROUP BY l.feedId")
+    // Rows of [feed id, number of log entries] for the given feeds that have entries.
+    // Only the feed's own entries count, not those of its posts (e.g. content extraction errors).
+    @Query("SELECT l.feedId, COUNT(l) FROM LogEntry l WHERE l.user = :user AND l.feedId IN :feedIds AND l.postId IS NULL GROUP BY l.feedId")
     List<Object[]> countByFeedIds(@Param("user") User user, @Param("feedIds") Collection<UUID> feedIds);
 
     // Rows of [user id, number of log entries] for every user that has log entries

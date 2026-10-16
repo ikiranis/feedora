@@ -24,9 +24,9 @@ public interface FeedRepository extends JpaRepository<Feed, UUID> {
     List<Feed> findByUserAndTitleContainingIgnoreCase(User user, String title, Pageable pageable);
     List<Feed> findByFolder(Folder folder);
 
-    // Problematic feeds first (with log entries or failing checks), then the most frequent ones, then by title.
+    // Problematic feeds first (with log entries of their own, not of their posts, or failing checks), then the most frequent ones, then by title.
     // Feeds not checked yet have no statistics and count as posting nothing.
-    String PROBLEMS_FIRST_ORDER = " ORDER BY CASE WHEN EXISTS (SELECT 1 FROM LogEntry l WHERE l.user = :user AND l.feedId = f.id)"
+    String PROBLEMS_FIRST_ORDER = " ORDER BY CASE WHEN EXISTS (SELECT 1 FROM LogEntry l WHERE l.user = :user AND l.feedId = f.id AND l.postId IS NULL)"
             + " OR COALESCE(s.consecutiveErrors, 0) > 0 THEN 0 ELSE 1 END,"
             + " COALESCE(s.postsPerDay, 0) DESC, f.title, f.id";
 

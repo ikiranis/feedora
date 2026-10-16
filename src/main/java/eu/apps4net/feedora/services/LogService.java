@@ -113,7 +113,7 @@ public class LogService {
     }
 
     /**
-     * Returns the number of log entries of each of the given feeds.
+     * Returns the number of log entries of each of the given feeds, not counting the entries of their posts.
      * @param user The user who owns the feeds
      * @param feedIds The feeds to count the entries of
      * @return Map of feed id to its number of entries. Feeds without entries are left out.

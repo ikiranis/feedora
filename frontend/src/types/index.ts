@@ -34,7 +34,7 @@ export interface Feed {
     type: string;
     folderName?: string;
     folderId?: string | null;
-    // Number of log entries of the feed and its posts
+    // Number of log entries of the feed itself, not counting those of its posts
     logCount?: number;
     // Null until the feed is checked for the first time
     statistics?: FeedStatistics | null;

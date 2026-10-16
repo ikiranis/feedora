@@ -65,7 +65,16 @@
                     </thead>
                     <tbody>
                         <tr v-for="feed in feeds" :key="feed.id">
-                            <td>{{ feed.title }}</td>
+                            <td>
+                                {{ feed.title }}
+                                <span
+                                    v-if="isFailingHttpFeed(feed)"
+                                    class="badge text-bg-warning ms-1"
+                                    :title="failingHttpFeedTitle(feed)"
+                                >
+                                    {{ language.get('HTTP, not working') }}
+                                </span>
+                            </td>
                             <td>
                                 <a :href="feed.xmlUrl" target="_blank" class="text-decoration-none" :title="feed.xmlUrl">
                                     {{ feed.xmlUrl.length > 30 ? feed.xmlUrl.substring(0, 30) + '...' : feed.xmlUrl }}
@@ -269,6 +278,25 @@ const loadMoreIfNotScrollable = async () => {
 const formatPostsPerDay = (feed: Feed) => feed.statistics
     ? feed.statistics.postsPerDay.toLocaleString(undefined, { maximumFractionDigits: 1 })
     : '—';
+
+/**
+ * Whether the feed uses a plain http:// address and its last check failed or found no posts.
+ * Many sites have stopped serving http, so the https:// address usually works instead. Some redirect
+ * http to https but drop the query string (e.g. ?channel=...), which returns an empty feed without errors.
+ */
+const isFailingHttpFeed = (feed: Feed) => {
+    const stats = feed.statistics;
+    if (!feed.xmlUrl.toLowerCase().startsWith('http://') || !stats) return false;
+    return stats.consecutiveErrors > 0 || (stats.totalChecks > 0 && stats.lastEntriesCount === 0);
+};
+
+/**
+ * Tooltip of the flag of a failing http feed, with the error of its last check
+ */
+const failingHttpFeedTitle = (feed: Feed) => {
+    const hint = language.get('This feed uses an http:// address and its checks are failing or find no posts. Try editing it to use https://');
+    return feed.statistics?.lastError ? hint + '\n\n' + feed.statistics.lastError : hint;
+};
 
 // Watch for search term changes and implement debounced search
 watch(searchTerm, () => {

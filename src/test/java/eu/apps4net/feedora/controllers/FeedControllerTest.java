@@ -112,16 +112,20 @@ class FeedControllerTest extends ApiTestBase {
         Feed gamma = createFeed("Gamma", "http://gamma.example/rss", null, user);
         createLog(user, gamma.getId(), null, LogLevel.ERROR, LocalDateTime.now());
         createLog(user, gamma.getId(), UUID.randomUUID(), LogLevel.WARNING, LocalDateTime.now());
+        // Only log entries of its posts, which don't make it a problematic feed
+        Feed delta = createFeed("Delta", "http://delta.example/rss", null, user);
+        createLog(user, delta.getId(), UUID.randomUUID(), LogLevel.ERROR, LocalDateTime.now());
 
         mockMvc.perform(auth(get("/api/feed/getFeeds").param("page", "1").param("pageSize", "10")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].title", contains("Gamma", "Alpha", "Beta")))
-                .andExpect(jsonPath("$[0].logCount").value(2))
+                .andExpect(jsonPath("$[*].title", contains("Gamma", "Alpha", "Beta", "Delta")))
+                .andExpect(jsonPath("$[0].logCount").value(1))
                 .andExpect(jsonPath("$[1].logCount").value(0))
-                .andExpect(jsonPath("$[1].id").value(alpha.getId().toString()));
+                .andExpect(jsonPath("$[1].id").value(alpha.getId().toString()))
+                .andExpect(jsonPath("$[3].logCount").value(0));
 
         mockMvc.perform(auth(get("/api/feed/getFeeds").param("page", "2").param("pageSize", "2")))
-                .andExpect(jsonPath("$[*].id", contains(beta.getId().toString())));
+                .andExpect(jsonPath("$[*].id", contains(beta.getId().toString(), delta.getId().toString())));
     }
 
     @Test

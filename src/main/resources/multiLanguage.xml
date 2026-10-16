@@ -1134,6 +1134,16 @@
         <language code="el">Εμφάνιση των καταγραφών αυτής της ροής</language>
     </entry>
 
+    <entry id="HTTP, not working">
+        <language code="en">HTTP, not working</language>
+        <language code="el">HTTP, δεν λειτουργεί</language>
+    </entry>
+
+    <entry id="This feed uses an http:// address and its checks are failing or find no posts. Try editing it to use https://">
+        <language code="en">This feed uses an http:// address and its checks are failing or find no posts. Try editing it to use https://</language>
+        <language code="el">Αυτή η ροή χρησιμοποιεί διεύθυνση http:// και οι έλεγχοί της αποτυγχάνουν ή δεν βρίσκουν άρθρα. Δοκιμάστε να την αλλάξετε σε https://</language>
+    </entry>
+
     <entry id="Show the log entries of this post">
         <language code="en">Show the log entries of this post</language>
         <language code="el">Εμφάνιση των καταγραφών αυτού του άρθρου</language>
