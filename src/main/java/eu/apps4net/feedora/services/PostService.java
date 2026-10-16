@@ -157,7 +157,9 @@ public class PostService {
                 if (success && entries != null) {
                     // On a feed's first check all its entries are added, however old
                     boolean checkedBefore = feed.getStatistics() != null && feed.getStatistics().getLastSuccessAt() != null;
-                    refreshLiveVideos(feed, user);
+                    // Errors of the YouTube live checks, logged once for the feed
+                    List<String> liveCheckErrors = new ArrayList<>();
+                    refreshLiveVideos(feed, user, liveCheckErrors);
                     // Links already added, including those of this check, so an entry repeated in the feed is added once
                     Set<String> knownLinks = new HashSet<>(postRepository.findLinksByFeedAndUser(feed, user));
                     List<Post> postsToSave = new ArrayList<>();
@@ -188,7 +190,7 @@ public class PostService {
                             );
                             post.setContent(getEntryContent(entry));
                             if (post.getPubDate().isAfter(LocalDateTime.now().minusDays(LIVE_CHECK_MAX_AGE_DAYS))) {
-                                checkLiveState(post);
+                                checkLiveState(post, liveCheckErrors);
                             }
                             post.setFeed(feed);
                             post.setUser(user);
@@ -199,6 +201,11 @@ public class PostService {
                         }
                     }
                     newPosts = savePosts(feed, postsToSave);
+                    if (!liveCheckErrors.isEmpty()) {
+                        logService.logFeed(feed, LogLevel.WARNING, LogType.YOUTUBE_LIVE_CHECK,
+                                "Couldn't check " + liveCheckErrors.size() + " YouTube videos for scheduled or live streams",
+                                String.join("\n", liveCheckErrors.stream().distinct().toList()));
+                    }
                     synchronized (succeededFeeds) { succeededFeeds[0]++; }
                 }
 
@@ -274,10 +281,11 @@ public class PostService {
      * Other posts are left unchanged, and so is the post if the video's page can't be read.
      *
      * @param post The new post
+     * @param errors Collects the error if the check fails
      */
-    private static void checkLiveState(Post post) {
+    private static void checkLiveState(Post post, List<String> errors) {
         String videoId = YouTubeLiveChecker.videoId(post.getLink());
-        if (videoId == null) {
+        if (videoId == null || YouTubeLiveChecker.isBlocked()) {
             return;
         }
         try {
@@ -286,7 +294,8 @@ public class PostService {
             post.setLiveStartAt(info.startAt());
             post.setLiveCheckedAt(LocalDateTime.now());
         } catch (Exception e) {
-            // Not worth a log entry: the post is shown as an ordinary video, and checked again on the feed's next parse
+            // The post is shown as an ordinary video, and checked again on the feed's next parse
+            errors.add(e.getMessage());
         }
     }
 
@@ -297,8 +306,9 @@ public class PostService {
      *
      * @param feed The feed being parsed
      * @param user The owner of the feed
+     * @param errors Collects the errors of the failed checks
      */
-    private void refreshLiveVideos(Feed feed, User user) {
+    private void refreshLiveVideos(Feed feed, User user, List<String> errors) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime soon = now.plusMinutes(5);
         for (Object[] video : postRepository.findLiveVideosByFeedAndUser(feed, user, now.minusDays(LIVE_CHECK_MAX_AGE_DAYS))) {
@@ -308,6 +318,9 @@ public class PostService {
             LocalDateTime startAt = (LocalDateTime) video[3];
             if (status == LiveStatus.UPCOMING && startAt != null && startAt.isAfter(soon)) {
                 continue;
+            }
+            if (videoId != null && YouTubeLiveChecker.isBlocked()) {
+                return;
             }
             if (videoId == null) {
                 postRepository.setLiveState(id, null, null, now);
@@ -319,6 +332,7 @@ public class PostService {
                 postRepository.setLiveState(id, info.status(), info.startAt() != null ? info.startAt() : startAt, now);
             } catch (Exception e) {
                 // Checked again on the feed's next parse
+                errors.add(e.getMessage());
             }
         }
     }

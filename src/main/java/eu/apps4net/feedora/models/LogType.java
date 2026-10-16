@@ -17,6 +17,8 @@ public enum LogType {
     CONTENT_EXTRACT,
     // No content longer than the description was found for the post
     CONTENT_NOT_FOUND,
+    // YouTube videos couldn't be checked for being scheduled or live streams (e.g. YouTube asked to sign in)
+    YOUTUBE_LIVE_CHECK,
     // Summary of a run of the feed parser: feeds checked, failures and new posts
     FEED_PARSING
 }
