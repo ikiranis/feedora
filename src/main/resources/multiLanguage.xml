@@ -1244,6 +1244,11 @@
         <language code="el">Εμφάνιση των άρθρων αυτής της ροής</language>
     </entry>
 
+    <entry id="Unfollow feed">
+        <language code="en">Unfollow feed</language>
+        <language code="el">Διακοπή παρακολούθησης ροής</language>
+    </entry>
+
     <entry id="The feed has not been checked yet">
         <language code="en">The feed has not been checked yet</language>
         <language code="el">Η ροή δεν έχει ελεγχθεί ακόμα</language>

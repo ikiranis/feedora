@@ -121,8 +121,32 @@
         <div class="flex-grow-1 posts-main">
             <div class="container py-4">
                 <div class="row justify-content-end mb-4 align-items-center">
-                    <div v-if="selectedFeedTitle" class="col text-truncate">
-                        <h5 class="mb-0 text-truncate" :title="selectedFeedTitle">{{ selectedFeedTitle }}</h5>
+                    <div v-if="selectedFeedTitle" class="col feed-title-col">
+                        <div class="dropdown d-flex align-items-center">
+                            <button type="button" class="btn btn-link text-reset text-decoration-none p-0 d-flex align-items-center gap-2 mw-100"
+                                data-bs-toggle="dropdown" aria-expanded="false" :title="selectedFeedTitle">
+                                <h5 class="mb-0 text-truncate">{{ selectedFeedTitle }}</h5>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-chevron-down flex-shrink-0" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <button type="button" class="dropdown-item" @click="openEditFeed">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-pencil me-2" viewBox="0 0 16 16"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325"/></svg>{{ language.get('Edit Feed') || 'Edit Feed' }}
+                                    </button>
+                                </li>
+                                <li>
+                                    <button type="button" class="dropdown-item" @click="openFeedStatistics">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-bar-chart me-2" viewBox="0 0 16 16"><path d="M4 11H2v3h2zm5-4H7v7h2zm5-5v12h-2V2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z"/></svg>{{ language.get('Statistics') || 'Statistics' }}
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <button type="button" class="dropdown-item text-danger" @click="unfollowFeed">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-x-circle me-2" viewBox="0 0 16 16"><path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14m0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16"/><path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708"/></svg>{{ language.get('Unfollow feed') || 'Unfollow feed' }}
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
                     <div class="col-auto d-flex align-items-center">
                         <div v-if="!showSaved" class="btn-group me-3" role="group"
@@ -187,13 +211,6 @@
                                     d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z" />
                                 <path
                                     d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z" />
-                            </svg>
-                        </button>
-                        <button v-if="selectedFeedId" @click="openFeedStatistics" class="btn btn-outline-info me-3"
-                            :title="language.get('Show the statistics of this feed') || 'Show the statistics of this feed'">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                                class="bi bi-bar-chart" viewBox="0 0 16 16">
-                                <path d="M4 11H2v3h2zm5-4H7v7h2zm5-5v12h-2V2zm-2-1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM6 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1zm-5 4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1z"/>
                             </svg>
                         </button>
                         <button @click="handleParseFeeds" class="btn btn-outline-primary me-3"
@@ -268,6 +285,7 @@
         @logs-cleared="handlePostLogsCleared" @modal-hidden="logsPost = null" />
 
     <FeedStatisticsModal :feed="statisticsFeed" :show="!!statisticsFeed" @modal-hidden="statisticsFeed = null" />
+    <EditFeedModal :feed="editedFeed" :show="!!editedFeed" @feed-updated="fetchFolders(); fetchUnreadCounts()" @modal-hidden="editedFeed = null" />
 
     <AddFolderModal @folder-added="fetchFolders" />
     <EditFolderModal :folder="editedFolder" @folder-updated="fetchFolders" />
@@ -279,7 +297,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getPosts, parseFeeds, markAsRead, markAllAsRead, getUnreadCounts, setPostSaved } from '@/api/post';
-import { getFeedOperationStatus, getLastParsedAt, getFeeds } from '@/api/feed';
+import { getFeedOperationStatus, getLastParsedAt, getFeeds, deleteFeed } from '@/api/feed';
 import { getFolders, deleteFolder } from '@/api/folder';
 import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType, Feed } from '@/types';
 import { language } from '@/functions/languageStore';
@@ -289,6 +307,7 @@ import PostModal from '@/components/PostModal.vue';
 import LogsModal from '@/components/log/LogsModal.vue';
 import AddFolderModal from '@/components/folder/AddFolderModal.vue';
 import FeedStatisticsModal from '@/components/feed/FeedStatisticsModal.vue';
+import EditFeedModal from '@/components/feed/EditFeedModal.vue';
 import EditFolderModal from '@/components/folder/EditFolderModal.vue';
 import Error from '@/components/error/Error.vue'; // Changed from ErrorDisplay
 import { errorStore } from '@/components/error/errorStore'; // Import errorStore
@@ -326,6 +345,7 @@ const showEmptyFolders = ref(localStorage.getItem('posts-show-empty-folders') ==
 const editingFolders = ref(false); // Shows the edit/delete buttons of the folders in the sidebar
 const editedFolder = ref<FolderType | null>(null); // Folder shown in the edit folder modal
 const statisticsFeed = ref<Feed | null>(null); // Feed shown in the statistics modal
+const editedFeed = ref<Feed | null>(null); // Feed shown in the edit feed modal
 const showRead = ref(localStorage.getItem('posts-show-read') === 'true'); // Lists the read posts too, persisted in localStorage
 
 // Choices of the "Mark all as read" dropdown, by the age of the posts to mark (null marks all of them)
@@ -443,14 +463,46 @@ const fetchFolders = async () => {
 };
 
 /**
- * Opens the statistics modal of the selected feed. The feeds are fetched on demand, to show up to date statistics.
+ * Fetches the selected feed, since the sidebar only has its title and counts. Null if it can't be fetched.
  */
-const openFeedStatistics = async () => {
+const fetchSelectedFeed = async (): Promise<Feed | null> => {
     try {
         const feeds: Feed[] = await getFeeds();
-        statisticsFeed.value = feeds.find(feed => feed.id === selectedFeedId.value) || null;
+        return feeds.find(feed => feed.id === selectedFeedId.value) || null;
     } catch (e: any) {
         errorStore.set(true, e.response?.data || language.get('Failed to fetch feeds') || 'Failed to fetch feeds.', e.response?.status || 500);
+        return null;
+    }
+};
+
+/**
+ * Opens the statistics modal of the selected feed. The feed is fetched on demand, to show up to date statistics.
+ */
+const openFeedStatistics = async () => {
+    statisticsFeed.value = await fetchSelectedFeed();
+};
+
+/**
+ * Opens the edit feed modal of the selected feed.
+ */
+const openEditFeed = async () => {
+    editedFeed.value = await fetchSelectedFeed();
+};
+
+/**
+ * Unfollows (deletes) the selected feed after confirmation, then shows the posts of all feeds.
+ */
+const unfollowFeed = async () => {
+    if (!confirmDialog(`${language.get('Are you sure you want to delete this feed') || 'Are you sure you want to delete this feed'}\n\n${selectedFeedTitle.value}`)) {
+        return;
+    }
+    try {
+        const result = await deleteFeed(selectedFeedId.value!);
+        await fetchUnreadCounts();
+        selectAll();
+        errorStore.set(true, result, 200); // Show success message
+    } catch (e: any) {
+        errorStore.set(true, e.response?.data || language.get('Failed to delete feed') || 'Failed to delete feed.', e.response?.status || 500);
     }
 };
 
@@ -1205,6 +1257,11 @@ onUnmounted(() => {
 
 .folder-chevron.expanded {
     transform: rotate(90deg);
+}
+
+/* Lets the selected feed's title shrink and truncate next to the toolbar */
+.feed-title-col {
+    min-width: 0;
 }
 
 .feed-item {
