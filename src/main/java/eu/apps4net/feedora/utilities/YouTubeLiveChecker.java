@@ -1,24 +1,38 @@
 package eu.apps4net.feedora.utilities;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.apps4net.feedora.models.LiveStatus;
 
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.URLEncoder;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Finds out whether a YouTube video is a scheduled live stream/premiere or is live now.
- * YouTube's RSS feeds don't say, so the video's watch page is read.
+ * YouTube's RSS feeds don't say, so it asks the YouTube Data API when an API key is set,
+ * otherwise it reads the video's watch page (which YouTube may refuse to servers).
  */
 public class YouTubeLiveChecker {
+
+    private static final String API_URL = "https://www.googleapis.com/youtube/v3/videos";
+    private static final int API_MAX_IDS = 50;
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private static final Duration TIMEOUT = Duration.ofSeconds(15);
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
@@ -42,6 +56,116 @@ public class YouTubeLiveChecker {
      * Live state of a video, with the (scheduled) start time if known.
      */
     public record LiveInfo(LiveStatus status, LocalDateTime startAt) {}
+
+    /**
+     * Live states of the checked videos by video id, and the errors of the failed checks.
+     * Videos that couldn't be checked are missing from the results.
+     */
+    public record CheckResult(Map<String, LiveInfo> results, List<String> errors) {}
+
+    /**
+     * Checks the live state of several videos: with the YouTube Data API in batches of 50 if an API key is given,
+     * otherwise by reading their watch pages one by one (skipped while YouTube refuses them, see isBlocked).
+     *
+     * @param videoIds The YouTube video ids
+     * @param apiKey   The YouTube Data API key, or null/blank to read the watch pages
+     */
+    public static CheckResult checkAll(Collection<String> videoIds, String apiKey) {
+        Map<String, LiveInfo> results = new HashMap<>();
+        List<String> errors = new ArrayList<>();
+        List<String> ids = videoIds.stream().distinct().toList();
+
+        if (apiKey != null && !apiKey.isBlank()) {
+            for (int i = 0; i < ids.size(); i += API_MAX_IDS) {
+                List<String> batch = ids.subList(i, Math.min(i + API_MAX_IDS, ids.size()));
+                try {
+                    results.putAll(checkWithApi(batch, apiKey.trim()));
+                } catch (Exception e) {
+                    errors.add(e.getMessage());
+                }
+            }
+        } else {
+            for (String id : ids) {
+                if (isBlocked()) {
+                    break;
+                }
+                try {
+                    results.put(id, check(id));
+                } catch (Exception e) {
+                    errors.add(e.getMessage());
+                }
+            }
+        }
+        return new CheckResult(results, errors);
+    }
+
+    /**
+     * Asks the YouTube Data API for the live state of up to 50 videos (costs 1 unit of the daily quota).
+     *
+     * @throws Exception if the API answers with an error, e.g. an invalid API key or exceeded quota
+     */
+    private static Map<String, LiveInfo> checkWithApi(List<String> videoIds, String apiKey) throws Exception {
+        URI uri = URI.create(API_URL + "?part=snippet,liveStreamingDetails"
+                + "&fields=items(id,snippet/liveBroadcastContent,liveStreamingDetails)"
+                + "&id=" + String.join(",", videoIds)
+                + "&key=" + URLEncoder.encode(apiKey, StandardCharsets.UTF_8));
+        HttpRequest request = HttpRequest.newBuilder(uri).timeout(TIMEOUT).GET().build();
+        HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            // The message doesn't include the URL, which has the API key
+            throw new Exception("YouTube Data API: HTTP " + response.statusCode() + apiErrorMessage(response.body()));
+        }
+        return parseApiResponse(response.body(), videoIds);
+    }
+
+    /**
+     * Error message of a YouTube Data API answer, e.g. " (quotaExceeded: The request cannot be completed...)".
+     */
+    private static String apiErrorMessage(String body) {
+        try {
+            JsonNode error = MAPPER.readTree(body).path("error");
+            String reason = error.path("errors").path(0).path("reason").asText("");
+            String message = error.path("message").asText("");
+            return reason.isEmpty() && message.isEmpty() ? "" : " (" + reason + (reason.isEmpty() || message.isEmpty() ? "" : ": ") + message + ")";
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    /**
+     * Extracts the live states from a YouTube Data API videos answer.
+     * Videos missing from the answer are private or removed, so they have no live state.
+     */
+    static Map<String, LiveInfo> parseApiResponse(String json, List<String> videoIds) throws Exception {
+        Map<String, LiveInfo> results = new HashMap<>();
+        for (String id : videoIds) {
+            results.put(id, new LiveInfo(null, null));
+        }
+        for (JsonNode item : MAPPER.readTree(json).path("items")) {
+            String content = item.path("snippet").path("liveBroadcastContent").asText("");
+            LiveStatus status = content.equals("upcoming") ? LiveStatus.UPCOMING
+                    : content.equals("live") ? LiveStatus.LIVE
+                    : null;
+            JsonNode details = item.path("liveStreamingDetails");
+            String start = status == LiveStatus.LIVE && details.hasNonNull("actualStartTime")
+                    ? details.path("actualStartTime").asText()
+                    : details.path("scheduledStartTime").asText(null);
+            results.put(item.path("id").asText(), new LiveInfo(status, status != null ? toLocalDateTime(start) : null));
+        }
+        return results;
+    }
+
+    private static LocalDateTime toLocalDateTime(String timestamp) {
+        if (timestamp == null) {
+            return null;
+        }
+        try {
+            return OffsetDateTime.parse(timestamp).atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime();
+        } catch (Exception e) {
+            // Unknown start time format
+            return null;
+        }
+    }
 
     /**
      * True while YouTube refuses the checks; they're skipped until then, and the videos are checked later.
@@ -159,15 +283,8 @@ public class YouTubeLiveChecker {
                 : player.contains("\"isLiveNow\":true") ? LiveStatus.LIVE
                 : null;
 
-        LocalDateTime startAt = null;
         Matcher startMatch = START_TIMESTAMP.matcher(player);
-        if (status != null && startMatch.find()) {
-            try {
-                startAt = OffsetDateTime.parse(startMatch.group(1)).atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime();
-            } catch (Exception e) {
-                // Unknown start time format
-            }
-        }
+        LocalDateTime startAt = status != null && startMatch.find() ? toLocalDateTime(startMatch.group(1)) : null;
         return new LiveInfo(status, startAt);
     }
 }

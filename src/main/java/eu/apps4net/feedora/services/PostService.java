@@ -64,6 +64,8 @@ public class PostService {
     private OperationLockService operationLockService;
     @Autowired
     private LogService logService;
+    @Autowired
+    private SettingService settingService;
     @PersistenceContext
     private EntityManager entityManager;
     @Autowired
@@ -124,6 +126,7 @@ public class PostService {
             int threadCount = Math.min(feeds.size(), 8);
             if (threadCount == 0) threadCount = 1;
             ExecutorService executor = Executors.newFixedThreadPool(threadCount); // up to 8 threads, at least 1
+            String youtubeApiKey = settingService.getYoutubeApiKey();
 
             // Use countByUser to avoid CLOB issues
             long postsBefore = postRepository.countByUser(user);
@@ -157,9 +160,6 @@ public class PostService {
                 if (success && entries != null) {
                     // On a feed's first check all its entries are added, however old
                     boolean checkedBefore = feed.getStatistics() != null && feed.getStatistics().getLastSuccessAt() != null;
-                    // Errors of the YouTube live checks, logged once for the feed
-                    List<String> liveCheckErrors = new ArrayList<>();
-                    refreshLiveVideos(feed, user, liveCheckErrors);
                     // Links already added, including those of this check, so an entry repeated in the feed is added once
                     Set<String> knownLinks = new HashSet<>(postRepository.findLinksByFeedAndUser(feed, user));
                     List<Post> postsToSave = new ArrayList<>();
@@ -189,9 +189,6 @@ public class PostService {
                                 false
                             );
                             post.setContent(getEntryContent(entry));
-                            if (post.getPubDate().isAfter(LocalDateTime.now().minusDays(LIVE_CHECK_MAX_AGE_DAYS))) {
-                                checkLiveState(post, liveCheckErrors);
-                            }
                             post.setFeed(feed);
                             post.setUser(user);
                             postsToSave.add(post);
@@ -200,10 +197,11 @@ public class PostService {
                                     "Couldn't save the post \"" + entry.getTitle() + "\" (" + entry.getLink() + ")", LogService.describe(e));
                         }
                     }
+                    List<String> liveCheckErrors = checkLiveStates(feed, user, postsToSave, youtubeApiKey);
                     newPosts = savePosts(feed, postsToSave);
                     if (!liveCheckErrors.isEmpty()) {
                         logService.logFeed(feed, LogLevel.WARNING, LogType.YOUTUBE_LIVE_CHECK,
-                                "Couldn't check " + liveCheckErrors.size() + " YouTube videos for scheduled or live streams",
+                                "Couldn't check the YouTube videos for scheduled or live streams",
                                 String.join("\n", liveCheckErrors.stream().distinct().toList()));
                     }
                     synchronized (succeededFeeds) { succeededFeeds[0]++; }
@@ -277,66 +275,70 @@ public class PostService {
     }
 
     /**
-     * Sets the live state of a YouTube video post (scheduled live stream/premiere, or live now).
-     * Other posts are left unchanged, and so is the post if the video's page can't be read.
-     *
-     * @param post The new post
-     * @param errors Collects the error if the check fails
-     */
-    private static void checkLiveState(Post post, List<String> errors) {
-        String videoId = YouTubeLiveChecker.videoId(post.getLink());
-        if (videoId == null || YouTubeLiveChecker.isBlocked()) {
-            return;
-        }
-        try {
-            YouTubeLiveChecker.LiveInfo info = YouTubeLiveChecker.check(videoId);
-            post.setLiveStatus(info.status());
-            post.setLiveStartAt(info.startAt());
-            post.setLiveCheckedAt(LocalDateTime.now());
-        } catch (Exception e) {
-            // The post is shown as an ordinary video, and checked again on the feed's next parse
-            errors.add(e.getMessage());
-        }
-    }
-
-    /**
-     * Checks again the feed's videos that are live, or scheduled to start by now, since their state changes over time
-     * (scheduled → live → ended). Videos scheduled for later are only checked once their start time comes.
-     * Also checks the feed's recent videos that were never checked, e.g. added before live states existed,
-     * and its saved videos once a day, since they're kept for long and may be scheduled later.
+     * Checks the live state (scheduled live stream/premiere, or live now) of a feed's YouTube videos, in one batch:
+     * - the new posts published within LIVE_CHECK_MAX_AGE_DAYS, before they're saved
+     * - stored videos that are live, or scheduled to start by now, since their state changes over time
+     *   (scheduled → live → ended); videos scheduled for later are only checked once their start time comes
+     * - stored recent videos that were never checked, e.g. added before live states existed,
+     *   and saved videos once a day, since they're kept for long and may be scheduled later
+     * Videos that couldn't be checked are left unchanged, and checked again on the feed's next parse.
      *
      * @param feed The feed being parsed
      * @param user The owner of the feed
-     * @param errors Collects the errors of the failed checks
+     * @param newPosts The feed's new posts, not saved yet
+     * @param apiKey The YouTube Data API key, or null to read the videos' pages
+     * @return The errors of the failed checks
      */
-    private void refreshLiveVideos(Feed feed, User user, List<String> errors) {
+    private List<String> checkLiveStates(Feed feed, User user, List<Post> newPosts, String apiKey) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime soon = now.plusMinutes(5);
+        Set<String> videoIds = new HashSet<>();
+
+        List<Object[]> storedVideos = new ArrayList<>();
         for (Object[] video : postRepository.findLiveVideosByFeedAndUser(feed, user,
                 now.minusDays(LIVE_CHECK_MAX_AGE_DAYS), now.minusDays(1))) {
-            UUID id = (UUID) video[0];
-            String videoId = YouTubeLiveChecker.videoId((String) video[1]);
             LiveStatus status = (LiveStatus) video[2];
             LocalDateTime startAt = (LocalDateTime) video[3];
             if (status == LiveStatus.UPCOMING && startAt != null && startAt.isAfter(soon)) {
                 continue;
             }
-            if (videoId != null && YouTubeLiveChecker.isBlocked()) {
-                return;
-            }
+            String videoId = YouTubeLiveChecker.videoId((String) video[1]);
             if (videoId == null) {
-                postRepository.setLiveState(id, null, null, now);
+                postRepository.setLiveState((UUID) video[0], null, null, now);
                 continue;
             }
-            try {
-                YouTubeLiveChecker.LiveInfo info = YouTubeLiveChecker.check(videoId);
+            storedVideos.add(video);
+            videoIds.add(videoId);
+        }
+
+        List<Post> newVideos = newPosts.stream()
+                .filter(post -> post.getPubDate().isAfter(now.minusDays(LIVE_CHECK_MAX_AGE_DAYS)))
+                .filter(post -> YouTubeLiveChecker.videoId(post.getLink()) != null)
+                .toList();
+        newVideos.forEach(post -> videoIds.add(YouTubeLiveChecker.videoId(post.getLink())));
+
+        if (videoIds.isEmpty()) {
+            return List.of();
+        }
+        YouTubeLiveChecker.CheckResult result = YouTubeLiveChecker.checkAll(videoIds, apiKey);
+
+        for (Object[] video : storedVideos) {
+            YouTubeLiveChecker.LiveInfo info = result.results().get(YouTubeLiveChecker.videoId((String) video[1]));
+            if (info != null) {
                 // Ended streams keep their start time, and no longer have a live status
-                postRepository.setLiveState(id, info.status(), info.startAt() != null ? info.startAt() : startAt, now);
-            } catch (Exception e) {
-                // Checked again on the feed's next parse
-                errors.add(e.getMessage());
+                LocalDateTime startAt = info.startAt() != null ? info.startAt() : (LocalDateTime) video[3];
+                postRepository.setLiveState((UUID) video[0], info.status(), startAt, now);
             }
         }
+        for (Post post : newVideos) {
+            YouTubeLiveChecker.LiveInfo info = result.results().get(YouTubeLiveChecker.videoId(post.getLink()));
+            if (info != null) {
+                post.setLiveStatus(info.status());
+                post.setLiveStartAt(info.startAt());
+                post.setLiveCheckedAt(now);
+            }
+        }
+        return result.errors();
     }
 
     private static LocalDateTime toLocalDateTime(java.util.Date date) {

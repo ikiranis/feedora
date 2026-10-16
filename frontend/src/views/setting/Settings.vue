@@ -65,7 +65,9 @@ const editSetting = (id: number) => {
                     {{ setting.settingName }}
                 </td>
                 <td class="align-middle">
-                    {{ setting.settingValue }}
+                    <!-- API keys are only shown when edited -->
+                    {{ /apikey/i.test(setting.settingName) && setting.settingValue
+                        ? '••••••••' + setting.settingValue.slice(-4) : setting.settingValue }}
                 </td>
                 <td class="my-auto align-middle">
                     <a class="btn btn-sm" @click="editSetting(setting.id)" :title="language.get('Edit Setting')">

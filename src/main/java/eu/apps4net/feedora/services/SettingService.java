@@ -12,6 +12,8 @@ import java.util.List;
 public class SettingService {
 
 	public static final String REGISTRATION_ENABLED = "registrationEnabled";
+	// YouTube Data API key for checking scheduled/live videos; empty to read the videos' pages instead
+	public static final String YOUTUBE_API_KEY = "youtubeApiKey";
 
 	private final SettingRepository settingRepository;
 
@@ -37,6 +39,10 @@ public class SettingService {
 		if (settings.isEmpty() || settingRepository.getBySettingName(REGISTRATION_ENABLED) == null) {
 			settingRepository.save(new Setting(REGISTRATION_ENABLED, "true"));
 		}
+
+		if (settings.isEmpty() || settingRepository.getBySettingName(YOUTUBE_API_KEY) == null) {
+			settingRepository.save(new Setting(YOUTUBE_API_KEY, ""));
+		}
 	}
 
 	/**
@@ -60,6 +66,17 @@ public class SettingService {
 	public boolean isRegistrationEnabled() {
 		Setting setting = settingRepository.getBySettingName(REGISTRATION_ENABLED);
 		return setting == null || !"false".equalsIgnoreCase(setting.getSettingValue());
+	}
+
+	/**
+	 * Returns the YouTube Data API key.
+	 *
+	 * @return the API key, or null if none is set
+	 */
+	public String getYoutubeApiKey() {
+		Setting setting = settingRepository.getBySettingName(YOUTUBE_API_KEY);
+		return setting == null || setting.getSettingValue() == null || setting.getSettingValue().isBlank()
+				? null : setting.getSettingValue().trim();
 	}
 
 	/**
@@ -93,6 +110,9 @@ public class SettingService {
 	public Boolean fieldValidation(String settingName, String settingValue) {
 		if (REGISTRATION_ENABLED.equals(settingName)) {
 			return "true".equals(settingValue) || "false".equals(settingValue);
+		}
+		if (YOUTUBE_API_KEY.equals(settingName)) {
+			return settingValue == null || settingValue.isBlank() || settingValue.trim().matches("[\\w-]{20,100}");
 		}
 		return true;
 	}

@@ -33,12 +33,13 @@ class SettingServiceTest {
         settingService.setDefaultSettings();
 
         ArgumentCaptor<Setting> saved = ArgumentCaptor.forClass(Setting.class);
-        verify(settingRepository, times(3)).save(saved.capture());
+        verify(settingRepository, times(4)).save(saved.capture());
         assertThat(saved.getAllValues()).extracting(Setting::getSettingName, Setting::getSettingValue)
                 .containsExactly(
                         org.assertj.core.groups.Tuple.tuple("uploadDir", "uploads"),
                         org.assertj.core.groups.Tuple.tuple("defaultActionsLanguage", "en"),
-                        org.assertj.core.groups.Tuple.tuple("registrationEnabled", "true"));
+                        org.assertj.core.groups.Tuple.tuple("registrationEnabled", "true"),
+                        org.assertj.core.groups.Tuple.tuple("youtubeApiKey", ""));
     }
 
     @Test
@@ -48,6 +49,7 @@ class SettingServiceTest {
         when(settingRepository.getBySettingName("uploadDir")).thenReturn(uploadDir);
         when(settingRepository.getBySettingName("defaultActionsLanguage")).thenReturn(null);
         when(settingRepository.getBySettingName("registrationEnabled")).thenReturn(new Setting("registrationEnabled", "true"));
+        when(settingRepository.getBySettingName("youtubeApiKey")).thenReturn(new Setting("youtubeApiKey", ""));
 
         settingService.setDefaultSettings();
 
@@ -62,6 +64,7 @@ class SettingServiceTest {
         when(settingRepository.getBySettingName("uploadDir")).thenReturn(new Setting("uploadDir", "files"));
         when(settingRepository.getBySettingName("defaultActionsLanguage")).thenReturn(new Setting("defaultActionsLanguage", "el"));
         when(settingRepository.getBySettingName("registrationEnabled")).thenReturn(new Setting("registrationEnabled", "false"));
+        when(settingRepository.getBySettingName("youtubeApiKey")).thenReturn(new Setting("youtubeApiKey", "key"));
 
         settingService.setDefaultSettings();
 
@@ -75,6 +78,18 @@ class SettingServiceTest {
 
         assertThat(settingService.getUploadDir()).isEqualTo("files");
         assertThat(settingService.getDefaultActionsLanguage()).isEqualTo("el");
+    }
+
+    @Test
+    void youtubeApiKeyIsNullWhenEmpty() {
+        when(settingRepository.getBySettingName("youtubeApiKey")).thenReturn(new Setting("youtubeApiKey", " "));
+        assertThat(settingService.getYoutubeApiKey()).isNull();
+
+        when(settingRepository.getBySettingName("youtubeApiKey")).thenReturn(new Setting("youtubeApiKey", " AIzaSyExample_key-123456789 "));
+        assertThat(settingService.getYoutubeApiKey()).isEqualTo("AIzaSyExample_key-123456789");
+        assertThat(settingService.fieldValidation("youtubeApiKey", "")).isTrue();
+        assertThat(settingService.fieldValidation("youtubeApiKey", "AIzaSyExample_key-123456789")).isTrue();
+        assertThat(settingService.fieldValidation("youtubeApiKey", "not a key")).isFalse();
     }
 
     @Test

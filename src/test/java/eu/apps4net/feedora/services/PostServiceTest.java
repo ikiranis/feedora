@@ -61,6 +61,8 @@ class PostServiceTest {
     @Mock
     private LogService logService;
     @Mock
+    private SettingService settingService;
+    @Mock
     private PlatformTransactionManager transactionManager;
     @InjectMocks
     private PostService postService;
