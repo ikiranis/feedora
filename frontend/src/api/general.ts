@@ -17,3 +17,15 @@ export const checkAppAlive = async (): Promise<boolean>  => {
         return false
     }
 }
+
+/**
+ * Get the version of the running app
+ */
+export const getAppVersion = async (): Promise<string | null> => {
+    try {
+        const response = await axios.get(config.defaultServer() + '/api/general/version')
+        return response.data
+    } catch(error: any) {
+        return null
+    }
+}

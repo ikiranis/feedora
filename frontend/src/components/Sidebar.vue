@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { language } from "@/functions/languageStore.ts";
-import { computed, ComputedRef } from "vue";
+import { computed, ComputedRef, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import LanguageSelect from "@/components/utilities/LanguageSelect.vue";
 import { authStore } from "@/functions/authStore";
+import { getAppVersion } from "@/api/general";
 
 const route = useRoute()
 const router = useRouter()
@@ -42,6 +43,12 @@ const menuItemClasses: ComputedRef<string> = computed(() => {
  */
 const getIconSize: ComputedRef<number> = computed(() => {
     return props.collapsed ? 22 : 20
+})
+
+const appVersion = ref<string | null>(null)
+
+onMounted(async () => {
+    appVersion.value = await getAppVersion()
 })
 
 /**
@@ -129,6 +136,11 @@ const handleLogout = async () => {
         </div>
 
         <div class="mt-auto">
+            <!-- Version of the running app -->
+            <div v-if="appVersion" class="app-version text-center mb-2" :title="'Feedora ' + appVersion">
+                {{ collapsed ? appVersion : 'Feedora v' + appVersion }}
+            </div>
+
             <!-- User Info and Logout -->
             <div v-if="authStore.user.value" class="user-section mb-2">
                 <div v-if="!collapsed" class="user-info rounded p-2 mb-2">
@@ -170,6 +182,14 @@ const handleLogout = async () => {
 </template>
 
 <style scoped lang="scss">
+.app-version {
+    font-size: 0.75rem;
+    color: #adb5bd;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .user-section {
     .user-info {
         background-color: rgba(255, 255, 255, 0.1);

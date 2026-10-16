@@ -302,7 +302,8 @@ public class PostService {
     /**
      * Checks again the feed's videos that are live, or scheduled to start by now, since their state changes over time
      * (scheduled → live → ended). Videos scheduled for later are only checked once their start time comes.
-     * Also checks the feed's recent and saved videos that were never checked, e.g. added before live states existed.
+     * Also checks the feed's recent videos that were never checked, e.g. added before live states existed,
+     * and its saved videos once a day, since they're kept for long and may be scheduled later.
      *
      * @param feed The feed being parsed
      * @param user The owner of the feed
@@ -311,7 +312,8 @@ public class PostService {
     private void refreshLiveVideos(Feed feed, User user, List<String> errors) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime soon = now.plusMinutes(5);
-        for (Object[] video : postRepository.findLiveVideosByFeedAndUser(feed, user, now.minusDays(LIVE_CHECK_MAX_AGE_DAYS))) {
+        for (Object[] video : postRepository.findLiveVideosByFeedAndUser(feed, user,
+                now.minusDays(LIVE_CHECK_MAX_AGE_DAYS), now.minusDays(1))) {
             UUID id = (UUID) video[0];
             String videoId = YouTubeLiveChecker.videoId((String) video[1]);
             LiveStatus status = (LiveStatus) video[2];
