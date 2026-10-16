@@ -66,7 +66,13 @@
                     <tbody>
                         <tr v-for="feed in feeds" :key="feed.id">
                             <td>
-                                {{ feed.title }}
+                                <router-link
+                                    :to="{ name: 'Posts', query: { feed: feed.id } }"
+                                    class="text-decoration-none"
+                                    :title="language.get('Show the posts of this feed')"
+                                >
+                                    {{ feed.title }}
+                                </router-link>
                                 <span
                                     v-if="isFailingHttpFeed(feed)"
                                     class="badge text-bg-warning ms-1"

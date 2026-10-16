@@ -121,6 +121,9 @@
         <div class="flex-grow-1 posts-main">
             <div class="container py-4">
                 <div class="row justify-content-end mb-4 align-items-center">
+                    <div v-if="selectedFeedTitle" class="col text-truncate">
+                        <h5 class="mb-0 text-truncate" :title="selectedFeedTitle">{{ selectedFeedTitle }}</h5>
+                    </div>
                     <div class="col-auto d-flex align-items-center">
                         <div v-if="!showSaved" class="btn-group me-3" role="group"
                             :aria-label="language.get('Posts to show') || 'Posts to show'">
@@ -274,6 +277,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { getPosts, parseFeeds, markAsRead, markAllAsRead, getUnreadCounts, setPostSaved } from '@/api/post';
 import { getFeedOperationStatus, getLastParsedAt, getFeeds } from '@/api/feed';
 import { getFolders, deleteFolder } from '@/api/folder';
@@ -291,6 +295,8 @@ import { errorStore } from '@/components/error/errorStore'; // Import errorStore
 import { confirmDialog } from '@/functions/javaDialogs';
 import { Dropdown, Modal } from 'bootstrap';
 
+const route = useRoute();
+const router = useRouter();
 const posts = ref<PostType[]>([]);
 const page = ref(1);
 const pageSize = 50;
@@ -371,6 +377,9 @@ const showDetails = computed<boolean>({
         localStorage.setItem(VIEW_MODES_KEY, JSON.stringify(viewModes.value));
     },
 });
+
+// Title of the selected feed, shown above the posts list
+const selectedFeedTitle = computed(() => unreadCounts.value.feeds.find(f => f.id === selectedFeedId.value)?.title ?? null);
 
 // Folders with unread posts, sorted by name. The selected folder (or the folder of the selected feed)
 // stays visible after its last post is read.
@@ -1059,7 +1068,13 @@ watch(searchTerm, (_) => {
 onMounted(() => {
     // Clear any existing errors when navigating to posts page
     errorStore.clear();
-    
+
+    // A feed selected from the feeds page. The query is removed, so it doesn't override later filter changes.
+    if (typeof route.query.feed === 'string') {
+        selectedFeedId.value = route.query.feed;
+        router.replace({ query: {} });
+    }
+
     loading.value = true;
     fetchFolders();
     fetchUnreadCounts();
