@@ -18,7 +18,7 @@ import java.util.Map;
 @Component
 public class EnumCheckConstraintCleanup {
     // Tables with @Enumerated columns, whose only CHECK constraints are the generated enum ones
-    private static final List<String> TABLES = List.of("LOG_ENTRY", "USERS");
+    private static final List<String> TABLES = List.of("LOG_ENTRY", "USERS", "POST");
 
     private final JdbcTemplate jdbcTemplate;
 

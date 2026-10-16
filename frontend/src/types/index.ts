@@ -115,6 +115,9 @@ export interface PostType {
     author: string | null;
     read: boolean;
     saved: boolean;
+    // YouTube videos: scheduled live stream/premiere or live now, and its (scheduled) start
+    liveStatus: 'UPCOMING' | 'LIVE' | null;
+    liveStartAt: string | null;
     feed: Feed;
     user: UserType;
 }

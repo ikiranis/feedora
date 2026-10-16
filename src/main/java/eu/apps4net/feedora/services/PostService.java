@@ -3,6 +3,7 @@ package eu.apps4net.feedora.services;
 import eu.apps4net.feedora.exceptions.FeedFetchException;
 import eu.apps4net.feedora.models.Feed;
 import eu.apps4net.feedora.models.FeedStatistics;
+import eu.apps4net.feedora.models.LiveStatus;
 import eu.apps4net.feedora.models.LogLevel;
 import eu.apps4net.feedora.models.LogType;
 import eu.apps4net.feedora.models.Post;
@@ -14,6 +15,7 @@ import eu.apps4net.feedora.configurations.Language;
 import eu.apps4net.feedora.exceptions.NotFoundException;
 import eu.apps4net.feedora.utilities.ArticleExtractor;
 import eu.apps4net.feedora.utilities.RssFetcher;
+import eu.apps4net.feedora.utilities.YouTubeLiveChecker;
 import com.rometools.rome.feed.synd.SyndContent;
 import com.rometools.rome.feed.synd.SyndEntry;
 import jakarta.persistence.EntityManager;
@@ -70,6 +72,10 @@ public class PostService {
     // Read posts are deleted this many days after they were read, by the post cleanup worker
     @Value("${feedora.posts.read-retention-days:30}")
     private int readRetentionDays;
+
+    // New YouTube videos published within this many days are checked for being scheduled or live streams.
+    // Older ones are skipped, so a feed's first check doesn't read the page of every video in it.
+    private static final int LIVE_CHECK_MAX_AGE_DAYS = 7;
 
     /**
      * Checks all the feeds of a user for new posts, and adds them as Posts in the database.
@@ -151,6 +157,7 @@ public class PostService {
                 if (success && entries != null) {
                     // On a feed's first check all its entries are added, however old
                     boolean checkedBefore = feed.getStatistics() != null && feed.getStatistics().getLastSuccessAt() != null;
+                    refreshLiveVideos(feed, user);
                     // Links already added, including those of this check, so an entry repeated in the feed is added once
                     Set<String> knownLinks = new HashSet<>(postRepository.findLinksByFeedAndUser(feed, user));
                     List<Post> postsToSave = new ArrayList<>();
@@ -180,6 +187,9 @@ public class PostService {
                                 false
                             );
                             post.setContent(getEntryContent(entry));
+                            if (post.getPubDate().isAfter(LocalDateTime.now().minusDays(LIVE_CHECK_MAX_AGE_DAYS))) {
+                                checkLiveState(post);
+                            }
                             post.setFeed(feed);
                             post.setUser(user);
                             postsToSave.add(post);
@@ -256,6 +266,60 @@ public class PostService {
                 }
             }
             return saved;
+        }
+    }
+
+    /**
+     * Sets the live state of a YouTube video post (scheduled live stream/premiere, or live now).
+     * Other posts are left unchanged, and so is the post if the video's page can't be read.
+     *
+     * @param post The new post
+     */
+    private static void checkLiveState(Post post) {
+        String videoId = YouTubeLiveChecker.videoId(post.getLink());
+        if (videoId == null) {
+            return;
+        }
+        try {
+            YouTubeLiveChecker.LiveInfo info = YouTubeLiveChecker.check(videoId);
+            post.setLiveStatus(info.status());
+            post.setLiveStartAt(info.startAt());
+            post.setLiveCheckedAt(LocalDateTime.now());
+        } catch (Exception e) {
+            // Not worth a log entry: the post is shown as an ordinary video, and checked again on the feed's next parse
+        }
+    }
+
+    /**
+     * Checks again the feed's videos that are live, or scheduled to start by now, since their state changes over time
+     * (scheduled → live → ended). Videos scheduled for later are only checked once their start time comes.
+     * Also checks the feed's recent videos that were never checked, e.g. added before live states existed.
+     *
+     * @param feed The feed being parsed
+     * @param user The owner of the feed
+     */
+    private void refreshLiveVideos(Feed feed, User user) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime soon = now.plusMinutes(5);
+        for (Object[] video : postRepository.findLiveVideosByFeedAndUser(feed, user, now.minusDays(LIVE_CHECK_MAX_AGE_DAYS))) {
+            UUID id = (UUID) video[0];
+            String videoId = YouTubeLiveChecker.videoId((String) video[1]);
+            LiveStatus status = (LiveStatus) video[2];
+            LocalDateTime startAt = (LocalDateTime) video[3];
+            if (status == LiveStatus.UPCOMING && startAt != null && startAt.isAfter(soon)) {
+                continue;
+            }
+            if (videoId == null) {
+                postRepository.setLiveState(id, null, null, now);
+                continue;
+            }
+            try {
+                YouTubeLiveChecker.LiveInfo info = YouTubeLiveChecker.check(videoId);
+                // Ended streams keep their start time, and no longer have a live status
+                postRepository.setLiveState(id, info.status(), info.startAt() != null ? info.startAt() : startAt, now);
+            } catch (Exception e) {
+                // Checked again on the feed's next parse
+            }
         }
     }
 

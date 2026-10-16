@@ -979,6 +979,31 @@
         <language code="el">Το άρθρο δεν βρέθηκε</language>
     </entry>
 
+    <entry id="Live">
+        <language code="en">Live</language>
+        <language code="el">Ζωντανά</language>
+    </entry>
+
+    <entry id="Upcoming">
+        <language code="en">Upcoming</language>
+        <language code="el">Προσεχώς</language>
+    </entry>
+
+    <entry id="Live since">
+        <language code="en">Live since</language>
+        <language code="el">Ζωντανά από</language>
+    </entry>
+
+    <entry id="Scheduled for">
+        <language code="en">Scheduled for</language>
+        <language code="el">Προγραμματισμένο για</language>
+    </entry>
+
+    <entry id="Watch on YouTube">
+        <language code="en">Watch on YouTube</language>
+        <language code="el">Παρακολούθηση στο YouTube</language>
+    </entry>
+
     <entry id="Loading full article...">
         <language code="en">Loading full article...</language>
         <language code="el">Φόρτωση πλήρους άρθρου...</language>

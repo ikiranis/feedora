@@ -1,12 +1,12 @@
 <template>
     <div v-if="showDetails" class="custom-card h-100" :class="{ 'unread-post': !post.read, 'read-post': post.read, 'selected-post': selected }" @click="handleCardClick">
         <!-- Media: playing video, YouTube thumbnail or first image of the post -->
-        <div v-if="playing && youtubeEmbedUrl" class="card-media" @click.stop>
+        <div v-if="playing && youtubeEmbedUrl && embeddable !== false" class="card-media" @click.stop>
             <iframe :src="`${youtubeEmbedUrl}?autoplay=1`" :title="post.title" allowfullscreen
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
         </div>
         <div v-else-if="thumbnailUrl" class="card-media" :class="{ 'is-short': youtubeVideo?.isShort }"
-            @click="youtubeVideo && (playing = true)">
+            @click="playVideo">
             <img v-if="youtubeVideo?.isShort" :src="thumbnailUrl" class="media-backdrop" alt="" aria-hidden="true" />
             <img :src="thumbnailUrl" class="media-image" alt="" loading="lazy" @error="thumbnailFailed = true" />
             <span v-if="youtubeVideo" class="media-badge">
@@ -23,10 +23,11 @@
                     <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
                 </svg>
             </span>
+            <span v-if="youtubeVideo && embeddable === false" class="media-external">{{ watchOnYoutube }}</span>
         </div>
 
         <div class="card-content">
-            <a :href="post.link" target="_blank" class="post-title" @click.stop>{{ post.title }}</a>
+            <a :href="post.link" target="_blank" class="post-title" @click.stop><LiveBadge :post="post" class="me-2" />{{ post.title }}</a>
             <div class="post-source">
                 <img v-if="siteIcon" :src="siteIcon" class="site-icon source-icon" alt="" loading="lazy" @error="iconFailed = true" />
                 <span class="text-truncate">{{ post.feed?.title }}</span>
@@ -83,6 +84,7 @@
                         <path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.4 31.4 0 0 0 0 12a31.4 31.4 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.4 31.4 0 0 0 24 12a31.4 31.4 0 0 0-.5-5.8zM9.6 15.6V8.4l6.2 3.6z"/>
                     </svg>
                 </span>
+                <LiveBadge :post="post" class="align-self-center" />
                 <a :href="post.link" target="_blank" class="list-title" @click="handleTitleClick">{{ post.title }}</a>
                 <span v-if="excerpt" class="list-excerpt">{{ excerpt }}</span>
             </div>
@@ -100,6 +102,7 @@
         <!-- Expanded details for the selected post -->
         <div v-if="selected" class="list-details" @click.stop>
             <header class="details-header">
+                <LiveBadge :post="post" class="title-live-badge" />
                 <a :href="post.link" target="_blank" class="details-title">{{ post.title }}</a>
                 <div class="details-meta">
                     <img v-if="siteIcon" :src="siteIcon" class="details-icon" alt="" @error="iconFailed = true" />
@@ -137,10 +140,22 @@
                     </button>
                 </div>
             </header>
-            <div v-if="youtubeEmbedUrl" class="ratio ratio-16x9 video-embed video-embed-summary">
+            <div v-if="youtubeEmbedUrl && embeddable" class="ratio ratio-16x9 video-embed video-embed-summary">
                 <iframe :src="youtubeEmbedUrl" :title="post.title" allowfullscreen
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
             </div>
+            <!-- Thumbnail while checking the video, or a link to YouTube when it can't be embedded -->
+            <a v-else-if="youtubeVideo" :href="post.link" target="_blank" class="card-media video-embed video-embed-summary d-block"
+                :class="{ 'is-short': youtubeVideo.isShort }" :title="watchOnYoutube">
+                <img v-if="youtubeVideo.isShort" :src="youtubeThumbnailUrl!" class="media-backdrop" alt="" aria-hidden="true" />
+                <img :src="youtubeThumbnailUrl!" class="media-image" alt="" />
+                <span v-if="embeddable === false" class="media-play visible">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                    </svg>
+                </span>
+                <span v-if="embeddable === false" class="media-external">{{ watchOnYoutube }}</span>
+            </a>
             <div v-if="contentLoading" class="content-loading">
                 <span class="spinner-border spinner-border-sm" role="status"></span>
                 {{ language.get('Loading full article...') || 'Loading full article...' }}
@@ -158,6 +173,8 @@ import { PostType } from '@/types';
 import { markAsRead } from '@/api/post';
 import { postContentStore } from '@/functions/postContentStore';
 import { hideBrokenImage } from '@/functions/hideBrokenImage';
+import { youtubeEmbedStore } from '@/functions/youtubeEmbedStore';
+import LiveBadge from '@/components/LiveBadge.vue';
 import { language } from '@/functions/languageStore';
 import { computed, ref, watch } from 'vue';
 
@@ -213,6 +230,32 @@ const youtubeEmbedUrl = computed(() =>
     youtubeVideo.value ? `https://www.youtube-nocookie.com/embed/${youtubeVideo.value.id}` : null
 );
 
+const youtubeThumbnailUrl = computed(() =>
+    youtubeVideo.value ? `https://i.ytimg.com/vi/${youtubeVideo.value.id}/hqdefault.jpg` : null
+);
+
+// Whether the video can be played embedded (undefined until checked); some uploaders disable embedding
+const embeddable = computed(() => youtubeVideo.value ? youtubeEmbedStore.isEmbeddable(youtubeVideo.value.id) : undefined);
+const watchOnYoutube = computed(() => language.get('Watch on YouTube') || 'Watch on YouTube');
+
+/**
+ * Grid card thumbnail click: plays the video in the card, or opens it on YouTube if it can't be embedded.
+ */
+const playVideo = () => {
+    if (!youtubeVideo.value) return;
+    if (embeddable.value === false) {
+        window.open(props.post.link, '_blank');
+        return;
+    }
+    youtubeEmbedStore.check(youtubeVideo.value.id);
+    playing.value = true;
+};
+
+// The video of a post opened in list mode is checked before showing the player
+watch([() => props.selected && !props.showDetails, youtubeVideo], ([opened, video]) => {
+    if (opened && video) youtubeEmbedStore.check(video.id);
+}, { immediate: true });
+
 /**
  * Parsed post description (DOMParser doesn't load images or run scripts).
  */
@@ -225,7 +268,7 @@ const descriptionDoc = computed(() =>
  */
 const thumbnailUrl = computed(() => {
     if (thumbnailFailed.value) return null;
-    if (youtubeVideo.value) return `https://i.ytimg.com/vi/${youtubeVideo.value.id}/hqdefault.jpg`;
+    if (youtubeThumbnailUrl.value) return youtubeThumbnailUrl.value;
 
     const src = descriptionDoc.value?.querySelector('img[src]')?.getAttribute('src');
     return src && /^https?:\/\//.test(src) ? src : null;
@@ -396,8 +439,24 @@ const handleCardClick = async () => {
     transition: opacity 0.2s;
 }
 
-.card-media:hover .media-play {
+.card-media:hover .media-play,
+.media-play.visible {
     opacity: 1;
+}
+
+/* Videos that can't be embedded open on YouTube */
+.media-external {
+    position: absolute;
+    bottom: 0.75rem;
+    left: 50%;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.4rem;
+    background-color: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+    transform: translateX(-50%);
 }
 
 /* Text area */
@@ -691,6 +750,11 @@ const handleCardClick = async () => {
     letter-spacing: -0.01em;
     color: var(--text-color);
     text-decoration: none;
+}
+
+.title-live-badge {
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
 }
 
 .details-title:hover {

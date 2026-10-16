@@ -43,6 +43,14 @@ public class Post {
     @ColumnDefault("false")
     private boolean saved;
 
+    // YouTube videos: scheduled live stream/premiere or live now (null otherwise), and its (scheduled) start
+    @Enumerated(EnumType.STRING)
+    private LiveStatus liveStatus;
+    private LocalDateTime liveStartAt;
+    // When the live state was last checked; null for posts never checked (e.g. added before live states existed)
+    @JsonIgnore
+    private LocalDateTime liveCheckedAt;
+
     @ManyToOne
     @JoinColumn(name = "feed_id")
     private Feed feed;
@@ -91,6 +99,15 @@ public class Post {
 
     public boolean isSaved() { return saved; }
     public void setSaved(boolean saved) { this.saved = saved; }
+
+    public LiveStatus getLiveStatus() { return liveStatus; }
+    public void setLiveStatus(LiveStatus liveStatus) { this.liveStatus = liveStatus; }
+
+    public LocalDateTime getLiveStartAt() { return liveStartAt; }
+    public void setLiveStartAt(LocalDateTime liveStartAt) { this.liveStartAt = liveStartAt; }
+
+    public LocalDateTime getLiveCheckedAt() { return liveCheckedAt; }
+    public void setLiveCheckedAt(LocalDateTime liveCheckedAt) { this.liveCheckedAt = liveCheckedAt; }
 
     public Feed getFeed() { return feed; }
     public void setFeed(Feed feed) { this.feed = feed; }

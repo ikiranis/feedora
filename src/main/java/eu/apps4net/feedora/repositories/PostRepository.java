@@ -1,5 +1,6 @@
 package eu.apps4net.feedora.repositories;
 
+import eu.apps4net.feedora.models.LiveStatus;
 import eu.apps4net.feedora.models.Post;
 import eu.apps4net.feedora.models.Feed;
 import eu.apps4net.feedora.models.User;
@@ -74,6 +75,19 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     // Links of the posts of a feed, to skip the entries already added in one query instead of one per entry
     @Query("SELECT p.link FROM Post p WHERE p.feed = :feed AND p.user = :user AND p.link IS NOT NULL")
     List<String> findLinksByFeedAndUser(@Param("feed") Feed feed, @Param("user") User user);
+
+    // Id, link, live status and start of the feed's scheduled or live videos, to check whether their state changed,
+    // and of its YouTube videos published since the given date that were never checked
+    @Query("SELECT p.id, p.link, p.liveStatus, p.liveStartAt FROM Post p WHERE p.feed = :feed AND p.user = :user AND " +
+           "(p.liveStatus IS NOT NULL OR (p.liveCheckedAt IS NULL AND p.pubDate > :since AND " +
+           "(p.link LIKE '%youtube.com/%' OR p.link LIKE '%youtu.be/%')))")
+    List<Object[]> findLiveVideosByFeedAndUser(@Param("feed") Feed feed, @Param("user") User user, @Param("since") LocalDateTime since);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE Post p SET p.liveStatus = :status, p.liveStartAt = :startAt, p.liveCheckedAt = :checkedAt WHERE p.id = :id")
+    int setLiveState(@Param("id") UUID id, @Param("status") LiveStatus status, @Param("startAt") LocalDateTime startAt,
+                     @Param("checkedAt") LocalDateTime checkedAt);
     
     @Modifying
     @Transactional

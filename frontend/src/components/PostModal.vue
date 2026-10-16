@@ -11,6 +11,7 @@
 
                 <article class="post-modal-article">
                     <header class="post-modal-header">
+                        <LiveBadge :post="post" class="title-live-badge" />
                         <a :href="post.link" target="_blank" class="post-modal-title">{{ post.title }}</a>
                         <div class="post-modal-meta">
                             <img v-if="siteIcon" :src="siteIcon" class="post-modal-icon" alt="" @error="iconFailed = true" />
@@ -44,10 +45,23 @@
                         </div>
                     </header>
 
-                    <div v-if="youtubeEmbedUrl" class="ratio ratio-16x9 mb-4">
+                    <div v-if="youtubeEmbedUrl && embeddable" class="ratio ratio-16x9 mb-4">
                         <iframe :src="youtubeEmbedUrl" :title="post.title" allowfullscreen
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
                     </div>
+                    <!-- Thumbnail while checking the video, or a link to YouTube when it can't be embedded -->
+                    <a v-else-if="videoId" :href="post.link" target="_blank" class="ratio ratio-16x9 mb-4 video-thumbnail"
+                        :title="language.get('Watch on YouTube') || 'Watch on YouTube'">
+                        <img :src="`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`" alt="" />
+                        <span v-if="embeddable === false" class="video-thumbnail-overlay">
+                            <span class="video-thumbnail-play">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 16 16" fill="currentColor">
+                                    <path d="M11.596 8.697l-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                                </svg>
+                            </span>
+                            {{ language.get('Watch on YouTube') || 'Watch on YouTube' }}
+                        </span>
+                    </a>
                     <div v-if="contentLoading" class="post-modal-loading">
                         <span class="spinner-border spinner-border-sm" role="status"></span>
                         {{ language.get('Loading full article...') || 'Loading full article...' }}
@@ -64,6 +78,8 @@
 import { PostType } from '@/types';
 import { postContentStore } from '@/functions/postContentStore';
 import { hideBrokenImage } from '@/functions/hideBrokenImage';
+import { youtubeEmbedStore } from '@/functions/youtubeEmbedStore';
+import LiveBadge from '@/components/LiveBadge.vue';
 import { language } from '@/functions/languageStore';
 import { computed, ref, watch } from 'vue';
 
@@ -91,9 +107,9 @@ const siteIcon = computed(() => {
 });
 
 /**
- * YouTube embed URL if the post links to a video (watch, youtu.be, shorts, embed or live links).
+ * YouTube video id if the post links to a video (watch, youtu.be, shorts, embed or live links).
  */
-const youtubeEmbedUrl = computed(() => {
+const videoId = computed(() => {
     try {
         const url = new URL(props.post.link);
         const host = url.hostname.replace(/^(www\.|m\.)/, '');
@@ -103,11 +119,15 @@ const youtubeEmbedUrl = computed(() => {
         } else if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
             videoId = url.pathname.match(/^\/(?:shorts|embed|live)\/([\w-]+)/)?.[1] ?? url.searchParams.get('v');
         }
-        return videoId && /^[\w-]{11}$/.test(videoId) ? `https://www.youtube-nocookie.com/embed/${videoId}` : null;
+        return videoId && /^[\w-]{11}$/.test(videoId) ? videoId : null;
     } catch {
         return null;
     }
 });
+
+const youtubeEmbedUrl = computed(() => videoId.value ? `https://www.youtube-nocookie.com/embed/${videoId.value}` : null);
+// Whether the video can be played embedded (undefined until checked); some uploaders disable embedding
+const embeddable = computed(() => videoId.value ? youtubeEmbedStore.isEmbeddable(videoId.value) : undefined);
 
 const fullContent = computed(() => postContentStore.get(props.post.id) ?? null);
 const contentLoading = computed(() => postContentStore.isLoading(props.post.id));
@@ -118,7 +138,8 @@ const logCount = computed(() => postContentStore.logCount(props.post.id));
 watch(() => props.post.id, () => {
     iconFailed.value = false;
     bodyRef.value?.scrollTo({ top: 0 });
-    if (!youtubeEmbedUrl.value) postContentStore.load(props.post.id);
+    if (videoId.value) youtubeEmbedStore.check(videoId.value);
+    else postContentStore.load(props.post.id);
 }, { immediate: true });
 
 /**
@@ -188,6 +209,11 @@ defineExpose({ scrollBy });
     text-decoration: none;
 }
 
+.title-live-badge {
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+}
+
 .post-modal-title:hover {
     color: #4d8dff;
 }
@@ -241,6 +267,44 @@ defineExpose({ scrollBy });
 .ratio iframe {
     border: 0;
     border-radius: 0.5rem;
+}
+
+.video-thumbnail {
+    overflow: hidden;
+    border-radius: 0.5rem;
+    background-color: #000;
+}
+
+.video-thumbnail img {
+    object-fit: cover;
+}
+
+.video-thumbnail-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    background-color: rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.video-thumbnail-play {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.6);
+    transition: background-color 0.2s;
+}
+
+.video-thumbnail:hover .video-thumbnail-play {
+    background-color: #ff0033;
 }
 
 .post-modal-loading {
