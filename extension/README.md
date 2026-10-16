@@ -54,5 +54,6 @@ Only `http`/`https` links are opened, and only messages posted by the page itsel
 
 For adding feeds, the app marks `<html>` with `data-feedora-server` (its API URL). On a Feedora tab, `content.js`
 sends that URL and the login token (`auth_token` in the page's localStorage) to `background.js` when the page loads
-and when you leave the tab; it is kept in the extension's own storage. The popup finds the page's feeds with
+and when you leave the tab; it is kept in the extension's own storage. The popup first reads the session straight
+from an open Feedora tab (falling back to the page's origin on app builds without `data-feedora-server`), then finds the page's feeds with
 `chrome.scripting.executeScript` and calls `/api/folders` and `/api/feed/addFeed` with that token.

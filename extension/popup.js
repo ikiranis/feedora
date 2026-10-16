@@ -34,6 +34,40 @@ function findFeeds() {
     return feeds;
 }
 
+// Runs in a page: the Feedora session, if it is a Feedora tab (marked by content.js)
+function readSession() {
+    const root = document.documentElement;
+    if (!(root instanceof HTMLElement) || !root.dataset.feedoraExtension) return null;
+
+    const token = localStorage.getItem('auth_token');
+    if (!token) return null;
+
+    // Older app builds don't mark their API server, they serve it on the page's own origin
+    return { server: root.dataset.feedoraServer || location.origin, token };
+}
+
+// The session of an open Feedora tab is the freshest; the stored one covers a closed Feedora tab
+const findSession = async () => {
+    const tabs = await chrome.tabs.query({});
+    for (const tab of tabs) {
+        // Tabs are listed with a URL only on the sites the extension has access to
+        if (!tab.url || !/^https?:/.test(tab.url)) continue;
+        try {
+            const [injection] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: readSession });
+            if (injection && injection.result) {
+                const session = { server: new URL(injection.result.server).origin, token: injection.result.token };
+                await chrome.storage.local.set({ session });
+                return session;
+            }
+        } catch {
+            // Not allowed on that tab, or it is still loading
+        }
+    }
+
+    const { session } = await chrome.storage.local.get('session');
+    return session && session.token ? session : null;
+};
+
 // Calls the Feedora API with the session the content script got from the Feedora tab
 const api = async (session, path, options = {}) => {
     const response = await fetch(session.server + path, {
@@ -82,6 +116,7 @@ const renderFeed = (session, feed) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = 'Add';
+    button.disabled = !session;
 
     const result = document.createElement('span');
     result.className = 'feed-result';
@@ -131,46 +166,64 @@ const showFeeds = async (tab) => {
         return;
     }
 
-    const { session } = await chrome.storage.local.get('session');
-    if (!session || !session.token) {
-        setStatus('Open Feedora and sign in, then come back to add the feed.');
-        return;
+    let session = await findSession();
+    let status = feeds.length === 1 ? '' : `${feeds.length} feeds found.`;
+    if (!session) {
+        status = 'Open Feedora in a tab and sign in to add a feed.';
+    } else {
+        try {
+            await loadFolders(session);
+        } catch (error) {
+            status = error instanceof TypeError ? `Could not reach Feedora at ${session.server}` : error.message;
+            session = null;
+        }
     }
 
-    try {
-        await loadFolders(session);
-    } catch (error) {
-        setStatus(error instanceof TypeError ? `Could not reach Feedora at ${session.server}` : error.message);
-        return;
-    }
-
-    setStatus(feeds.length === 1 ? '' : `${feeds.length} feeds found.`);
+    setStatus(status);
     for (const feed of feeds) {
         renderFeed(session, feed);
     }
 };
 
-// Feedora on another server (e.g. Docker): the site permission is remembered and background.js registers
-// the content script for it
+// Feedora on another server (e.g. Docker): background.js registers the content script for that site.
+// The site permission alone doesn't say it, the browser can grant it for all sites.
 const showEnable = async (tab) => {
     const url = new URL(tab.url);
-    // Match patterns can't have a port, so this covers every port on that host (like the localhost entries)
-    const pattern = `${url.protocol}//${url.hostname}/*`;
+    const enabledEl = document.getElementById('enabled');
+    const enableButton = document.getElementById('enable');
+    const disableButton = document.getElementById('disable');
 
-    if (await chrome.permissions.contains({ origins: [pattern] })) {
-        document.getElementById('enabled').hidden = false;
+    // Always on in the manifest
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+        enabledEl.hidden = false;
         return;
     }
 
-    const button = document.getElementById('enable');
-    button.hidden = false;
-    button.addEventListener('click', () => {
+    // Match patterns can't have a port, so this covers every port on that host (like the localhost entries)
+    const pattern = `${url.protocol}//${url.hostname}/*`;
+    const id = `feedora-${url.protocol.slice(0, -1)}-${url.hostname}`;
+
+    const showState = (enabled) => {
+        enabledEl.hidden = !enabled;
+        disableButton.hidden = !enabled;
+        enableButton.hidden = enabled;
+    };
+    showState((await chrome.scripting.getRegisteredContentScripts({ ids: [id] })).length > 0);
+
+    enableButton.addEventListener('click', () => {
+        // If the permission prompt closes the popup (Firefox), background.js finishes it when the permission is added
+        chrome.storage.session.set({ pendingEnable: pattern });
         // Must be called right away in the click handler, the browser only allows it during a user action
-        chrome.permissions.request({ origins: [pattern] }).then((granted) => {
+        chrome.permissions.request({ origins: [pattern] }).then(async (granted) => {
             if (!granted) return;
-            button.hidden = true;
-            document.getElementById('enabled').hidden = false;
+            await chrome.runtime.sendMessage({ type: 'FEEDORA_ENABLE_SITE', pattern });
+            showState(true);
         }).catch((error) => console.error('Feedora Companion: could not enable on this site', error));
+    });
+
+    disableButton.addEventListener('click', async () => {
+        await chrome.runtime.sendMessage({ type: 'FEEDORA_DISABLE_SITE', pattern });
+        showState(false);
     });
 };
 

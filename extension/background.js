@@ -41,35 +41,76 @@ chrome.runtime.onMessage.addListener((message, sender) => {
     }
 });
 
-// When the popup enables the extension on a site (e.g. Feedora in Docker on another server), the content script is
+// The popup enables the extension on a site (e.g. Feedora in Docker on another server): the content script is
 // registered for future visits and injected in the open tabs of that site, so there is no need to reload.
-// Done here and not in the popup, because the permission prompt can close the popup.
-chrome.permissions.onAdded.addListener(async ({ origins = [] }) => {
-    for (const pattern of origins) {
-        // Only the patterns the popup asks for, like http://192.168.1.10/*
-        const match = /^(https?):\/\/([^/*]+)\/\*$/.exec(pattern);
-        if (!match) continue;
+const siteId = (pattern) => {
+    // Only the patterns the popup asks for, like http://192.168.1.10/*
+    const match = /^(https?):\/\/([^/*]+)\/\*$/.exec(pattern);
+    return match ? `feedora-${match[1]}-${match[2]}` : null;
+};
 
+const enableSite = async (pattern) => {
+    const id = siteId(pattern);
+    if (!id) return;
+
+    const registered = await chrome.scripting.getRegisteredContentScripts({ ids: [id] });
+    if (registered.length === 0) {
+        await chrome.scripting.registerContentScripts([{
+            id,
+            matches: [pattern],
+            js: ['content.js'],
+            runAt: 'document_start',
+            persistAcrossSessions: true,
+        }]);
+    }
+
+    const tabs = await chrome.tabs.query({ url: pattern });
+    for (const tab of tabs) {
         try {
-            const id = `feedora-${match[1]}-${match[2]}`;
-            const registered = await chrome.scripting.getRegisteredContentScripts({ ids: [id] });
-            if (registered.length === 0) {
-                await chrome.scripting.registerContentScripts([{
-                    id,
-                    matches: [pattern],
-                    js: ['content.js'],
-                    runAt: 'document_start',
-                    persistAcrossSessions: true,
-                }]);
-            }
-
-            const tabs = await chrome.tabs.query({ url: pattern });
-            for (const tab of tabs) {
-                await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] });
-                await chrome.action.setBadgeText({ tabId: tab.id, text: 'ON' });
-            }
-        } catch (error) {
-            console.error('Feedora Companion: could not enable on', pattern, error);
+            await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] });
+            await chrome.action.setBadgeText({ tabId: tab.id, text: 'ON' });
+        } catch {
+            // Tab still loading or not scriptable, the registered script covers it next time
         }
     }
+};
+
+const disableSite = async (pattern) => {
+    const id = siteId(pattern);
+    if (!id) return;
+
+    const registered = await chrome.scripting.getRegisteredContentScripts({ ids: [id] });
+    if (registered.length > 0) {
+        await chrome.scripting.unregisterContentScripts({ ids: [id] });
+    }
+
+    const tabs = await chrome.tabs.query({ url: pattern });
+    for (const tab of tabs) {
+        await chrome.action.setBadgeText({ tabId: tab.id, text: '' });
+    }
+};
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    // Only from the popup (an extension page, not a tab)
+    if (!message || sender.id !== chrome.runtime.id || sender.tab) return;
+
+    const action = message.type === 'FEEDORA_ENABLE_SITE' ? enableSite
+        : message.type === 'FEEDORA_DISABLE_SITE' ? disableSite : null;
+    if (!action) return;
+
+    chrome.storage.session.remove('pendingEnable');
+    action(message.pattern)
+        .catch((error) => console.error('Feedora Companion: could not change', message.pattern, error))
+        .finally(() => sendResponse());
+    return true;
+});
+
+// The permission prompt can close the popup (Firefox), then the site is enabled here. Only for the site the popup
+// asked for: the permission is also added when the browser grants access to sites from its own menu.
+chrome.permissions.onAdded.addListener(async ({ origins = [] }) => {
+    const { pendingEnable } = await chrome.storage.session.get('pendingEnable');
+    if (!pendingEnable || !origins.includes(pendingEnable)) return;
+
+    await chrome.storage.session.remove('pendingEnable');
+    enableSite(pendingEnable).catch((error) => console.error('Feedora Companion: could not enable on', pendingEnable, error));
 });

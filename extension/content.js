@@ -7,7 +7,8 @@ const SESSION_TYPE = 'FEEDORA_SESSION';
 
 // The script can be injected twice in the same page (toolbar button, or a site that is also in the manifest),
 // which would open every link twice
-if (!window.feedoraCompanionLoaded) {
+// Not in XML pages (e.g. a feed opened in the browser), they have no HTML element to mark
+if (!window.feedoraCompanionLoaded && document.documentElement instanceof HTMLElement) {
     window.feedoraCompanionLoaded = true;
 
     // Let the page know the extension is installed (the DOM is shared with the page).
@@ -23,13 +24,18 @@ if (!window.feedoraCompanionLoaded) {
         chrome.runtime.sendMessage({ type: MESSAGE_TYPE, url: data.url });
     });
 
-    // The app marks <html> with its API server, so only real Feedora pages send a session.
     // Sent when the page loads and when the tab is left (e.g. after signing in, to go add a feed).
+    // The app marks <html> with its API server; older builds don't, and serve the API on the page's own origin.
     const syncSession = () => {
-        const server = document.documentElement.dataset.feedoraServer;
-        if (!server) return;
+        const marked = document.documentElement.dataset.feedoraServer;
+        const token = localStorage.getItem('auth_token');
+        if (!marked && !token) return;
 
-        chrome.runtime.sendMessage({ type: SESSION_TYPE, server, token: localStorage.getItem('auth_token') });
+        try {
+            chrome.runtime.sendMessage({ type: SESSION_TYPE, server: marked || window.location.origin, token });
+        } catch {
+            // The extension was reloaded, this old copy of the script can't reach it any more
+        }
     };
 
     if (document.readyState === 'complete') {
