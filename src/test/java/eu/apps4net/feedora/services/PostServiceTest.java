@@ -22,6 +22,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -35,9 +37,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -56,6 +60,8 @@ class PostServiceTest {
     private OperationLockService operationLockService;
     @Mock
     private LogService logService;
+    @Mock
+    private PlatformTransactionManager transactionManager;
     @InjectMocks
     private PostService postService;
 
@@ -68,6 +74,15 @@ class PostServiceTest {
         user.setId(UUID.randomUUID());
         otherUser = new User("other", "other@example.com", "hash");
         otherUser.setId(UUID.randomUUID());
+        ReflectionTestUtils.setField(postService, "transactionTemplate", new TransactionTemplate(transactionManager));
+    }
+
+    // The posts saved together by the last saveAll call
+    @SuppressWarnings("unchecked")
+    private List<Post> savedPosts() {
+        ArgumentCaptor<List<Post>> saved = ArgumentCaptor.forClass(List.class);
+        verify(postRepository).saveAll(saved.capture());
+        return saved.getValue();
     }
 
     private Post post(String title, User owner, LocalDateTime pubDate) {
@@ -96,6 +111,7 @@ class PostServiceTest {
 
         verify(operationLockService).unlockFeedOperation();
         verify(postRepository, never()).save(any());
+        verify(postRepository, never()).saveAll(any());
     }
 
     @Test
@@ -114,9 +130,9 @@ class PostServiceTest {
 
             postService.parseFeeds(user);
 
-            ArgumentCaptor<Post> saved = ArgumentCaptor.forClass(Post.class);
-            verify(postRepository).save(saved.capture());
-            Post post = saved.getValue();
+            List<Post> saved = savedPosts();
+            assertThat(saved).hasSize(1);
+            Post post = saved.get(0);
             assertThat(post.getTitle()).isEqualTo("Post");
             assertThat(post.getDescription()).isEqualTo("Summary");
             assertThat(post.getContent()).isEqualTo(ArticleExtractor.VERSION_MARKER + "<p>Full content</p>");
@@ -140,6 +156,7 @@ class PostServiceTest {
 
             verify(logService).logFeed(eq(feed), eq(LogLevel.ERROR), eq(LogType.FEED_PARSE), anyString(), anyString());
             verify(postRepository, never()).save(any());
+            verify(postRepository, never()).saveAll(any());
         }
     }
 
@@ -153,7 +170,7 @@ class PostServiceTest {
             Feed broken = new Feed("Broken", server.url("/missing"), "", "rss", null, user);
             when(operationLockService.tryLockFeedOperation()).thenReturn(true);
             when(feedRepository.findByUser(user)).thenReturn(List.of(feed, broken));
-            when(postRepository.existsByFeedAndUserAndLink(feed, user, "http://example.com/1")).thenReturn(true);
+            when(postRepository.findLinksByFeedAndUser(feed, user)).thenReturn(List.of("http://example.com/1"));
             when(feedStatisticsRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
             postService.parseFeeds(user);
@@ -169,6 +186,53 @@ class PostServiceTest {
             assertThat(brokenStats.getTotalErrors()).isEqualTo(1);
             assertThat(brokenStats.getLastError()).contains("HTTP 404");
             assertThat(brokenStats.getLastSuccessAt()).isNull();
+        }
+    }
+
+    @Test
+    void parseFeedsSavesTheNewPostsOfAFeedTogetherAndSkipsRepeatedEntries() throws Exception {
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/rss", 200, "application/rss+xml", TestHttpServer.rss("Feed",
+                    TestHttpServer.rssItem("Known", "http://example.com/known", "Known"),
+                    TestHttpServer.rssItem("First", "http://example.com/1", "First"),
+                    TestHttpServer.rssItem("Repeated", "http://example.com/1", "Repeated"),
+                    TestHttpServer.rssItem("Second", "http://example.com/2", "Second")));
+            Feed feed = new Feed("Feed", server.url("/rss"), "", "rss", null, user);
+            when(operationLockService.tryLockFeedOperation()).thenReturn(true);
+            when(feedRepository.findByUser(user)).thenReturn(List.of(feed));
+            when(postRepository.findLinksByFeedAndUser(feed, user)).thenReturn(List.of("http://example.com/known"));
+
+            postService.parseFeeds(user);
+
+            assertThat(savedPosts()).extracting(Post::getTitle).containsExactly("First", "Second");
+            verify(postRepository, never()).save(any());
+            verify(transactionManager).commit(any());
+        }
+    }
+
+    @Test
+    void parseFeedsSavesThePostsOneByOneWhenTheBatchFails() throws Exception {
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/rss", 200, "application/rss+xml", TestHttpServer.rss("Feed",
+                    TestHttpServer.rssItem("Good", "http://example.com/good", "Good"),
+                    TestHttpServer.rssItem("Bad", "http://example.com/bad", "Bad")));
+            Feed feed = new Feed("Feed", server.url("/rss"), "", "rss", null, user);
+            when(operationLockService.tryLockFeedOperation()).thenReturn(true);
+            when(feedRepository.findByUser(user)).thenReturn(List.of(feed));
+            when(postRepository.saveAll(any())).thenThrow(new RuntimeException("Batch failed"));
+            when(postRepository.save(any())).thenAnswer(invocation -> {
+                Post post = invocation.getArgument(0);
+                if (post.getTitle().equals("Bad")) throw new RuntimeException("Bad post");
+                return post;
+            });
+            when(feedStatisticsRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+            postService.parseFeeds(user);
+
+            verify(transactionManager).rollback(any());
+            verify(postRepository, times(2)).save(any());
+            verify(logService).logFeed(eq(feed), eq(LogLevel.ERROR), eq(LogType.POST_SAVE), contains("Bad"), anyString());
+            assertThat(feed.getStatistics().getLastNewPostsCount()).isEqualTo(1);
         }
     }
 
@@ -193,9 +257,7 @@ class PostServiceTest {
             postService.parseFeeds(user);
 
             // The old entry may be a read post deleted by the cleanup
-            ArgumentCaptor<Post> saved = ArgumentCaptor.forClass(Post.class);
-            verify(postRepository).save(saved.capture());
-            assertThat(saved.getValue().getTitle()).isEqualTo("Undated");
+            assertThat(savedPosts()).extracting(Post::getTitle).containsExactly("Undated");
         }
     }
 
@@ -215,9 +277,7 @@ class PostServiceTest {
 
             postService.parseFeeds(user);
 
-            ArgumentCaptor<Post> saved = ArgumentCaptor.forClass(Post.class);
-            verify(postRepository).save(saved.capture());
-            assertThat(saved.getValue().getTitle()).isEqualTo("Old");
+            assertThat(savedPosts()).extracting(Post::getTitle).containsExactly("Old");
         }
     }
 
@@ -241,9 +301,12 @@ class PostServiceTest {
 
             postService.parseDueFeeds(user);
 
-            ArgumentCaptor<Post> saved = ArgumentCaptor.forClass(Post.class);
-            verify(postRepository, org.mockito.Mockito.times(2)).save(saved.capture());
-            assertThat(saved.getAllValues()).extracting(Post::getFeed).containsExactlyInAnyOrder(newFeed, dueFeed);
+            // One batch per checked feed
+            @SuppressWarnings("unchecked")
+            ArgumentCaptor<List<Post>> saved = ArgumentCaptor.forClass(List.class);
+            verify(postRepository, times(2)).saveAll(saved.capture());
+            assertThat(saved.getAllValues()).flatExtracting(posts -> posts).extracting(Post::getFeed)
+                    .containsExactlyInAnyOrder(newFeed, dueFeed);
             assertThat(newFeed.getStatistics()).isNotNull();
             assertThat(notDueStats.getTotalChecks()).isZero();
             verify(operationLockService).unlockFeedOperation();

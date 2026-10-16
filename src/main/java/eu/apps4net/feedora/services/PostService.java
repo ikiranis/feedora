@@ -30,13 +30,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -61,6 +64,8 @@ public class PostService {
     private LogService logService;
     @PersistenceContext
     private EntityManager entityManager;
+    @Autowired
+    private TransactionTemplate transactionTemplate;
 
     // Read posts are deleted this many days after they were read, by the post cleanup worker
     @Value("${feedora.posts.read-retention-days:30}")
@@ -146,6 +151,9 @@ public class PostService {
                 if (success && entries != null) {
                     // On a feed's first check all its entries are added, however old
                     boolean checkedBefore = feed.getStatistics() != null && feed.getStatistics().getLastSuccessAt() != null;
+                    // Links already added, including those of this check, so an entry repeated in the feed is added once
+                    Set<String> knownLinks = new HashSet<>(postRepository.findLinksByFeedAndUser(feed, user));
+                    List<Post> postsToSave = new ArrayList<>();
                     for (SyndEntry entry : entries) {
                         if (entry.getPublishedDate() != null) {
                             pubDates.add(toLocalDateTime(entry.getPublishedDate()));
@@ -156,8 +164,7 @@ public class PostService {
                             continue;
                         }
 
-                        // Modify the query to fetch only necessary fields to avoid CLOB issues
-                        if (postRepository.existsByFeedAndUserAndLink(feed, user, entry.getLink())) {
+                        if (entry.getLink() != null && !knownLinks.add(entry.getLink())) {
                             continue;
                         }
 
@@ -175,13 +182,13 @@ public class PostService {
                             post.setContent(getEntryContent(entry));
                             post.setFeed(feed);
                             post.setUser(user);
-                            postRepository.save(post);
-                            newPosts++;
+                            postsToSave.add(post);
                         } catch (Exception e) {
                             logService.logFeed(feed, LogLevel.ERROR, LogType.POST_SAVE,
                                     "Couldn't save the post \"" + entry.getTitle() + "\" (" + entry.getLink() + ")", LogService.describe(e));
                         }
                     }
+                    newPosts = savePosts(feed, postsToSave);
                     synchronized (succeededFeeds) { succeededFeeds[0]++; }
                 }
 
@@ -217,6 +224,38 @@ public class PostService {
         } finally {
             // Always release the lock
             operationLockService.unlockFeedOperation();
+        }
+    }
+
+    /**
+     * Saves the new posts of a feed in a single transaction, with batched inserts. A commit per post is very slow
+     * on an HDD (the database syncs its log to disk on every commit), e.g. on a feed's first check or after an OPML import.
+     * If the batch fails, the posts are saved one by one, so a single bad post doesn't lose the rest.
+     *
+     * @param feed The feed of the posts
+     * @param posts The posts to save
+     * @return The number of posts saved
+     */
+    private int savePosts(Feed feed, List<Post> posts) {
+        if (posts.isEmpty()) {
+            return 0;
+        }
+        try {
+            transactionTemplate.executeWithoutResult(status -> postRepository.saveAll(posts));
+            return posts.size();
+        } catch (Exception batchError) {
+            int saved = 0;
+            for (Post post : posts) {
+                post.setId(null); // The id given in the failed batch was never committed
+                try {
+                    postRepository.save(post);
+                    saved++;
+                } catch (Exception e) {
+                    logService.logFeed(feed, LogLevel.ERROR, LogType.POST_SAVE,
+                            "Couldn't save the post \"" + post.getTitle() + "\" (" + post.getLink() + ")", LogService.describe(e));
+                }
+            }
+            return saved;
         }
     }
 

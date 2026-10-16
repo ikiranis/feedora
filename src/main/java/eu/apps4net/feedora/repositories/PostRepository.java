@@ -70,7 +70,10 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     List<Object[]> countGroupedByUser();
 
     long countByUser(User user);
-    boolean existsByFeedAndUserAndLink(Feed feed, User user, String link);
+
+    // Links of the posts of a feed, to skip the entries already added in one query instead of one per entry
+    @Query("SELECT p.link FROM Post p WHERE p.feed = :feed AND p.user = :user AND p.link IS NOT NULL")
+    List<String> findLinksByFeedAndUser(@Param("feed") Feed feed, @Param("user") User user);
     
     @Modifying
     @Transactional
