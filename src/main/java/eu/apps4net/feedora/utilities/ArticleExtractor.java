@@ -2,17 +2,38 @@ package eu.apps4net.feedora.utilities;
 
 import net.dankito.readability4j.Article;
 import net.dankito.readability4j.Readability4J;
+import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Entities;
 import org.jsoup.safety.Safelist;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class ArticleExtractor {
 
     private static final String USER_AGENT =
             "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36";
-    private static final int TIMEOUT_MILLIS = 15000;
+    private static final Duration TIMEOUT = Duration.ofSeconds(15);
+    private static final int MAX_BODY_SIZE = 5 * 1024 * 1024;
+    private static final Pattern CHARSET = Pattern.compile("(?i)charset=\"?([^\";\\s]+)");
+
+    // Jsoup's own fetcher only speaks HTTP/1.1, which some sites block (e.g. 902.gr answers 403).
+    // HttpClient prefers HTTP/2 and falls back to HTTP/1.1 for servers that don't support it.
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_2)
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .connectTimeout(TIMEOUT)
+            .build();
 
     // Prefix of stored content made by the current extraction logic. Bump it when extraction improves,
     // so content stored by older versions is extracted again the next time it's opened.
@@ -31,12 +52,7 @@ public class ArticleExtractor {
      * @throws Exception if the page can't be downloaded
      */
     public static String extractFromUrl(String url) throws Exception {
-        Document page = Jsoup.connect(url)
-                .userAgent(USER_AGENT)
-                .timeout(TIMEOUT_MILLIS)
-                .followRedirects(true)
-                .maxBodySize(5 * 1024 * 1024)
-                .get();
+        Document page = fetch(url);
 
         fixLazyImages(page);
         String leadImage = findLeadImage(page);
@@ -49,6 +65,38 @@ public class ArticleExtractor {
             content = "<figure><img src=\"" + Entities.escape(leadImage) + "\" alt=\"\"></figure>" + content;
         }
         return content;
+    }
+
+    /**
+     * Downloads and parses a web page.
+     *
+     * @throws HttpStatusException if the server responds with an error status
+     */
+    private static Document fetch(String url) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                .timeout(TIMEOUT)
+                .header("User-Agent", USER_AGENT)
+                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+                .GET()
+                .build();
+        HttpResponse<InputStream> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofInputStream());
+        String finalUrl = response.uri().toString();
+
+        byte[] body;
+        try (InputStream in = response.body()) {
+            body = in.readNBytes(MAX_BODY_SIZE);
+        }
+        if (response.statusCode() >= 400) {
+            throw new HttpStatusException("HTTP error fetching URL", response.statusCode(), finalUrl);
+        }
+
+        // Charset from the Content-Type header, otherwise Jsoup detects it from the page's BOM or meta tags
+        String charset = response.headers().firstValue("Content-Type")
+                .map(CHARSET::matcher)
+                .filter(Matcher::find)
+                .map(m -> m.group(1))
+                .orElse(null);
+        return Jsoup.parse(new ByteArrayInputStream(body), charset, finalUrl);
     }
 
     /**
