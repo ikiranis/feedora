@@ -1,9 +1,11 @@
 # Feedora Companion
 
-Browser extension that lets Feedora open posts in a **background tab** when you press **B** on a selected post.
-Web pages can't open background tabs on their own, so the app hands the link to this extension.
+Browser extension that:
 
-Without the extension, B still works but the browser switches to the new tab.
+- lets Feedora open posts in a **background tab** when you press **B** on a selected post. Web pages can't open
+  background tabs on their own, so the app hands the link to this extension. Without the extension, B still works
+  but the browser switches to the new tab.
+- **adds the feed of the page you're on** to Feedora from its toolbar popup.
 
 ## Install
 
@@ -25,11 +27,21 @@ Temporary add-ons are removed when Firefox restarts.
 The extension is always active on `http://localhost` and `http://127.0.0.1` (any port), which covers the Vite
 dev server and the Spring Boot app on port 9999.
 
-If Feedora runs somewhere else (e.g. in Docker on `http://192.168.1.10:8820`), open it and **click the extension's
-toolbar button** (pin it from the extensions menu first). Allow access to the site when the browser asks. The badge
-shows **ON**, B works right away, and the site is remembered for next time (all ports on that host).
+If Feedora runs somewhere else (e.g. in Docker on `http://192.168.1.10:8820`), open it, **click the extension's
+toolbar button** (pin it from the extensions menu first) and choose **Enable the companion here**. Allow access to
+the site when the browser asks. The badge shows **ON**, B works right away, and the site is remembered for next time
+(all ports on that host).
 
 To disable it on a site, remove the extension's access to it in the browser's extension settings.
+
+## Adding a page's feed
+
+1. Open Feedora and sign in once, so the extension knows your server and session.
+2. On any site, click the toolbar button. The popup lists the feeds the page links to
+   (`<link rel="alternate">` RSS/Atom), or the page itself if it is a feed.
+3. Pick a folder (remembered for next time) and click **Add**. Feedora reads the feed's title itself.
+
+If you sign out or the session expires, open Feedora and sign in again.
 
 ## How it works
 
@@ -39,3 +51,8 @@ To disable it on a site, remove the extension's access to it in the browser's ex
    right after the current tab.
 
 Only `http`/`https` links are opened, and only messages posted by the page itself are accepted.
+
+For adding feeds, the app marks `<html>` with `data-feedora-server` (its API URL). On a Feedora tab, `content.js`
+sends that URL and the login token (`auth_token` in the page's localStorage) to `background.js` when the page loads
+and when you leave the tab; it is kept in the extension's own storage. The popup finds the page's feeds with
+`chrome.scripting.executeScript` and calls `/api/folders` and `/api/feed/addFeed` with that token.

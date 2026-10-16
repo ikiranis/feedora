@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Feedora Companion</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <header>
+        <img src="icons/feedora.svg" alt="" width="28" height="28">
+        <h1>Feedora</h1>
+    </header>
+
+    <section>
+        <h2>Feeds on this page</h2>
+        <p id="status" class="muted">Looking for feeds…</p>
+
+        <label id="folder-row" class="folder" hidden>
+            Folder
+            <select id="folder">
+                <option value="">No folder</option>
+            </select>
+        </label>
+
+        <ul id="feeds"></ul>
+    </section>
+
+    <footer>
+        <button id="enable" type="button" class="link" hidden>Feedora runs on this site? Enable the companion here</button>
+        <p id="enabled" class="muted" hidden>Companion enabled on this site</p>
+    </footer>
+
+    <script src="popup.js"></script>
+</body>
+</html>

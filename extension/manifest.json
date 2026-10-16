@@ -1,16 +1,29 @@
 {
   "manifest_version": 3,
   "name": "Feedora Companion",
-  "version": "1.1.0",
-  "description": "Lets Feedora open posts in background tabs (press B on a post).",
+  "version": "1.2.0",
+  "description": "Lets Feedora open posts in background tabs (press B on a post) and adds the feed of the current page to Feedora.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "background": {
     "service_worker": "background.js",
     "scripts": ["background.js"]
   },
   "action": {
-    "default_title": "Enable Feedora Companion on this site"
+    "default_title": "Feedora Companion",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
   },
-  "permissions": ["activeTab", "scripting"],
+  "permissions": ["activeTab", "scripting", "storage"],
   "optional_host_permissions": ["http://*/*", "https://*/*"],
   "content_scripts": [
     {
