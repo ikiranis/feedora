@@ -293,7 +293,7 @@ public class PostService {
     /**
      * Checks again the feed's videos that are live, or scheduled to start by now, since their state changes over time
      * (scheduled → live → ended). Videos scheduled for later are only checked once their start time comes.
-     * Also checks the feed's recent videos that were never checked, e.g. added before live states existed.
+     * Also checks the feed's recent and saved videos that were never checked, e.g. added before live states existed.
      *
      * @param feed The feed being parsed
      * @param user The owner of the feed

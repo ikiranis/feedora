@@ -77,9 +77,9 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     List<String> findLinksByFeedAndUser(@Param("feed") Feed feed, @Param("user") User user);
 
     // Id, link, live status and start of the feed's scheduled or live videos, to check whether their state changed,
-    // and of its YouTube videos published since the given date that were never checked
+    // and of its YouTube videos that were never checked: those published since the given date, and saved ones of any age
     @Query("SELECT p.id, p.link, p.liveStatus, p.liveStartAt FROM Post p WHERE p.feed = :feed AND p.user = :user AND " +
-           "(p.liveStatus IS NOT NULL OR (p.liveCheckedAt IS NULL AND p.pubDate > :since AND " +
+           "(p.liveStatus IS NOT NULL OR (p.liveCheckedAt IS NULL AND (p.pubDate > :since OR p.saved = true) AND " +
            "(p.link LIKE '%youtube.com/%' OR p.link LIKE '%youtu.be/%')))")
     List<Object[]> findLiveVideosByFeedAndUser(@Param("feed") Feed feed, @Param("user") User user, @Param("since") LocalDateTime since);
 
