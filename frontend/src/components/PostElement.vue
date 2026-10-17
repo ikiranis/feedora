@@ -1,13 +1,8 @@
 <template>
     <div v-if="showDetails" class="custom-card h-100" :class="{ 'unread-post': !post.read, 'read-post': post.read, 'selected-post': selected }" @click="handleCardClick">
-        <!-- Media: playing video, YouTube thumbnail or first image of the post -->
-        <div v-if="playing && youtubeEmbedUrl && embeddable !== false" class="card-media" @click.stop>
-            <iframe :src="youtubeEmbedStore.embedUrl(youtubeVideo!.id, true)" :title="post.title" allowfullscreen
-                @load="youtubeEmbedStore.watchPlayer($event.target as HTMLIFrameElement, youtubeVideo!.id)"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-        </div>
-        <div v-else-if="thumbnailUrl" class="card-media" :class="{ 'is-short': youtubeVideo?.isShort }"
-            @click="playVideo">
+        <!-- Media: YouTube thumbnail or first image of the post; clicking it opens the post in the modal -->
+        <div v-if="thumbnailUrl" class="card-media" :class="{ 'is-short': youtubeVideo?.isShort }"
+            @click="emit('open', post.id)">
             <img v-if="youtubeVideo?.isShort" :src="thumbnailUrl" class="media-backdrop" alt="" aria-hidden="true" />
             <img :src="thumbnailUrl" class="media-image" alt="" loading="lazy" @error="thumbnailFailed = true" />
             <span v-if="youtubeVideo" class="media-badge">
@@ -28,7 +23,8 @@
         </div>
 
         <div class="card-content">
-            <a :href="post.link" target="_blank" class="post-title" @click.stop><LiveBadge :post="post" class="me-2" />{{ post.title }}</a>
+            <!-- The title opens the post in the modal (Ctrl/Cmd/Shift-click opens the original link) -->
+            <a :href="post.link" target="_blank" class="post-title" @click="handleGridTitleClick"><LiveBadge :post="post" class="me-2" />{{ post.title }}</a>
             <div class="post-source">
                 <img v-if="siteIcon" :src="siteIcon" class="site-icon source-icon" alt="" loading="lazy" @error="iconFailed = true" />
                 <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
@@ -205,7 +201,6 @@ const siteIcon = computed(() => {
 });
 
 const thumbnailFailed = ref(false);
-const playing = ref(false); // Grid card: YouTube thumbnail was clicked and the player is shown
 
 /**
  * YouTube video info if the post links to a video (watch, youtu.be, shorts, embed or live links).
@@ -242,19 +237,6 @@ const youtubeThumbnailUrl = computed(() =>
 // Whether the video can be played embedded (undefined until checked); some uploaders disable embedding
 const embeddable = computed(() => youtubeVideo.value ? youtubeEmbedStore.isEmbeddable(youtubeVideo.value.id) : undefined);
 const watchOnYoutube = computed(() => language.get('Watch on YouTube') || 'Watch on YouTube');
-
-/**
- * Grid card thumbnail click: plays the video in the card, or opens it on YouTube if it can't be embedded.
- */
-const playVideo = () => {
-    if (!youtubeVideo.value) return;
-    if (embeddable.value === false) {
-        window.open(props.post.link, '_blank');
-        return;
-    }
-    youtubeEmbedStore.check(youtubeVideo.value.id);
-    playing.value = true;
-};
 
 // The video of a post opened in list mode is checked before showing the player
 watch([() => props.selected && !props.showDetails, youtubeVideo], ([opened, video]) => {
@@ -298,7 +280,6 @@ const shortDate = computed(() => {
 watch(() => props.post.id, () => {
     iconFailed.value = false;
     thumbnailFailed.value = false;
-    playing.value = false;
 });
 
 // Full article HTML from the shared cache (preloaded by the posts list), shown when the post is opened in list mode
@@ -322,6 +303,7 @@ const emit = defineEmits<{
     'show-logs': [post: PostType]
     'show-feed': [feedId: string]
     'close': []
+    'open': [postId: string]
 }>();
 
 /**
@@ -334,6 +316,19 @@ const handleTitleClick = (event: MouseEvent) => {
     } else {
         event.preventDefault();
     }
+};
+
+/**
+ * Grid card title: a plain click opens the post in the modal;
+ * Ctrl/Cmd/Shift-click (and middle-click) still open the original link.
+ */
+const handleGridTitleClick = (event: MouseEvent) => {
+    if (event.ctrlKey || event.metaKey || event.shiftKey) {
+        event.stopPropagation();
+        return;
+    }
+    event.preventDefault();
+    emit('open', props.post.id);
 };
 
 const handleCardClick = async () => {
@@ -359,7 +354,6 @@ const handleCardClick = async () => {
     background-color: var(--card-bg);
     overflow: hidden;
     transition: transform 0.2s, box-shadow 0.2s, border-color 0.3s;
-    cursor: pointer;
 }
 
 [data-bs-theme="dark"] .custom-card {
@@ -379,6 +373,7 @@ const handleCardClick = async () => {
     overflow: hidden;
     background-color: #000;
     flex-shrink: 0;
+    cursor: pointer;
 }
 
 .card-media iframe {

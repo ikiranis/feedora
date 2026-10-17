@@ -286,7 +286,7 @@
                             @click="selectedIndex = !showDetails && selectedIndex === index ? -1 : index">
                             <PostElement :post="post" :show-details="showDetails" :selected="index === selectedIndex"
                                 @post-read="handlePostRead" @toggle-saved="toggleSaved" @toggle-read="toggleRead" @show-logs="showPostLogs"
-                                @show-feed="showFeed" @close="selectedIndex = -1" />
+                                @show-feed="showFeed" @close="selectedIndex = -1" @open="selectedIndex = index; modalOpen = true" />
                         </div>
                         <div v-if="allLoaded && posts.length > 0 && !searchTerm.trim()" class="text-center w-100 text-muted my-4">
                             {{ language.get('No more posts') || 'No more posts' }}
