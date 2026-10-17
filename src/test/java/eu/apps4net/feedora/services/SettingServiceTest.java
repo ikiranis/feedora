@@ -67,6 +67,7 @@ class SettingServiceTest {
         when(settingRepository.getBySettingName("defaultActionsLanguage")).thenReturn(new Setting("defaultActionsLanguage", "el"));
         when(settingRepository.getBySettingName("registrationEnabled")).thenReturn(new Setting("registrationEnabled", "false"));
         when(settingRepository.getBySettingName("youtubeApiKey")).thenReturn(new Setting("youtubeApiKey", "key"));
+        when(settingRepository.getBySettingName("liveNewsfeedRefreshSeconds")).thenReturn(new Setting("liveNewsfeedRefreshSeconds", "30"));
 
         settingService.setDefaultSettings();
 
