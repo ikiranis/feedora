@@ -322,6 +322,22 @@ class PostControllerTest extends ApiTestBase {
     }
 
     @Test
+    void markAllAsReadSkipsThePostsAddedAfterTheListing() throws Exception {
+        createFeeds();
+        Post listed = createPost("Listed", bbc, user, false, now);
+        String listedAt = mockMvc.perform(auth(get("/api/posts/getPosts").param("page", "1").param("pageSize", "10")))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getHeader(PostController.LISTED_AT_HEADER);
+        assertThat(listedAt).isNotNull();
+        Post parsedSince = createPost("Parsed since", bbc, user, false, now);
+
+        mockMvc.perform(auth(put("/api/posts/markAllAsRead").param("addedBefore", listedAt)))
+                .andExpect(jsonPath("$.count").value(1));
+        assertThat(postRepository.findById(listed.getId()).orElseThrow().isRead()).isTrue();
+        assertThat(postRepository.findById(parsedSince.getId()).orElseThrow().isRead()).isFalse();
+    }
+
+    @Test
     void savedFlagCanBeSetAndCleared() throws Exception {
         createFeeds();
         Post post = createPost("Post", bbc, user, false, now);

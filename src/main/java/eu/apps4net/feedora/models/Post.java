@@ -7,6 +7,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @JsonIgnoreProperties({"user"}) // Only ignore user, not feed
@@ -37,6 +38,12 @@ public class Post {
 
     // When the post was marked as read. Read posts are deleted some time after this (see PostService.deleteExpiredReadPosts)
     private LocalDateTime readAt;
+
+    // When the post was added, so marking all as read can skip the posts added after the list was loaded.
+    // Null for posts added before it was kept.
+    @CreationTimestamp
+    @JsonIgnore
+    private LocalDateTime createdAt;
 
     // Saved for later. The default lets the column be added to existing databases.
     @Column(name = "is_saved", nullable = false)
@@ -98,6 +105,9 @@ public class Post {
 
     public LocalDateTime getReadAt() { return readAt; }
     public void setReadAt(LocalDateTime readAt) { this.readAt = readAt; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
     public boolean isSaved() { return saved; }
     public void setSaved(boolean saved) { this.saved = saved; }

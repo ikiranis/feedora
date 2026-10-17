@@ -662,10 +662,12 @@ public class PostService {
      * @param folderId The folder whose feeds' posts to mark, or null for all folders
      * @param feedId The feed whose posts to mark, or null for all feeds. Takes precedence over folderId.
      * @param olderThanDays Only mark the posts published more than this many days ago, or null for all posts
+     * @param addedBefore Only mark the posts added up to this time (when the list was loaded), so posts parsed
+     *                    in the meantime stay unread, or null for all posts
      * @return The number of posts marked as read
      */
     @Transactional
-    public int markAllPostsAsRead(User user, UUID folderId, UUID feedId, Integer olderThanDays) {
+    public int markAllPostsAsRead(User user, UUID folderId, UUID feedId, Integer olderThanDays, LocalDateTime addedBefore) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaUpdate<Post> update = cb.createCriteriaUpdate(Post.class);
         Root<Post> post = update.from(Post.class);
@@ -685,6 +687,10 @@ public class PostService {
 
         if (olderThanDays != null && olderThanDays > 0) {
             predicates.add(cb.lessThan(post.get("pubDate"), LocalDateTime.now().minusDays(olderThanDays)));
+        }
+
+        if (addedBefore != null) {
+            predicates.add(cb.or(cb.isNull(post.get("createdAt")), cb.lessThanOrEqualTo(post.get("createdAt"), addedBefore)));
         }
 
         update.set(post.<Boolean>get("read"), true)

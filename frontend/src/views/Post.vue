@@ -357,6 +357,8 @@ const page = ref(1);
 const pageSize = 50;
 const loading = ref(false);
 const allLoaded = ref(false);
+// Server time of the first page's listing. Marking all as read only marks the posts added up to it, not the ones parsed since.
+const listedAt = ref<string | null>(null);
 const lastParsedAt = ref<string | null>(null); // When the feeds were last parsed, by the scheduler or manually
 let lastParsedTimer: number | null = null;
 const scrollableContainerRef = ref<HTMLElement | null>(null); // Ref for the scrollable container
@@ -686,7 +688,7 @@ const fetchPosts = async (reset = false) => {
             selectedIndex.value = -1;
         }
 
-        const data = await getPosts(page.value, pageSize, searchTerm.value, selectedFolderId.value, selectedFeedId.value, showSaved.value, showRead.value,
+        const { posts: data, listedAt: pageListedAt } = await getPosts(page.value, pageSize, searchTerm.value, selectedFolderId.value, selectedFeedId.value, showSaved.value, showRead.value,
             [...hiddenShortsFolders.value]);
 
         if (data.length < pageSize) {
@@ -695,6 +697,7 @@ const fetchPosts = async (reset = false) => {
 
         if (reset) {
             posts.value = data;
+            listedAt.value = pageListedAt;
         } else {
             posts.value = posts.value.concat(data);
         }
@@ -756,6 +759,7 @@ const handleParseFeeds = async () => {
 
 /**
  * Marks all the unread posts of the current view (all, a folder or a feed) as read, then reloads the list.
+ * Posts added after the list was loaded (e.g. by a parse in the meantime) stay unread.
  * @param olderThanDays - Only mark the posts older than this many days, or null for all of them.
  *                        Marking all of them from the main button asks for confirmation first.
  */
@@ -769,7 +773,7 @@ const handleMarkAllAsRead = async (olderThanDays: number | null) => {
     }
     try {
         loading.value = true;
-        await markAllAsRead(selectedFolderId.value, selectedFeedId.value, olderThanDays);
+        await markAllAsRead(selectedFolderId.value, selectedFeedId.value, olderThanDays, listedAt.value);
         scrollableContainerRef.value?.scrollTo({ top: 0 });
         await handleRefreshPosts();
     } catch (e: any) {

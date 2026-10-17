@@ -1,5 +1,6 @@
 package eu.apps4net.feedora.configurations;
 
+import eu.apps4net.feedora.controllers.PostController;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -61,6 +62,8 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
+        // Read by the frontend in development, where it runs on another origin
+        configuration.setExposedHeaders(List.of(PostController.LISTED_AT_HEADER));
         configuration.setAllowCredentials(true);
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

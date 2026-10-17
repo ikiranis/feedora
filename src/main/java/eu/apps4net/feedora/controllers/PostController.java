@@ -7,6 +7,7 @@ import eu.apps4net.feedora.services.LogService;
 import eu.apps4net.feedora.services.PostService;
 import eu.apps4net.feedora.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,8 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/posts")
 public class PostController {
+    public static final String LISTED_AT_HEADER = "X-Listed-At";
+
     @Autowired
     private PostService postService;
     @Autowired
@@ -63,14 +67,18 @@ public class PostController {
         }
     }
 
+    // The X-Listed-At header has the server time of the listing, for markAllAsRead to skip the posts added after it
     @GetMapping("/getPosts")
-    public List<Post> getPosts(@RequestParam int page, @RequestParam int pageSize, @RequestParam(required = false) String search,
+    public ResponseEntity<List<Post>> getPosts(@RequestParam int page, @RequestParam int pageSize, @RequestParam(required = false) String search,
                                @RequestParam(required = false) UUID folderId, @RequestParam(required = false) UUID feedId,
                                @RequestParam(defaultValue = "false") boolean saved,
                                @RequestParam(defaultValue = "false") boolean includeRead,
                                @RequestParam(required = false) List<UUID> hideShortsFolderIds) {
         User currentUser = userService.getCurrentUser();
-        return postService.getPostsForUser(currentUser, page, pageSize, search, folderId, feedId, saved, includeRead, hideShortsFolderIds);
+        LocalDateTime listedAt = LocalDateTime.now();
+        return ResponseEntity.ok()
+                .header(LISTED_AT_HEADER, listedAt.toString())
+                .body(postService.getPostsForUser(currentUser, page, pageSize, search, folderId, feedId, saved, includeRead, hideShortsFolderIds));
     }
 
     // hideShortsFolderIds: folders whose YouTube Shorts aren't counted
@@ -99,9 +107,10 @@ public class PostController {
 
     @PutMapping("/markAllAsRead")
     public Map<String, Integer> markAllPostsAsRead(@RequestParam(required = false) UUID folderId, @RequestParam(required = false) UUID feedId,
-                                                   @RequestParam(required = false) Integer olderThanDays) {
+                                                   @RequestParam(required = false) Integer olderThanDays,
+                                                   @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime addedBefore) {
         User currentUser = userService.getCurrentUser();
-        return Map.of("count", postService.markAllPostsAsRead(currentUser, folderId, feedId, olderThanDays));
+        return Map.of("count", postService.markAllPostsAsRead(currentUser, folderId, feedId, olderThanDays, addedBefore));
     }
 
     @PutMapping("/markAsRead/{postId}")

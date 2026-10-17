@@ -12,10 +12,12 @@ import type { UnreadCountsType } from "@/types";
  * @param saved - If true, return the saved posts (read or unread) instead of the unread ones
  * @param includeRead - If true, return the read posts too, not only the unread ones
  * @param hideShortsFolderIds - Folders whose YouTube Shorts are left out (not applied to the saved posts)
- * @returns {Promise<any>} List of posts
+ * @returns {Promise<{posts: any[], listedAt: string | null}>} List of posts, and the server time of the listing,
+ *          for markAllAsRead to skip the posts added after it
  * @throws Error if the request fails
  */
-export const getPosts = async (page: number, pageSize: number, search?: string, folderId?: string | null, feedId?: string | null, saved?: boolean, includeRead?: boolean, hideShortsFolderIds?: string[]) => {
+export const getPosts = async (page: number, pageSize: number, search?: string, folderId?: string | null, feedId?: string | null, saved?: boolean, includeRead?: boolean,
+                               hideShortsFolderIds?: string[]): Promise<{ posts: any[], listedAt: string | null }> => {
     try {
         const params: any = { page, pageSize };
         if (search && search.trim()) {
@@ -41,9 +43,7 @@ export const getPosts = async (page: number, pageSize: number, search?: string, 
             params,
             headers: { 'Accept': 'application/json' }
         });
-        if (response.status === 200) {
-            return response.data;
-        }
+        return { posts: response.data, listedAt: response.headers['x-listed-at'] ?? null };
     } catch (error: any) {
         throw error;
     }
@@ -123,10 +123,12 @@ export const markAsUnread = async (postId: string) => {
  * @param {string | null} folderId - Optional folder id to only mark posts of that folder's feeds
  * @param {string | null} feedId - Optional feed id to only mark posts of that feed
  * @param {number | null} olderThanDays - Optional age in days, to only mark posts published before it
+ * @param {string | null} addedBefore - Optional server time (from getPosts' listedAt), to only mark posts added up to it
  * @returns {Promise<number>} The number of posts marked as read
  * @throws Error if the request fails
  */
-export const markAllAsRead = async (folderId?: string | null, feedId?: string | null, olderThanDays?: number | null): Promise<number> => {
+export const markAllAsRead = async (folderId?: string | null, feedId?: string | null, olderThanDays?: number | null,
+                                    addedBefore?: string | null): Promise<number> => {
     const params: any = {};
     if (folderId) {
         params.folderId = folderId;
@@ -136,6 +138,9 @@ export const markAllAsRead = async (folderId?: string | null, feedId?: string | 
     }
     if (olderThanDays) {
         params.olderThanDays = olderThanDays;
+    }
+    if (addedBefore) {
+        params.addedBefore = addedBefore;
     }
     const response = await axios.put(config.defaultServer() + '/api/posts/markAllAsRead', null, { params });
     return response.data.count;
