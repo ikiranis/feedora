@@ -127,6 +127,7 @@ public class FeedController {
      * Checks if a feed operation (parsing or OPML import) is currently running, and how far it has gone.
      *
      * @return JSON object with status information. total is 0 when the progress isn't known (e.g. OPML import).
+     *         runCount is increased by every scan, so a scan that ended between two checks is noticed.
      */
     @GetMapping("/feedOperationStatus")
     public Map<String, Object> getFeedOperationStatus() {
@@ -134,6 +135,7 @@ public class FeedController {
         status.put("isRunning", operationLockService.isFeedOperationRunning());
         status.put("total", operationLockService.getProgressTotal());
         status.put("completed", operationLockService.getProgressCompleted());
+        status.put("runCount", operationLockService.getRunCount());
         return status;
     }
 

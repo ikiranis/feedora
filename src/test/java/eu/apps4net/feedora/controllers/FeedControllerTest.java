@@ -143,7 +143,8 @@ class FeedControllerTest extends ApiTestBase {
     void feedOperationStatusIsNotRunning() throws Exception {
         mockMvc.perform(auth(get("/api/feed/feedOperationStatus")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.isRunning").value(false));
+                .andExpect(jsonPath("$.isRunning").value(false))
+                .andExpect(jsonPath("$.runCount").isNumber());
     }
 
     @Test

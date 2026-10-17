@@ -17,6 +17,8 @@ public class OperationLockService {
     // Feeds to check and feeds checked by the running operation. Zero total means the progress isn't known.
     private final AtomicInteger progressTotal = new AtomicInteger();
     private final AtomicInteger progressCompleted = new AtomicInteger();
+    // Increased every time a scan starts, so the frontend can tell a scan ran even when it ended between two checks
+    private final AtomicInteger runCount = new AtomicInteger();
     
     /**
      * Attempts to acquire the feed operation lock.
@@ -52,6 +54,7 @@ public class OperationLockService {
     public void startProgress(int total) {
         progressCompleted.set(0);
         progressTotal.set(total);
+        runCount.incrementAndGet();
     }
 
     /**
@@ -67,5 +70,9 @@ public class OperationLockService {
 
     public int getProgressCompleted() {
         return progressCompleted.get();
+    }
+
+    public int getRunCount() {
+        return runCount.get();
     }
 }

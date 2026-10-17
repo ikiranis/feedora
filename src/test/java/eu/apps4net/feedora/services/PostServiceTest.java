@@ -36,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
@@ -96,22 +97,24 @@ class PostServiceTest {
 
     @Test
     void parseFeedsIsSkippedWhileAnotherOperationRuns() {
+        Feed feed = new Feed("Feed", "http://example.com/rss", "", "rss", null, user);
+        when(feedRepository.findByUser(user)).thenReturn(List.of(feed));
         when(operationLockService.tryLockFeedOperation()).thenReturn(false);
 
         postService.parseFeeds(user);
 
-        verifyNoInteractions(feedRepository, postRepository);
+        verifyNoInteractions(postRepository);
+        verify(operationLockService, never()).startProgress(anyInt());
         verify(operationLockService, never()).unlockFeedOperation();
     }
 
     @Test
-    void parseFeedsReleasesTheLockWhenThereAreNoFeeds() {
-        when(operationLockService.tryLockFeedOperation()).thenReturn(true);
+    void parseFeedsDoesNotTakeTheLockWhenThereAreNoFeeds() {
         when(feedRepository.findByUser(user)).thenReturn(List.of());
 
         postService.parseFeeds(user);
 
-        verify(operationLockService).unlockFeedOperation();
+        verify(operationLockService, never()).tryLockFeedOperation();
         verify(postRepository, never()).save(any());
         verify(postRepository, never()).saveAll(any());
     }
@@ -321,13 +324,13 @@ class PostServiceTest {
         FeedStatistics stats = new FeedStatistics(feed);
         stats.setNextCheckAt(LocalDateTime.now().plusHours(1));
         feed.setStatistics(stats);
-        when(operationLockService.tryLockFeedOperation()).thenReturn(true);
         when(feedRepository.findByUser(user)).thenReturn(List.of(feed));
 
         postService.parseDueFeeds(user);
 
         verifyNoInteractions(postRepository, feedStatisticsRepository);
-        verify(operationLockService).unlockFeedOperation();
+        // Nothing is due, so no scan is shown in the frontend
+        verify(operationLockService, never()).tryLockFeedOperation();
     }
 
     @Test

@@ -116,6 +116,25 @@ public class PostService {
     }
 
     private void parseFeeds(User user, UUID folderId, UUID feedId, boolean onlyDue) {
+        long startTime = System.currentTimeMillis();
+        List<Feed> feeds = feedId != null ? feedRepository.findByIdAndUser(feedId, user)
+                : folderId != null ? feedRepository.findByUserAndFolder_Id(user, folderId)
+                : feedRepository.findByUser(user);
+        if (feeds.isEmpty()) {
+            System.out.println("[Feedora] No feeds found in database. Skipping feed parsing task.");
+            return;
+        }
+        if (onlyDue) {
+            LocalDateTime now = LocalDateTime.now();
+            feeds = feeds.stream()
+                    .filter(feed -> feed.getStatistics() == null || feed.getStatistics().isDue(now))
+                    .toList();
+            // Nothing is due, so the lock isn't taken and the frontend doesn't show a scan
+            if (feeds.isEmpty()) {
+                return;
+            }
+        }
+
         // Try to acquire lock to prevent conflicts with OPML import
         if (!operationLockService.tryLockFeedOperation()) {
             System.out.println("[Feedora] Skipping feed parsing - another feed operation is in progress (likely OPML import).");
@@ -123,23 +142,6 @@ public class PostService {
         }
 
         try {
-            long startTime = System.currentTimeMillis();
-            List<Feed> feeds = feedId != null ? feedRepository.findByIdAndUser(feedId, user)
-                    : folderId != null ? feedRepository.findByUserAndFolder_Id(user, folderId)
-                    : feedRepository.findByUser(user);
-            if (feeds.isEmpty()) {
-                System.out.println("[Feedora] No feeds found in database. Skipping feed parsing task.");
-                return;
-            }
-            if (onlyDue) {
-                LocalDateTime now = LocalDateTime.now();
-                feeds = feeds.stream()
-                        .filter(feed -> feed.getStatistics() == null || feed.getStatistics().isDue(now))
-                        .toList();
-                if (feeds.isEmpty()) {
-                    return;
-                }
-            }
             operationLockService.startProgress(feeds.size());
             feedService.freezeLastParsedAt(user);
             // Read posts older than this may have been deleted by the cleanup, so they must not be added again

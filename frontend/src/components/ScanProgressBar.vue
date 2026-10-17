@@ -14,18 +14,27 @@ import { language } from '@/functions/languageStore';
 import { scanStore } from '@/functions/scanStore';
 
 const RUNNING_INTERVAL = 1000;
-const IDLE_INTERVAL = 5000; // The scheduler scans in the background, so the status is checked while idle too
+// The scheduler scans in the background, so the status is checked while idle too.
+// Its scans only check the feeds that are due, so they are often short and need a short interval to be seen.
+const IDLE_INTERVAL = 2000;
+// How long the full bar stays after a scan, so a short scan is still noticed
+const FINISHED_DISPLAY = 800;
 
 const isRunning = ref(false);
 const total = ref(0);
 const completed = ref(0);
+// Shown for a moment after a scan, even when the scan ended between two checks
+const finishing = ref(false);
+let runCount: number | null = null;
 let timer: number | null = null;
+let finishingTimer: number | null = null;
 
-// Hidden as soon as all the feeds are checked, without waiting for the scan to wrap up
-const visible = computed(() => isRunning.value && (total.value === 0 || completed.value < total.value));
+// The full bar is shown as soon as all the feeds are checked, without waiting for the scan to wrap up
+const visible = computed(() => finishing.value
+    || (isRunning.value && (total.value === 0 || completed.value < total.value)));
 
 // null when the progress isn't known (e.g. during an OPML import)
-const percent = computed<number | null>(() => total.value > 0
+const percent = computed<number | null>(() => finishing.value ? 100 : total.value > 0
     ? Math.min(100, Math.round(completed.value * 100 / total.value))
     : null);
 
@@ -37,16 +46,29 @@ const checkStatus = async () => {
     try {
         const status = await getFeedOperationStatus();
         const wasRunning = isRunning.value;
+        // A scan started and ended since the previous check (e.g. a short scheduled scan)
+        const missedScan = runCount !== null && status?.runCount !== runCount && !status?.isRunning;
+        runCount = status?.runCount ?? null;
         isRunning.value = !!status?.isRunning;
         total.value = status?.total ?? 0;
         completed.value = status?.completed ?? 0;
-        if (wasRunning && !isRunning.value) {
+        if (isRunning.value && total.value > 0 && completed.value >= total.value) {
+            showFinished();
+        }
+        if ((wasRunning || missedScan) && !isRunning.value) {
+            showFinished();
             scanStore.finishedCount.value++;
         }
     } catch (e) {
         console.warn('Could not check the scan status:', e);
     }
     schedule();
+};
+
+const showFinished = () => {
+    finishing.value = true;
+    if (finishingTimer) clearTimeout(finishingTimer);
+    finishingTimer = window.setTimeout(() => finishing.value = false, FINISHED_DISPLAY);
 };
 
 const schedule = () => {
@@ -65,6 +87,7 @@ onMounted(checkStatus);
 
 onUnmounted(() => {
     if (timer) clearTimeout(timer);
+    if (finishingTimer) clearTimeout(finishingTimer);
 });
 </script>
 
