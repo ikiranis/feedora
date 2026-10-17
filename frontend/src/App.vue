@@ -56,7 +56,7 @@ const collapse = () => {
         <div v-if="authStore.isAuthenticated.value" class="row vh-100">
             <sidebar class="sidebar d-flex flex-column col-12" :class="collapsed ? 'sidebar-collapsed' : 'col-lg-2'" :collapsed="collapsed"/>
 
-            <div class="content col-12 px-5" :class="collapsed ? 'content-expanded' : 'col-lg-10'">
+            <div class="content col-12 px-2 px-lg-5" :class="collapsed ? 'content-expanded' : 'col-lg-10'">
                 <div class="d-none d-lg-block d-flex">
                     <span @click="collapse" class="collapseButton btn" :title="collapsed ? language.get('Expand') : language.get('Collapse')">
                         <span v-if="collapsed">

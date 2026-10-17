@@ -294,6 +294,13 @@ onUnmounted(() => {
     overflow-y: auto;
 }
 
+/* On mobile the sidebar is a top bar above the page */
+@media (max-width: 991.98px) {
+    .scrollable-live-view {
+        height: calc(100dvh - 130px);
+    }
+}
+
 /* Pulsing red dot while live, grey while paused */
 .live-indicator {
     display: inline-block;

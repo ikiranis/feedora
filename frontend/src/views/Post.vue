@@ -1391,6 +1391,13 @@ onUnmounted(() => {
     overflow-y: auto;
 }
 
+/* On mobile the sidebar is a top bar above the page */
+@media (max-width: 991.98px) {
+    .scrollable-post-view {
+        height: calc(100dvh - 130px);
+    }
+}
+
 /* New posts badge, floating over the top of the posts list while it scrolls */
 .new-posts-badge-wrapper {
     position: sticky;

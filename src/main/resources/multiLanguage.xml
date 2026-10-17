@@ -1749,4 +1749,14 @@
         <language code="el">Αποτυχία σήμανσης της δημοσίευσης ως μη αναγνωσμένης</language>
     </entry>
 
+    <entry id="Open menu">
+        <language code="en">Open menu</language>
+        <language code="el">Άνοιγμα μενού</language>
+    </entry>
+
+    <entry id="Close menu">
+        <language code="en">Close menu</language>
+        <language code="el">Κλείσιμο μενού</language>
+    </entry>
+
 </root>

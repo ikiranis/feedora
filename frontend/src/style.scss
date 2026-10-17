@@ -183,6 +183,50 @@ h1 {
     }
 }
 
+// Theme and menu buttons of the mobile top bar
+.sidebar-icon-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: var(--sidebar-text);
+    opacity: 0.85;
+    padding: 6px;
+    margin-right: 8px;
+    border-radius: 10px;
+
+    &:hover {
+        background-color: var(--sidebar-hover);
+        opacity: 1;
+    }
+}
+
+// Below the lg breakpoint the sidebar is a top bar, and its menu opens below it with the hamburger button
+@media (max-width: 991.98px) {
+    .sidebar {
+        position: sticky;
+        top: 0;
+        z-index: 1030;
+        padding-top: 6px;
+        padding-bottom: 6px;
+        max-height: 100dvh;
+        overflow-y: auto;
+
+        a.brand {
+            margin-bottom: 0;
+        }
+
+        &:not(.menu-open) .sidebar-menu {
+            display: none;
+        }
+
+        &.menu-open .sidebar-menu.mt-auto {
+            margin-top: 12px !important;
+        }
+    }
+}
+
 // Collapsed sidebar is a slim fixed-width icon rail
 @media (min-width: 992px) {
     // The row's negative gutter hides 12px on the left, so the left padding compensates for it
