@@ -1608,4 +1608,44 @@
         <language code="el">Εμφάνιση των YouTube Shorts σε αυτόν τον φάκελο</language>
     </entry>
 
+    <entry id="Keyboard shortcuts">
+        <language code="en">Keyboard shortcuts</language>
+        <language code="el">Συντομεύσεις πληκτρολογίου</language>
+    </entry>
+
+    <entry id="Select the previous / next post">
+        <language code="en">Select the previous / next post</language>
+        <language code="el">Επιλογή της προηγούμενης / επόμενης ανάρτησης</language>
+    </entry>
+
+    <entry id="Select the post above / below, or scroll in list mode and in the opened post">
+        <language code="en">Select the post above / below, or scroll in list mode and in the opened post</language>
+        <language code="el">Επιλογή της ανάρτησης από πάνω / από κάτω, ή κύλιση σε προβολή λίστας και στην ανοιχτή ανάρτηση</language>
+    </entry>
+
+    <entry id="Open / close the selected post">
+        <language code="en">Open / close the selected post</language>
+        <language code="el">Άνοιγμα / κλείσιμο της επιλεγμένης ανάρτησης</language>
+    </entry>
+
+    <entry id="Close the opened post">
+        <language code="en">Close the opened post</language>
+        <language code="el">Κλείσιμο της ανοιχτής ανάρτησης</language>
+    </entry>
+
+    <entry id="Open the link of the selected post in a background tab">
+        <language code="en">Open the link of the selected post in a background tab</language>
+        <language code="el">Άνοιγμα του συνδέσμου της επιλεγμένης ανάρτησης σε καρτέλα στο παρασκήνιο</language>
+    </entry>
+
+    <entry id="Save the selected post for later / unsave it">
+        <language code="en">Save the selected post for later / unsave it</language>
+        <language code="el">Αποθήκευση της επιλεγμένης ανάρτησης για αργότερα / αφαίρεση από τις αποθηκευμένες</language>
+    </entry>
+
+    <entry id="Show / hide the keyboard shortcuts">
+        <language code="en">Show / hide the keyboard shortcuts</language>
+        <language code="el">Εμφάνιση / απόκρυψη των συντομεύσεων πληκτρολογίου</language>
+    </entry>
+
 </root>

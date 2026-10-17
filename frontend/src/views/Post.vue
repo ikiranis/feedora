@@ -316,6 +316,8 @@
     <LogsModal :post-id="logsPost?.id" :feed-id="logsPost?.feed?.id" :title="logsPost?.title" :show="!!logsPost"
         @logs-cleared="handlePostLogsCleared" @modal-hidden="logsPost = null" />
 
+    <KeyboardShortcutsModal :show="showShortcuts" @modal-hidden="showShortcuts = false" />
+
     <FeedStatisticsModal :feed="statisticsFeed" :show="!!statisticsFeed" @modal-hidden="statisticsFeed = null" />
     <EditFeedModal :feed="editedFeed" :show="!!editedFeed" @feed-updated="fetchFolders(); fetchUnreadCounts()" @modal-hidden="editedFeed = null" />
 
@@ -337,6 +339,7 @@ import { postContentStore } from '@/functions/postContentStore';
 import PostElement from '@/components/PostElement.vue';
 import PostModal from '@/components/PostModal.vue';
 import LogsModal from '@/components/log/LogsModal.vue';
+import KeyboardShortcutsModal from '@/components/KeyboardShortcutsModal.vue';
 import AddFolderModal from '@/components/folder/AddFolderModal.vue';
 import FeedStatisticsModal from '@/components/feed/FeedStatisticsModal.vue';
 import EditFeedModal from '@/components/feed/EditFeedModal.vue';
@@ -367,6 +370,7 @@ const modalOpen = ref(false); // The selected post is shown in full in a modal
 const postModalRef = ref<InstanceType<typeof PostModal> | null>(null);
 const modalPost = computed(() => modalOpen.value ? posts.value[selectedIndex.value] ?? null : null);
 const logsPost = ref<PostType | null>(null); // The post whose log entries are shown in the logs modal
+const showShortcuts = ref(false); // The help modal with the keyboard shortcuts is shown
 const folders = ref<FolderType[]>([]);
 const unreadCounts = ref<UnreadCountsType>({ total: 0, saved: 0, folders: {}, feeds: [] });
 const selectedFolderId = ref<string | null>(null); // null shows the posts of all folders
@@ -1095,22 +1099,42 @@ const handlePostLogsCleared = () => {
 };
 
 /**
+ * Returns the pressed key, with letters lowercased. When the keyboard layout doesn't produce a Latin letter
+ * (e.g. Greek), the letter of the physical key is used instead, so the letter shortcuts work with any layout.
+ */
+const getShortcutKey = (event: KeyboardEvent): string => {
+    if (/^[a-z]$/i.test(event.key)) return event.key.toLowerCase();
+    if (/^Key[A-Z]$/.test(event.code)) return event.code.slice(3).toLowerCase();
+    return event.key;
+};
+
+/**
  * Handles arrow key navigation between cards.
  * In list mode, Up/Down scroll the list instead (so long expanded posts can be read) and Left/Right move between posts.
  * Enter or O opens the selected post in a modal (Esc closes it), B opens its link in a background tab, F saves it for later (or unsaves it).
+ * H shows the help modal with all the keyboard shortcuts.
  */
 const handleKeydown = (event: KeyboardEvent) => {
     // The logs modal handles its own keys (Esc closes it)
     if (logsPost.value) return;
     const target = event.target as HTMLElement | null;
     if (target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
-    if (event.altKey || event.ctrlKey || event.metaKey || posts.value.length === 0) return;
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+
+    const key = getShortcutKey(event);
+    if (key === 'h') {
+        showShortcuts.value = !showShortcuts.value;
+        event.preventDefault();
+        return;
+    }
+    // The help modal handles its own keys (Esc closes it)
+    if (showShortcuts.value || posts.value.length === 0) return;
 
     const current = selectedIndex.value;
     const columns = getColumnCount();
     let next: number;
 
-    switch (event.key) {
+    switch (key) {
         case 'ArrowRight':
             next = current < 0 ? 0 : current + 1;
             break;
@@ -1120,22 +1144,21 @@ const handleKeydown = (event: KeyboardEvent) => {
         case 'ArrowDown':
         case 'ArrowUp':
             if (modalOpen.value) {
-                postModalRef.value?.scrollBy(event.key === 'ArrowDown' ? 80 : -80);
+                postModalRef.value?.scrollBy(key === 'ArrowDown' ? 80 : -80);
                 event.preventDefault();
                 return;
             }
             if (!showDetails.value) {
-                scrollableContainerRef.value?.scrollBy({ top: event.key === 'ArrowDown' ? 80 : -80 });
+                scrollableContainerRef.value?.scrollBy({ top: key === 'ArrowDown' ? 80 : -80 });
                 event.preventDefault();
                 return;
             }
             next = current < 0
                 ? 0
-                : event.key === 'ArrowDown' ? Math.min(current + columns, posts.value.length - 1) : current - columns;
+                : key === 'ArrowDown' ? Math.min(current + columns, posts.value.length - 1) : current - columns;
             break;
         case 'Enter':
         case 'o':
-        case 'O':
             if (current >= 0 && posts.value[current]) {
                 modalOpen.value = !modalOpen.value;
                 event.preventDefault();
@@ -1147,14 +1170,12 @@ const handleKeydown = (event: KeyboardEvent) => {
             else if (!showDetails.value) selectedIndex.value = -1;
             return;
         case 'b':
-        case 'B':
             if (current >= 0 && posts.value[current]?.link) {
                 openInBackgroundTab(posts.value[current].link);
                 event.preventDefault();
             }
             return;
         case 'f':
-        case 'F':
             if (current >= 0 && posts.value[current]) {
                 toggleSaved(posts.value[current].id);
                 event.preventDefault();
