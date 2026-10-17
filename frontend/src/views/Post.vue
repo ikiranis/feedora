@@ -253,7 +253,7 @@
                             :class="showDetails ? 'col-12 col-md-6 col-lg-4' : 'col-12'"
                             @click="selectedIndex = !showDetails && selectedIndex === index ? -1 : index">
                             <PostElement :post="post" :show-details="showDetails" :selected="index === selectedIndex"
-                                @post-read="handlePostRead" @toggle-saved="toggleSaved" @show-logs="showPostLogs"
+                                @post-read="handlePostRead" @toggle-saved="toggleSaved" @toggle-read="toggleRead" @show-logs="showPostLogs"
                                 @close="selectedIndex = -1" />
                         </div>
                         <div v-if="allLoaded && posts.length > 0 && !searchTerm.trim()" class="text-center w-100 text-muted my-4">
@@ -296,7 +296,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getPosts, parseFeeds, markAsRead, markAllAsRead, getUnreadCounts, setPostSaved } from '@/api/post';
+import { getPosts, parseFeeds, markAsRead, markAsUnread, markAllAsRead, getUnreadCounts, setPostSaved } from '@/api/post';
 import { getFeedOperationStatus, getLastParsedAt, getFeeds, deleteFeed } from '@/api/feed';
 import { getFolders, deleteFolder } from '@/api/folder';
 import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType, Feed } from '@/types';
@@ -779,6 +779,42 @@ const markPostAsReadAPI = async (postId: string) => {
         handlePostRead(postId); // Update local state
     } catch (error) {
         console.error('Failed to mark post as read:', error);
+    }
+};
+
+/**
+ * Toggles the read state of a post from its read indicator.
+ * A post marked as unread isn't observed again, so scrolling doesn't mark it as read right away.
+ */
+const toggleRead = async (postId: string) => {
+    const post = posts.value.find(p => p.id === postId);
+    if (!post) return;
+    if (!post.read) {
+        await markPostAsReadAPI(postId);
+        return;
+    }
+    try {
+        await markAsUnread(postId);
+        post.read = false;
+        incrementUnreadCount(post);
+    } catch (e: any) {
+        console.error('Failed to mark post as unread:', e);
+        errorStore.set(true, language.get('Failed to mark post as unread') || 'Failed to mark post as unread.', e.response?.status || 500);
+    }
+};
+
+/**
+ * Raises the sidebar unread counts after a post has been marked as unread.
+ */
+const incrementUnreadCount = (post: PostType) => {
+    unreadCounts.value.total++;
+    const folderId = post.feed?.folderId;
+    if (folderId) {
+        unreadCounts.value.folders[folderId] = (unreadCounts.value.folders[folderId] || 0) + 1;
+    }
+    const feed = unreadCounts.value.feeds.find(f => f.id === post.feed?.id);
+    if (feed) {
+        feed.count++;
     }
 };
 

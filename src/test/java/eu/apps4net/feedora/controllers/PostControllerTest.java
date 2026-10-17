@@ -184,6 +184,32 @@ class PostControllerTest extends ApiTestBase {
     }
 
     @Test
+    void markAsUnreadMarksTheUsersPost() throws Exception {
+        createFeeds();
+        Post post = createPost("Post", bbc, user, true, now);
+
+        mockMvc.perform(auth(put("/api/posts/markAsUnread/" + post.getId())))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Post marked as unread"));
+
+        Post updated = postRepository.findById(post.getId()).orElseThrow();
+        assertThat(updated.isRead()).isFalse();
+        assertThat(updated.getReadAt()).isNull();
+    }
+
+    @Test
+    void markAsUnreadFailsForForeignPosts() throws Exception {
+        User other = createUser("other", "other@example.com", "secret123");
+        Feed foreignFeed = createFeed("Foreign", "http://f.example/rss", null, other);
+        Post foreign = createPost("Foreign", foreignFeed, other, true, now);
+
+        mockMvc.perform(auth(put("/api/posts/markAsUnread/" + foreign.getId())))
+                .andExpect(status().isBadRequest());
+
+        assertThat(postRepository.findById(foreign.getId()).orElseThrow().isRead()).isTrue();
+    }
+
+    @Test
     void markAsReadFailsForMissingOrForeignPosts() throws Exception {
         User other = createUser("other", "other@example.com", "secret123");
         Feed foreignFeed = createFeed("Foreign", "http://f.example/rss", null, other);

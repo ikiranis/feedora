@@ -118,4 +118,13 @@ public class PostController {
             return ResponseEntity.status(500).body("Error marking post as read: " + e.getMessage());
         }
     }
+
+    @PutMapping("/markAsUnread/{postId}")
+    public ResponseEntity<String> markPostAsUnread(@PathVariable UUID postId) {
+        User currentUser = userService.getCurrentUser();
+        if (postService.markPostAsUnread(postId, currentUser)) {
+            return ResponseEntity.ok("Post marked as unread");
+        }
+        return ResponseEntity.badRequest().body("Failed to mark post as unread");
+    }
 }

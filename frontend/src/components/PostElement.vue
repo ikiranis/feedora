@@ -61,8 +61,8 @@
                             <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
                         </svg>
                     </a>
-                    <span class="read-indicator" :class="{ unread: !post.read }"
-                        :title="post.read ? (language.get('Read') || 'Read') : (language.get('Unread') || 'Unread')"></span>
+                    <button type="button" class="footer-action read-indicator" :class="{ unread: !post.read }" @click.stop="emit('toggle-read', post.id)"
+                        :title="post.read ? (language.get('Mark as unread') || 'Mark as unread') : (language.get('Mark as read') || 'Mark as read')"></button>
                 </div>
             </div>
         </div>
@@ -70,8 +70,8 @@
     <div v-else class="list-row" :class="{ 'unread-post': !post.read, 'read-post': post.read, 'selected-post': selected }" @click="handleCardClick">
         <!-- The opened post shows its title and actions in the details header instead of the row -->
         <div v-if="!selected" class="list-line">
-            <span class="read-dot" :class="{ unread: !post.read }"
-                :title="post.read ? (language.get('Read') || 'Read') : (language.get('Unread') || 'Unread')"></span>
+            <button type="button" class="read-dot" :class="{ unread: !post.read }" @click.stop="emit('toggle-read', post.id)"
+                :title="post.read ? (language.get('Mark as unread') || 'Mark as unread') : (language.get('Mark as read') || 'Mark as read')"></button>
             <div class="list-source" :title="post.feed?.folderName ? `${post.feed?.title} — ${post.feed.folderName}` : post.feed?.title">
                 <img v-if="siteIcon" :src="siteIcon" class="site-icon list-source-icon" alt="" loading="lazy" @error="iconFailed = true" />
                 <span class="text-truncate">{{ post.feed?.title }}</span>
@@ -315,6 +315,7 @@ watch([isOpened, () => props.post.id], ([opened]) => {
 const emit = defineEmits<{
     'post-read': [postId: string]
     'toggle-saved': [postId: string]
+    'toggle-read': [postId: string]
     'show-logs': [post: PostType]
     'close': []
 }>();
@@ -571,8 +572,10 @@ const handleCardClick = async () => {
 .read-indicator {
     width: 18px;
     height: 18px;
+    padding: 0;
     border: 2px solid currentColor;
     border-radius: 50%;
+    background: transparent;
 }
 
 .read-indicator.unread {
@@ -639,7 +642,19 @@ const handleCardClick = async () => {
     width: 9px;
     height: 9px;
     flex-shrink: 0;
+    padding: 0;
+    border: 0;
     border-radius: 50%;
+    background: transparent;
+    /* Bigger click target than the dot itself */
+    box-sizing: content-box;
+    background-clip: content-box;
+    margin: -6px;
+    padding: 6px;
+}
+
+.read-dot:hover {
+    box-shadow: inset 0 0 0 7px rgba(127, 127, 127, 0.25);
 }
 
 .read-dot.unread {

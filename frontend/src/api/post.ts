@@ -102,6 +102,17 @@ export const markAsRead = async (postId: string) => {
 };
 
 /**
+ * Mark a specific post as unread.
+ * @param {string} postId - The UUID of the post to mark as unread
+ * @returns {Promise<any>} Result message from backend
+ * @throws Error if the request fails
+ */
+export const markAsUnread = async (postId: string) => {
+    const response = await axios.put(config.defaultServer() + `/api/posts/markAsUnread/${postId}`);
+    return response.data;
+};
+
+/**
  * Mark all the unread posts as read, optionally only those of a folder or feed, or older than some days.
  * @param {string | null} folderId - Optional folder id to only mark posts of that folder's feeds
  * @param {string | null} feedId - Optional feed id to only mark posts of that feed

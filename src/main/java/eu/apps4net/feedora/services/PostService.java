@@ -590,6 +590,28 @@ public class PostService {
     }
 
     /**
+     * Mark a post as unread for a specific user.
+     * Clears its read date too, so the cleanup of old read posts doesn't delete it.
+     * @param postId The UUID of the post to mark as unread
+     * @param user The user who is marking the post as unread
+     * @return true if the post was found and updated, false otherwise
+     */
+    public boolean markPostAsUnread(UUID postId, User user) {
+        Optional<Post> postOptional = postRepository.findById(postId);
+        if (postOptional.isPresent()) {
+            Post post = postOptional.get();
+            // Verify that the post belongs to the specified user
+            if (post.getUser().getId().equals(user.getId())) {
+                post.setRead(false);
+                post.setReadAt(null);
+                postRepository.save(post);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Mark all the unread posts of a user as read, optionally only those of a feed or folder, or older than some days.
      * Runs as a single bulk update, so it doesn't load the posts.
      * @param user The user whose posts to mark as read
