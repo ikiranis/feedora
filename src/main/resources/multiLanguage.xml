@@ -1689,4 +1689,64 @@
         <language code="el">Κοινοποίηση στο</language>
     </entry>
 
+    <entry id="Live Newsfeed">
+        <language code="en">Live Newsfeed</language>
+        <language code="el">Ζωντανή Ροή Ειδήσεων</language>
+    </entry>
+
+    <entry id="Posts waiting to be shown">
+        <language code="en">Posts waiting to be shown</language>
+        <language code="el">Δημοσιεύσεις σε αναμονή για εμφάνιση</language>
+    </entry>
+
+    <entry id="The last check for new posts failed">
+        <language code="en">The last check for new posts failed</language>
+        <language code="el">Ο τελευταίος έλεγχος για νέες δημοσιεύσεις απέτυχε</language>
+    </entry>
+
+    <entry id="Offline">
+        <language code="en">Offline</language>
+        <language code="el">Εκτός σύνδεσης</language>
+    </entry>
+
+    <entry id="Pause">
+        <language code="en">Pause</language>
+        <language code="el">Παύση</language>
+    </entry>
+
+    <entry id="Resume">
+        <language code="en">Resume</language>
+        <language code="el">Συνέχεια</language>
+    </entry>
+
+    <entry id="Pause the live newsfeed">
+        <language code="en">Pause the live newsfeed</language>
+        <language code="el">Παύση της ζωντανής ροής ειδήσεων</language>
+    </entry>
+
+    <entry id="Resume the live newsfeed">
+        <language code="en">Resume the live newsfeed</language>
+        <language code="el">Συνέχεια της ζωντανής ροής ειδήσεων</language>
+    </entry>
+
+    <entry id="No posts yet. New posts will show up here.">
+        <language code="en">No posts yet. New posts will show up here.</language>
+        <language code="el">Δεν υπάρχουν ακόμα δημοσιεύσεις. Οι νέες δημοσιεύσεις θα εμφανίζονται εδώ.</language>
+    </entry>
+
+    <entry id="Failed to load posts">
+        <language code="en">Failed to load posts</language>
+        <language code="el">Αποτυχία φόρτωσης δημοσιεύσεων</language>
+    </entry>
+
+    <entry id="Failed to mark post as read">
+        <language code="en">Failed to mark post as read</language>
+        <language code="el">Αποτυχία σήμανσης της δημοσίευσης ως αναγνωσμένης</language>
+    </entry>
+
+    <entry id="Failed to mark post as unread">
+        <language code="en">Failed to mark post as unread</language>
+        <language code="el">Αποτυχία σήμανσης της δημοσίευσης ως μη αναγνωσμένης</language>
+    </entry>
+
 </root>

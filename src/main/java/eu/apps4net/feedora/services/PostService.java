@@ -656,6 +656,24 @@ public class PostService {
     }
 
     /**
+     * Returns the posts of a user added after the given time, read or unread, for the live newsfeed.
+     * @param user The user
+     * @param addedAfter Only return the posts added after this time
+     * @param limit The maximum number of posts; the most recently added are kept
+     * @return The posts, most recently added first
+     */
+    public List<Post> getPostsAddedAfter(User user, LocalDateTime addedAfter, int limit) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Post> query = cb.createQuery(Post.class);
+        Root<Post> post = query.from(Post.class);
+
+        query.select(post)
+                .where(cb.equal(post.get("user"), user), cb.greaterThan(post.get("createdAt"), addedAfter))
+                .orderBy(cb.desc(post.get("createdAt")));
+        return entityManager.createQuery(query).setMaxResults(limit).getResultList();
+    }
+
+    /**
      * Delete all posts from the database.
      */
     public void deleteAllPosts() {

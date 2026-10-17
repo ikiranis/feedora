@@ -5,6 +5,7 @@ import eu.apps4net.feedora.models.Post;
 import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.services.LogService;
 import eu.apps4net.feedora.services.PostService;
+import eu.apps4net.feedora.services.SettingService;
 import eu.apps4net.feedora.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -35,6 +36,14 @@ public class PostController {
     private UserService userService;
     @Autowired
     private LogService logService;
+    @Autowired
+    private SettingService settingService;
+
+    // Most posts the live newsfeed gets per check
+    private static final int MAX_LIVE_POSTS = 200;
+    // The live newsfeed's next check starts this much before its listing, to also get posts whose parse was committed
+    // during it (the posts are added with the time they were created, not committed). The page skips posts it already has.
+    private static final long LIVE_LISTING_OVERLAP_SECONDS = 30;
 
     @GetMapping("/getAllPosts")
     public List<Post> getAllPosts() {
@@ -96,6 +105,23 @@ public class PostController {
                                            @RequestParam(required = false) List<UUID> hideShortsFolderIds) {
         User currentUser = userService.getCurrentUser();
         return Map.of("count", postService.countNewPosts(currentUser, folderId, feedId, addedAfter, hideShortsFolderIds));
+    }
+
+    // Live newsfeed: the posts (read or unread) added after addedAfter (a previous X-Listed-At), most recently added first.
+    // Its X-Listed-At header is the time to check from next.
+    @GetMapping("/live")
+    public ResponseEntity<List<Post>> getLivePosts(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime addedAfter) {
+        User currentUser = userService.getCurrentUser();
+        LocalDateTime listedAt = LocalDateTime.now().minusSeconds(LIVE_LISTING_OVERLAP_SECONDS);
+        return ResponseEntity.ok()
+                .header(LISTED_AT_HEADER, listedAt.toString())
+                .body(postService.getPostsAddedAfter(currentUser, addedAfter, MAX_LIVE_POSTS));
+    }
+
+    // How often the live newsfeed checks for new posts, from the settings (which only the admin can read)
+    @GetMapping("/live/refreshSeconds")
+    public Map<String, Integer> getLiveRefreshSeconds() {
+        return Map.of("seconds", settingService.getLiveNewsfeedRefreshSeconds());
     }
 
     // The content, and the number of log entries of the post (e.g. when its page couldn't be read)

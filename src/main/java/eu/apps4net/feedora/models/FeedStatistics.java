@@ -15,9 +15,11 @@ import java.util.UUID;
 @Entity
 public class FeedStatistics {
     // Check intervals, from the posting frequency of the feed
+    public static final int BUSY_INTERVAL_MINUTES = 5;          // more than BUSY_POSTS_PER_HOUR posts per hour
     public static final int FREQUENT_INTERVAL_MINUTES = 10;     // more than 1 post per hour
     public static final int DAILY_INTERVAL_MINUTES = 60;        // more than 1 post per day
     public static final int RARE_INTERVAL_MINUTES = 6 * 60;     // up to 1 post per day
+    public static final int BUSY_POSTS_PER_HOUR = 10;
     // After this many failed checks in a row, the feed is checked as rarely as possible
     public static final int MAX_CONSECUTIVE_ERRORS = 3;
     // Only the posts of the last days count for the frequency
@@ -129,6 +131,8 @@ public class FeedStatistics {
     private void scheduleNextCheck(LocalDateTime checkedAt) {
         if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
             checkIntervalMinutes = RARE_INTERVAL_MINUTES;
+        } else if (postsPerHour > BUSY_POSTS_PER_HOUR) {
+            checkIntervalMinutes = BUSY_INTERVAL_MINUTES;
         } else if (postsPerHour > 1) {
             checkIntervalMinutes = FREQUENT_INTERVAL_MINUTES;
         } else if (postsPerDay > 1) {

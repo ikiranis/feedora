@@ -14,6 +14,10 @@ public class SettingService {
 	public static final String REGISTRATION_ENABLED = "registrationEnabled";
 	// YouTube Data API key for checking scheduled/live videos; empty to read the videos' pages instead
 	public static final String YOUTUBE_API_KEY = "youtubeApiKey";
+	// How often the live newsfeed page checks for new posts, in seconds
+	public static final String LIVE_NEWSFEED_REFRESH_SECONDS = "liveNewsfeedRefreshSeconds";
+	public static final int DEFAULT_LIVE_NEWSFEED_REFRESH_SECONDS = 60;
+	public static final int MIN_LIVE_NEWSFEED_REFRESH_SECONDS = 5;
 
 	private final SettingRepository settingRepository;
 
@@ -42,6 +46,10 @@ public class SettingService {
 
 		if (settings.isEmpty() || settingRepository.getBySettingName(YOUTUBE_API_KEY) == null) {
 			settingRepository.save(new Setting(YOUTUBE_API_KEY, ""));
+		}
+
+		if (settings.isEmpty() || settingRepository.getBySettingName(LIVE_NEWSFEED_REFRESH_SECONDS) == null) {
+			settingRepository.save(new Setting(LIVE_NEWSFEED_REFRESH_SECONDS, String.valueOf(DEFAULT_LIVE_NEWSFEED_REFRESH_SECONDS)));
 		}
 	}
 
@@ -80,6 +88,27 @@ public class SettingService {
 	}
 
 	/**
+	 * Returns how often the live newsfeed page checks for new posts.
+	 *
+	 * @return the interval in seconds, the default if the setting is missing or invalid
+	 */
+	public int getLiveNewsfeedRefreshSeconds() {
+		Setting setting = settingRepository.getBySettingName(LIVE_NEWSFEED_REFRESH_SECONDS);
+		if (setting == null || !isValidRefreshSeconds(setting.getSettingValue())) {
+			return DEFAULT_LIVE_NEWSFEED_REFRESH_SECONDS;
+		}
+		return Integer.parseInt(setting.getSettingValue().trim());
+	}
+
+	private static boolean isValidRefreshSeconds(String value) {
+		try {
+			return value != null && Integer.parseInt(value.trim()) >= MIN_LIVE_NEWSFEED_REFRESH_SECONDS;
+		} catch (NumberFormatException e) {
+			return false;
+		}
+	}
+
+	/**
 	 * Get all settings.
 	 *
 	 * @return List<Setting>
@@ -113,6 +142,9 @@ public class SettingService {
 		}
 		if (YOUTUBE_API_KEY.equals(settingName)) {
 			return settingValue == null || settingValue.isBlank() || settingValue.trim().matches("[\\w-]{20,100}");
+		}
+		if (LIVE_NEWSFEED_REFRESH_SECONDS.equals(settingName)) {
+			return isValidRefreshSeconds(settingValue);
 		}
 		return true;
 	}

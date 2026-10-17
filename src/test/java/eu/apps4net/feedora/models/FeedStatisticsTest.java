@@ -36,6 +36,18 @@ class FeedStatisticsTest {
     }
 
     @Test
+    void veryBusyFeedsAreCheckedEveryFiveMinutes() {
+        FeedStatistics stats = new FeedStatistics();
+
+        // A post every 4 minutes, 15 per hour
+        stats.recordSuccess(now, 100, postsEvery(4, 20), 20, 5);
+
+        assertThat(stats.getPostsPerHour()).isGreaterThan(FeedStatistics.BUSY_POSTS_PER_HOUR);
+        assertThat(stats.getCheckIntervalMinutes()).isEqualTo(FeedStatistics.BUSY_INTERVAL_MINUTES);
+        assertThat(stats.getNextCheckAt()).isEqualTo(now.plusMinutes(5));
+    }
+
+    @Test
     void busyFeedsAreCheckedEveryTenMinutes() {
         FeedStatistics stats = new FeedStatistics();
 

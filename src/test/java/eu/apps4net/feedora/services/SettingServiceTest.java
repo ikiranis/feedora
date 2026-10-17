@@ -33,13 +33,14 @@ class SettingServiceTest {
         settingService.setDefaultSettings();
 
         ArgumentCaptor<Setting> saved = ArgumentCaptor.forClass(Setting.class);
-        verify(settingRepository, times(4)).save(saved.capture());
+        verify(settingRepository, times(5)).save(saved.capture());
         assertThat(saved.getAllValues()).extracting(Setting::getSettingName, Setting::getSettingValue)
                 .containsExactly(
                         org.assertj.core.groups.Tuple.tuple("uploadDir", "uploads"),
                         org.assertj.core.groups.Tuple.tuple("defaultActionsLanguage", "en"),
                         org.assertj.core.groups.Tuple.tuple("registrationEnabled", "true"),
-                        org.assertj.core.groups.Tuple.tuple("youtubeApiKey", ""));
+                        org.assertj.core.groups.Tuple.tuple("youtubeApiKey", ""),
+                        org.assertj.core.groups.Tuple.tuple("liveNewsfeedRefreshSeconds", "60"));
     }
 
     @Test
@@ -50,6 +51,7 @@ class SettingServiceTest {
         when(settingRepository.getBySettingName("defaultActionsLanguage")).thenReturn(null);
         when(settingRepository.getBySettingName("registrationEnabled")).thenReturn(new Setting("registrationEnabled", "true"));
         when(settingRepository.getBySettingName("youtubeApiKey")).thenReturn(new Setting("youtubeApiKey", ""));
+        when(settingRepository.getBySettingName("liveNewsfeedRefreshSeconds")).thenReturn(new Setting("liveNewsfeedRefreshSeconds", "60"));
 
         settingService.setDefaultSettings();
 
@@ -112,6 +114,27 @@ class SettingServiceTest {
     @Test
     void everyValueIsValid() {
         assertThat(settingService.fieldValidation("anything", "anything")).isTrue();
+    }
+
+    @Test
+    void liveNewsfeedRefreshSecondsMustBeAtLeastTheMinimum() {
+        assertThat(settingService.fieldValidation("liveNewsfeedRefreshSeconds", "60")).isTrue();
+        assertThat(settingService.fieldValidation("liveNewsfeedRefreshSeconds", "5")).isTrue();
+        assertThat(settingService.fieldValidation("liveNewsfeedRefreshSeconds", "4")).isFalse();
+        assertThat(settingService.fieldValidation("liveNewsfeedRefreshSeconds", "1.5")).isFalse();
+        assertThat(settingService.fieldValidation("liveNewsfeedRefreshSeconds", "")).isFalse();
+    }
+
+    @Test
+    void liveNewsfeedRefreshSecondsFallsBackToTheDefault() {
+        when(settingRepository.getBySettingName("liveNewsfeedRefreshSeconds")).thenReturn(new Setting("liveNewsfeedRefreshSeconds", " 30 "));
+        assertThat(settingService.getLiveNewsfeedRefreshSeconds()).isEqualTo(30);
+
+        when(settingRepository.getBySettingName("liveNewsfeedRefreshSeconds")).thenReturn(new Setting("liveNewsfeedRefreshSeconds", "abc"));
+        assertThat(settingService.getLiveNewsfeedRefreshSeconds()).isEqualTo(60);
+
+        when(settingRepository.getBySettingName("liveNewsfeedRefreshSeconds")).thenReturn(null);
+        assertThat(settingService.getLiveNewsfeedRefreshSeconds()).isEqualTo(60);
     }
 
     @Test

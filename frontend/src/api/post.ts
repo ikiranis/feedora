@@ -1,6 +1,6 @@
 import axios from "axios";
 import config from "@/functions/config.ts";
-import type { UnreadCountsType } from "@/types";
+import type { PostType, UnreadCountsType } from "@/types";
 
 /**
  * Fetch all posts from the backend for the current user.
@@ -185,4 +185,26 @@ export const markAllAsRead = async (folderId?: string | null, feedId?: string | 
  */
 export const setPostSaved = async (postId: string, saved: boolean) => {
     await axios.put(config.defaultServer() + `/api/posts/saved/${postId}`, null, { params: { saved } });
+};
+
+/**
+ * Fetch the posts (read or unread) added after a time, for the live newsfeed.
+ * @param addedAfter - Server time to check from (from getPosts' or a previous getLivePosts' listedAt)
+ * @returns {Promise<{posts: PostType[], listedAt: string | null}>} The posts, most recently added first,
+ *          and the server time to check from next
+ * @throws Error if the request fails
+ */
+export const getLivePosts = async (addedAfter: string): Promise<{ posts: PostType[], listedAt: string | null }> => {
+    const response = await axios.get(config.defaultServer() + '/api/posts/live', { params: { addedAfter } });
+    return { posts: response.data, listedAt: response.headers['x-listed-at'] ?? null };
+};
+
+/**
+ * How often the live newsfeed checks for new posts, from the settings.
+ * @returns {Promise<number>} The interval in seconds
+ * @throws Error if the request fails
+ */
+export const getLiveRefreshSeconds = async (): Promise<number> => {
+    const response = await axios.get(config.defaultServer() + '/api/posts/live/refreshSeconds');
+    return response.data.seconds;
 };

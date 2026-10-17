@@ -25,6 +25,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -355,6 +356,32 @@ class PostControllerTest extends ApiTestBase {
                 .andExpect(jsonPath("$.count").value(2));
         mockMvc.perform(auth(get("/api/posts/countNew").param("addedAfter", listedAt).param("feedId", bbc.getId().toString())))
                 .andExpect(jsonPath("$.count").value(1));
+    }
+
+    @Test
+    void liveReturnsThePostsAddedAfterTheListingMostRecentFirst() throws Exception {
+        createFeeds();
+        createPost("Listed", bbc, user, false, now);
+        String listedAt = mockMvc.perform(auth(get("/api/posts/getPosts").param("page", "1").param("pageSize", "10")))
+                .andReturn().getResponse().getHeader(PostController.LISTED_AT_HEADER);
+        Thread.sleep(5);
+        createPost("First since", bbc, user, false, now.minusDays(1));
+        Thread.sleep(5);
+        createPost("Read since", cnn, user, true, now);
+        Feed foreignFeed = createFeed("Foreign", "http://f.example/rss", null, createUser("other", "other@example.com", "secret123"));
+        createPost("Foreign", foreignFeed, foreignFeed.getUser(), false, now);
+
+        mockMvc.perform(auth(get("/api/posts/live").param("addedAfter", listedAt)))
+                .andExpect(status().isOk())
+                .andExpect(header().exists(PostController.LISTED_AT_HEADER))
+                .andExpect(jsonPath("$[*].title", contains("Read since", "First since")));
+    }
+
+    @Test
+    void liveRefreshSecondsComesFromTheSettings() throws Exception {
+        mockMvc.perform(auth(get("/api/posts/live/refreshSeconds")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.seconds").value(60));
     }
 
     @Test
