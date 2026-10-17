@@ -507,6 +507,35 @@ class PostControllerTest extends ApiTestBase {
     }
 
     @Test
+    void parseFeedsOnlyParsesTheFeedsOfTheGivenFolderOrFeed() throws Exception {
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/a", 200, "application/rss+xml", TestHttpServer.rss("A", TestHttpServer.rssItem("A1", "http://example.com/a1", "A1")));
+            server.respond("/b", 200, "application/rss+xml", TestHttpServer.rss("B", TestHttpServer.rssItem("B1", "http://example.com/b1", "B1")));
+            server.respond("/c", 200, "application/rss+xml", TestHttpServer.rss("C", TestHttpServer.rssItem("C1", "http://example.com/c1", "C1")));
+            Folder folder = createFolder("Folder", user);
+            createFeed("A", server.url("/a"), folder, user);
+            Feed b = createFeed("B", server.url("/b"), folder, user);
+            createFeed("C", server.url("/c"), null, user);
+            Feed foreign = createFeed("Foreign", server.url("/c"), null, createUser("other", "other@example.com", "secret123"));
+
+            // A foreign feed isn't parsed
+            mockMvc.perform(auth(post("/api/posts/parseFeeds").param("feedId", foreign.getId().toString()))).andExpect(status().isOk());
+            assertThat(postRepository.findAll()).isEmpty();
+
+            // feedId takes precedence over folderId
+            mockMvc.perform(auth(post("/api/posts/parseFeeds").param("feedId", b.getId().toString()).param("folderId", folder.getId().toString())))
+                    .andExpect(status().isOk());
+            assertThat(postRepository.findByUser(user)).extracting(Post::getTitle).containsExactly("B1");
+
+            mockMvc.perform(auth(post("/api/posts/parseFeeds").param("folderId", folder.getId().toString()))).andExpect(status().isOk());
+            assertThat(postRepository.findByUser(user)).extracting(Post::getTitle).containsExactlyInAnyOrder("A1", "B1");
+
+            mockMvc.perform(auth(post("/api/posts/parseFeeds"))).andExpect(status().isOk());
+            assertThat(postRepository.findByUser(user)).extracting(Post::getTitle).containsExactlyInAnyOrder("A1", "B1", "C1");
+        }
+    }
+
+    @Test
     void parseFeedsWithoutFeedsDoesNothing() throws Exception {
         mockMvc.perform(auth(post("/api/posts/parseFeeds")))
                 .andExpect(status().isOk())

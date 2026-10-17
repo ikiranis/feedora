@@ -75,13 +75,19 @@ export const getPostContent = async (postId: string): Promise<{ content: string 
 };
 
 /**
- * Trigger backend to parse all RSS feeds and update posts for the current user.
+ * Trigger backend to parse the RSS feeds and update posts for the current user.
+ * Only the feeds of a folder, or a single feed, are parsed when given; otherwise all of them.
+ * @param {string | null} folderId - The folder whose feeds to parse, or null
+ * @param {string | null} feedId - The feed to parse, or null (takes precedence over the folder)
  * @returns {Promise<any>} Result message from backend
  * @throws Error if the request fails
  */
-export const parseFeeds = async () => {
+export const parseFeeds = async (folderId: string | null = null, feedId: string | null = null) => {
     try {
-        const response = await axios.post(config.defaultServer() + '/api/posts/parseFeeds');
+        const params: Record<string, string> = {};
+        if (feedId) params.feedId = feedId;
+        else if (folderId) params.folderId = folderId;
+        const response = await axios.post(config.defaultServer() + '/api/posts/parseFeeds', null, { params });
         if (response.status === 200) {
             return response.data;
         }

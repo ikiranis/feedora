@@ -23,6 +23,8 @@ public interface FeedRepository extends JpaRepository<Feed, UUID> {
     List<Feed> findByUser(User user, Pageable pageable);
     List<Feed> findByUserAndTitleContainingIgnoreCase(User user, String title, Pageable pageable);
     List<Feed> findByFolder(Folder folder);
+    List<Feed> findByUserAndFolder_Id(User user, UUID folderId);
+    List<Feed> findByIdAndUser(UUID id, User user);
 
     // Problematic feeds first (with log entries of their own, not of their posts, or failing checks), then the most frequent ones, then by title.
     // Feeds not checked yet have no statistics and count as posting nothing.

@@ -724,8 +724,8 @@ const fetchPosts = async (reset = false) => {
 };
 
 /**
- * Handles the action of parsing RSS feeds. It calls the parseFeeds API,
- * then refreshes the post list and shows an alert with the result.
+ * Handles the action of parsing RSS feeds. It calls the parseFeeds API for the current view
+ * (the selected feed, the selected folder, or all feeds), then refreshes the post list and shows an alert with the result.
  */
 const handleParseFeeds = async () => {
     try {
@@ -743,7 +743,7 @@ const handleParseFeeds = async () => {
     try {
         loading.value = true;
         scanStore.active.value = true;
-        const result = await parseFeeds();
+        const result = await parseFeeds(selectedFolderId.value, selectedFeedId.value);
         await fetchPosts(true); // Refresh posts
         fetchUnreadCounts();
         fetchLastParsedAt();

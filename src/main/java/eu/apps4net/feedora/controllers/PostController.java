@@ -42,11 +42,12 @@ public class PostController {
         return postService.getAllPostsForUser(currentUser);
     }
 
+    // With a feedId only that feed is parsed, with a folderId only the feeds of the folder, otherwise all of them
     @PostMapping("/parseFeeds")
-    public String parseFeeds() {
+    public String parseFeeds(@RequestParam(required = false) UUID folderId, @RequestParam(required = false) UUID feedId) {
         try {
             User currentUser = userService.getCurrentUser();
-            postService.parseFeeds(currentUser);
+            postService.parseFeeds(currentUser, folderId, feedId);
             return Language.getActionString("Feeds parsed and posts updated");
         } catch (Exception e) {
             e.printStackTrace();

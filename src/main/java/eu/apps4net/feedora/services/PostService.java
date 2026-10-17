@@ -85,7 +85,19 @@ public class PostService {
      * @param user The user whose feeds to parse
      */
     public void parseFeeds(User user) {
-        parseFeeds(user, false);
+        parseFeeds(user, null, null, false);
+    }
+
+    /**
+     * Checks the feeds of a user in a folder, or a single feed, for new posts, and adds them as Posts in the database.
+     * The feed takes precedence over the folder. With neither, all the feeds of the user are checked.
+     *
+     * @param user The user whose feeds to parse
+     * @param folderId The folder whose feeds to parse, or null
+     * @param feedId The feed to parse, or null
+     */
+    public void parseFeeds(User user, UUID folderId, UUID feedId) {
+        parseFeeds(user, folderId, feedId, false);
     }
 
     /**
@@ -95,10 +107,10 @@ public class PostService {
      * @param user The user whose feeds to parse
      */
     public void parseDueFeeds(User user) {
-        parseFeeds(user, true);
+        parseFeeds(user, null, null, true);
     }
 
-    private void parseFeeds(User user, boolean onlyDue) {
+    private void parseFeeds(User user, UUID folderId, UUID feedId, boolean onlyDue) {
         // Try to acquire lock to prevent conflicts with OPML import
         if (!operationLockService.tryLockFeedOperation()) {
             System.out.println("[Feedora] Skipping feed parsing - another feed operation is in progress (likely OPML import).");
@@ -107,7 +119,9 @@ public class PostService {
 
         try {
             long startTime = System.currentTimeMillis();
-            List<Feed> feeds = feedRepository.findByUser(user);
+            List<Feed> feeds = feedId != null ? feedRepository.findByIdAndUser(feedId, user)
+                    : folderId != null ? feedRepository.findByUserAndFolder_Id(user, folderId)
+                    : feedRepository.findByUser(user);
             if (feeds.isEmpty()) {
                 System.out.println("[Feedora] No feeds found in database. Skipping feed parsing task.");
                 return;
