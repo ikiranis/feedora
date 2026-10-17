@@ -3,6 +3,7 @@ import {language} from "./functions/languageStore.ts";
 import {onMounted, ref} from "vue";
 import {checkAppAlive} from "@/api/general.ts";
 import Sidebar from "@/components/Sidebar.vue";
+import ScanProgressBar from "@/components/ScanProgressBar.vue";
 import Page404 from "@/components/error/Page404.vue";
 import { themeStore } from "./functions/themeStore.ts";
 import { authStore } from "./functions/authStore.ts";
@@ -87,6 +88,9 @@ const collapse = () => {
 
                 <router-view/>
             </div>
+
+            <!-- Shown on every page while the feeds are scanned -->
+            <ScanProgressBar/>
         </div>
         
         <!-- Unauthenticated user layout - full screen router view -->

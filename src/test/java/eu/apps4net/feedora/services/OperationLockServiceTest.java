@@ -40,4 +40,18 @@ class OperationLockServiceTest {
         lockService.unlockFeedOperation();
         assertThat(lockService.isFeedOperationRunning()).isFalse();
     }
+
+    @Test
+    void progressIsCountedAndResetOnUnlock() {
+        assertThat(lockService.tryLockFeedOperation()).isTrue();
+        lockService.startProgress(3);
+        lockService.incrementProgress();
+        lockService.incrementProgress();
+        assertThat(lockService.getProgressTotal()).isEqualTo(3);
+        assertThat(lockService.getProgressCompleted()).isEqualTo(2);
+
+        lockService.unlockFeedOperation();
+        assertThat(lockService.getProgressTotal()).isZero();
+        assertThat(lockService.getProgressCompleted()).isZero();
+    }
 }

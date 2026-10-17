@@ -23,6 +23,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class FeedService {
@@ -36,6 +37,9 @@ public class FeedService {
     private OperationLockService operationLockService;
     @Autowired
     private LogService logService;
+
+    // Last parse time of the users whose feeds are being scanned, as it was before the scan
+    private final Map<UUID, Optional<LocalDateTime>> lastParsedBeforeScan = new ConcurrentHashMap<>();
 
     /**
      * Imports feeds and folders from an OPML file and saves them to the database.
@@ -167,7 +171,30 @@ public class FeedService {
      * @return The last check of any of the user's feeds, or null if none was checked yet
      */
     public LocalDateTime getLastParsedAt(User user) {
+        Optional<LocalDateTime> frozen = lastParsedBeforeScan.get(user.getId());
+        if (frozen != null) {
+            return frozen.orElse(null);
+        }
         return feedRepository.findLastCheckedAtByUser(user);
+    }
+
+    /**
+     * Keeps the last parse time of a user as it was before a scan, until the scan ends,
+     * so it doesn't change with every feed checked during the scan.
+     *
+     * @param user The user whose feeds are scanned
+     */
+    public void freezeLastParsedAt(User user) {
+        lastParsedBeforeScan.put(user.getId(), Optional.ofNullable(feedRepository.findLastCheckedAtByUser(user)));
+    }
+
+    /**
+     * Makes the last parse time of a user follow the feeds' checks again, after a scan ended.
+     *
+     * @param user The user whose feeds were scanned
+     */
+    public void unfreezeLastParsedAt(User user) {
+        lastParsedBeforeScan.remove(user.getId());
     }
 
     /**

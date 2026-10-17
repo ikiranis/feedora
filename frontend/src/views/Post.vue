@@ -299,8 +299,8 @@
                         {{ language.get('No posts match your search') || 'No posts match your search' }}
                     </div>
 
-                    <!-- Fixed bottom-right loading spinner -->
-                    <div v-if="loading" class="loading-spinner-fixed">
+                    <!-- Fixed bottom-right loading spinner, not shown while parsing since the scan progress bar shows it -->
+                    <div v-if="loading && !scanStore.active.value" class="loading-spinner-fixed">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
                         </div>
@@ -347,6 +347,7 @@ import EditFeedModal from '@/components/feed/EditFeedModal.vue';
 import EditFolderModal from '@/components/folder/EditFolderModal.vue';
 import Error from '@/components/error/Error.vue'; // Changed from ErrorDisplay
 import { errorStore } from '@/components/error/errorStore'; // Import errorStore
+import { scanStore } from '@/functions/scanStore';
 import { confirmDialog } from '@/functions/javaDialogs';
 import { Dropdown, Modal } from 'bootstrap';
 
@@ -741,6 +742,7 @@ const handleParseFeeds = async () => {
 
     try {
         loading.value = true;
+        scanStore.active.value = true;
         const result = await parseFeeds();
         await fetchPosts(true); // Refresh posts
         fetchUnreadCounts();
@@ -753,6 +755,7 @@ const handleParseFeeds = async () => {
             errorStore.set(true, language.get('Failed to parse feeds') || 'Failed to parse feeds.', 500);
         }
     } finally {
+        scanStore.active.value = false;
         loading.value = false;
     }
 };
@@ -1278,6 +1281,12 @@ watch(searchTerm, (_) => {
             setupIntersectionObserver();
         });
     }, 500); // 500ms debounce delay
+});
+
+// A scan (scheduled or manual) ended, so the counts and the last parse time are refreshed
+watch(scanStore.finishedCount, () => {
+    fetchUnreadCounts();
+    fetchLastParsedAt();
 });
 
 // Lifecycle hooks

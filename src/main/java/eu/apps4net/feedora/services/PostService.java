@@ -121,6 +121,8 @@ public class PostService {
                     return;
                 }
             }
+            operationLockService.startProgress(feeds.size());
+            feedService.freezeLastParsedAt(user);
             // Read posts older than this may have been deleted by the cleanup, so they must not be added again
             LocalDateTime deletedBefore = readRetentionDays > 0 ? LocalDateTime.now().minusDays(readRetentionDays) : null;
             int threadCount = Math.min(feeds.size(), 8);
@@ -216,6 +218,7 @@ public class PostService {
                     String failure = error;
                     updateStatistics(feed, stats -> stats.recordFailure(checkedAt, duration, failure));
                 }
+                operationLockService.incrementProgress();
             });
         }
 
@@ -237,6 +240,7 @@ public class PostService {
         logService.logUser(user, failedFeeds[0] > 0 ? LogLevel.WARNING : LogLevel.INFO, LogType.FEED_PARSING,
                 "Parsed " + totalFeedsParsed + " feeds in " + seconds + " seconds. Succeeded: " + succeededFeeds[0] + ", Failed: " + failedFeeds[0] + ". Total posts: " + postsAfter + ". New posts added: " + newPosts, null);
         } finally {
+            feedService.unfreezeLastParsedAt(user);
             // Always release the lock
             operationLockService.unlockFeedOperation();
         }

@@ -1328,6 +1328,10 @@
         <language code="en">Last parsing</language>
         <language code="el">Τελευταία ανάκτηση</language>
     </entry>
+    <entry id="Scanning feeds">
+        <language code="en">Scanning feeds</language>
+        <language code="el">Ανάκτηση ροών</language>
+    </entry>
     <entry id="Last check">
         <language code="en">Last check</language>
         <language code="el">Τελευταίος έλεγχος</language>
