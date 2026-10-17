@@ -134,13 +134,13 @@
         </aside>
 
         <div class="flex-grow-1 posts-main">
-            <div class="container py-4">
-                <div class="row justify-content-end mb-4 align-items-center">
+            <div class="container pt-2 pb-0">
+                <div class="row justify-content-end mb-1 align-items-center">
                     <div v-if="selectedFeedTitle" class="col feed-title-col">
                         <div class="dropdown d-flex align-items-center">
                             <button type="button" class="btn btn-link text-reset text-decoration-none p-0 d-flex align-items-center gap-2 mw-100"
                                 data-bs-toggle="dropdown" aria-expanded="false" :title="selectedFeedTitle">
-                                <h5 class="mb-0 text-truncate">{{ selectedFeedTitle }}</h5>
+                                <h6 class="mb-0 text-truncate">{{ selectedFeedTitle }}</h6>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-chevron-down flex-shrink-0" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg>
                             </button>
                             <ul class="dropdown-menu">
@@ -164,7 +164,7 @@
                         </div>
                     </div>
                     <div class="col-auto d-flex align-items-center">
-                        <div v-if="!showSaved" class="btn-group me-3" role="group"
+                        <div v-if="!showSaved" class="btn-group btn-group-sm me-2" role="group"
                             :aria-label="language.get('Posts to show') || 'Posts to show'">
                             <button type="button" class="btn btn-outline-secondary" :class="{ active: !showRead }"
                                 @click="showRead = false" :disabled="loading"
@@ -177,7 +177,7 @@
                                 {{ language.get('All') || 'All' }}
                             </button>
                         </div>
-                        <div v-if="!showSaved" class="btn-group me-3">
+                        <div v-if="!showSaved" class="btn-group btn-group-sm me-2">
                             <button type="button" class="btn btn-outline-primary d-flex align-items-center gap-2"
                                 @click="handleMarkAllAsRead(null)" :disabled="loading"
                                 :title="language.get('Mark all as read') || 'Mark all as read'">
@@ -201,7 +201,7 @@
                                 </li>
                             </ul>
                         </div>
-                        <button @click="handleRefreshPosts" class="btn btn-outline-primary me-3"
+                        <button @click="handleRefreshPosts" class="btn btn-sm btn-outline-primary me-2"
                             :title="language.get('Refresh Posts') || 'Refresh Posts'"
                             :disabled="loading">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" 
@@ -211,7 +211,7 @@
                                 <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
                             </svg>
                         </button>
-                        <button @click="showDetails = !showDetails" class="btn btn-outline-secondary me-3"
+                        <button @click="showDetails = !showDetails" class="btn btn-sm btn-outline-secondary me-2"
                             :title="showDetails ? language.get('Show Summary') : language.get('Show Details')">
                             <svg v-if="showDetails" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
                                 fill="currentColor" class="bi bi-list" viewBox="0 0 16 16">
@@ -228,7 +228,7 @@
                                     d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z" />
                             </svg>
                         </button>
-                        <button v-if="!showSaved && currentFolderId" type="button" class="btn btn-outline-secondary me-3"
+                        <button v-if="!showSaved && currentFolderId" type="button" class="btn btn-sm btn-outline-secondary me-2"
                             :class="{ active: hideShorts }" @click="hideShorts = !hideShorts" :disabled="loading"
                             :title="hideShorts
                                 ? (language.get('Show YouTube Shorts in this folder') || 'Show YouTube Shorts in this folder')
@@ -245,7 +245,7 @@
                                 <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
                             </svg>
                         </button>
-                        <button @click="handleParseFeeds" class="btn btn-outline-primary me-3"
+                        <button @click="handleParseFeeds" class="btn btn-sm btn-outline-primary me-2"
                             :title="language.get('Parse RSS Feeds') || 'Parse RSS Feeds'" :disabled="loading">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                 class="bi bi-cloud-arrow-down" viewBox="0 0 16 16">
@@ -253,7 +253,7 @@
                                 <path d="M4.406 3.342A5.53 5.53 0 0 1 8 2c2.69 0 4.923 2 5.166 4.579C14.758 6.804 16 8.137 16 9.773 16 11.569 14.502 13 12.687 13H3.781C1.708 13 0 11.366 0 9.318c0-1.763 1.266-3.223 2.942-3.593.143-.863.698-1.723 1.464-2.383zm.653.757c-.757.653-1.153 1.44-1.153 2.056v.448l-.445.049C2.064 6.805 1 7.952 1 9.318 1 10.785 2.23 12 3.781 12h8.906C13.98 12 15 10.988 15 9.773c0-1.216-1.02-2.228-2.313-2.228h-.5v-.5C12.188 4.825 10.328 3 8 3a4.53 4.53 0 0 0-2.941 1.1z"/>
                             </svg>
                         </button>
-                        <div class="input-group" style="width: 250px;">
+                        <div class="input-group input-group-sm" style="width: 220px;">
                             <span class="input-group-text">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
                                     <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
@@ -269,9 +269,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="row justify-content-end mt-n3 mb-2">
+                <div class="row justify-content-end">
                     <div class="col-auto">
-                        <small class="text-muted last-parsed" :title="lastParsedAt ? new Date(lastParsedAt).toLocaleString() : ''">
+                        <small class="text-muted last-parsed d-block" :title="lastParsedAt ? new Date(lastParsedAt).toLocaleString() : ''">
                             {{ language.get('Last parsing') || 'Last parsing' }}: {{ lastParsedLabel }}
                         </small>
                     </div>
@@ -279,7 +279,7 @@
             </div>
             
             <div class="scrollable-post-view" ref="scrollableContainerRef">
-                <div class="container py-4">
+                <div class="container pt-1 pb-4">
                     <div v-if="posts.length > 0" class="row" :class="showDetails ? 'g-4' : 'g-0'">
                         <div v-for="(post, index) in posts" :key="post.id" :data-post-id="post.id"
                             :class="showDetails ? 'col-12 col-md-6 col-lg-4' : 'col-12'"
@@ -1344,11 +1344,16 @@ onUnmounted(() => {
 <style>
 /* Make the main view scrollable instead of the whole page */
 .scrollable-post-view {
-    height: calc(90vh - 120px); /* Adjust height to account for fixed header */
+    height: calc(100vh - 110px); /* Viewport minus top bar and posts toolbar */
     overflow-y: auto;
 }
 
 /* Folder sidebar on the left of the posts list */
+.last-parsed {
+    font-size: 0.7rem;
+    line-height: 1.2;
+}
+
 .posts-main {
     min-width: 0;
 }
