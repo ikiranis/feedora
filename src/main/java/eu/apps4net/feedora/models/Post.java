@@ -30,6 +30,10 @@ public class Post {
     @JsonIgnore
     private String content;
     
+    // Image for the post's card, found in the feed entry when parsed (see ThumbnailExtractor). Null if none.
+    @Column(length = 2048)
+    private String thumbnail;
+
     private LocalDateTime pubDate;
     private String author;
 
@@ -93,6 +97,9 @@ public class Post {
 
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
+
+    public String getThumbnail() { return thumbnail; }
+    public void setThumbnail(String thumbnail) { this.thumbnail = thumbnail; }
 
     public LocalDateTime getPubDate() { return pubDate; }
     public void setPubDate(LocalDateTime pubDate) { this.pubDate = pubDate; }

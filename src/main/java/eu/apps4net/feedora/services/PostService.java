@@ -16,6 +16,7 @@ import eu.apps4net.feedora.configurations.Language;
 import eu.apps4net.feedora.exceptions.NotFoundException;
 import eu.apps4net.feedora.utilities.ArticleExtractor;
 import eu.apps4net.feedora.utilities.RssFetcher;
+import eu.apps4net.feedora.utilities.ThumbnailExtractor;
 import eu.apps4net.feedora.utilities.YouTubeLiveChecker;
 import com.rometools.rome.feed.synd.SyndContent;
 import com.rometools.rome.feed.synd.SyndEntry;
@@ -209,6 +210,7 @@ public class PostService {
                                 false
                             );
                             post.setContent(getEntryContent(entry));
+                            post.setThumbnail(ThumbnailExtractor.find(entry));
                             post.setFeed(feed);
                             post.setUser(user);
                             postsToSave.add(post);

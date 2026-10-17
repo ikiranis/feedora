@@ -258,13 +258,14 @@ const descriptionDoc = computed(() =>
 );
 
 /**
- * Thumbnail for the card: the YouTube thumbnail for videos, otherwise the first image in the description.
+ * Thumbnail for the card: the YouTube thumbnail for videos, otherwise the image found when the feed was parsed
+ * (description, full content or enclosure), falling back to the first image in the description for older posts.
  */
 const thumbnailUrl = computed(() => {
     if (thumbnailFailed.value) return null;
     if (youtubeThumbnailUrl.value) return youtubeThumbnailUrl.value;
 
-    const src = descriptionDoc.value?.querySelector('img[src]')?.getAttribute('src');
+    const src = props.post.thumbnail || descriptionDoc.value?.querySelector('img[src]')?.getAttribute('src');
     return src && /^https?:\/\//.test(src) ? src : null;
 });
 

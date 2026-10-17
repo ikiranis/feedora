@@ -111,6 +111,8 @@ export interface PostType {
     title: string;
     link: string;
     description: string | null;
+    // Image for the card, found in the feed entry when parsed; null if none (or for posts added before it was kept)
+    thumbnail: string | null;
     pubDate: string | null;
     author: string | null;
     read: boolean;
