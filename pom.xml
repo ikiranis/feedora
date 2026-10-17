@@ -10,7 +10,7 @@
     </parent>
     <groupId>eu.apps4net</groupId>
     <artifactId>Feedora</artifactId>
-    <version>0.9.4</version>
+    <version>0.9.5</version>
     <name>Feedora</name>
     <description>RSS reader app</description>
     <url/>

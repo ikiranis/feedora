@@ -107,6 +107,21 @@
                     </template>
                 </template>
 
+                <!-- Feeds that are not in any folder -->
+                <button v-for="feed in visibleOrphanFeeds" :key="feed.id" type="button"
+                    class="folder-item orphan-feed-item" :class="{ active: selectedFeedId === feed.id }"
+                    @click="selectFeed(feed.id)" :title="feed.title">
+                    <img v-if="getFeedIcon(feed)" :src="getFeedIcon(feed)!" class="feed-icon flex-shrink-0"
+                        alt="" loading="lazy" @error="failedFeedIcons.add(feed.id)" />
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-rss flex-shrink-0" viewBox="0 0 16 16">
+                        <path d="M14 1a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h12zM2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H2z"/>
+                        <path d="M5.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm-3-8.5a1 1 0 0 1 1-1c5.523 0 10 4.477 10 10a1 1 0 1 1-2 0 8 8 0 0 0-8-8 1 1 0 0 1-1-1zm0 4a1 1 0 0 1 1-1 6 6 0 0 1 6 6 1 1 0 1 1-2 0 4 4 0 0 0-4-4 1 1 0 0 1-1-1z"/>
+                    </svg>
+                    <span class="folder-name">{{ feed.title }}</span>
+                    <span class="folder-count">{{ feed.count }}</span>
+                </button>
+
                 <button type="button" class="folder-item text-secondary mt-2" @click="openAddFolder"
                     :title="language.get('Add a new folder to organize your feeds') || 'Add a new folder to organize your feeds'">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -426,6 +441,15 @@ const visibleFeedsByFolder = computed(() => {
     }
     Object.values(groups).forEach(feeds => feeds.sort((a, b) => a.title.localeCompare(b.title)));
     return groups;
+});
+
+// Feeds that are not in any folder, shown under the folders with the same visibility rules, sorted by title
+const visibleOrphanFeeds = computed(() => {
+    const folderIds = new Set(folders.value.map(folder => folder.id));
+    return unreadCounts.value.feeds
+        .filter(feed => !feed.folderId || !folderIds.has(feed.folderId))
+        .filter(feed => feed.count > 0 || showEmptyFolders.value || feed.id === selectedFeedId.value)
+        .sort((a, b) => a.title.localeCompare(b.title));
 });
 
 /**
@@ -1314,6 +1338,11 @@ onUnmounted(() => {
 
 .feed-item {
     padding-left: 2.25rem;
+    font-size: 0.95em;
+}
+
+/* Feed outside any folder, at the same level as the folders */
+.orphan-feed-item {
     font-size: 0.95em;
 }
 
