@@ -7,7 +7,8 @@ import Page404 from "@/components/error/Page404.vue";
 import { themeStore } from "./functions/themeStore.ts";
 import { authStore } from "./functions/authStore.ts";
 
-const collapsed = ref(false)
+const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed'
+const collapsed = ref(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) !== 'false') // Collapsed by default, persisted in localStorage
 const isAppAlive = ref(true)
 
 onMounted(() => {
@@ -42,6 +43,7 @@ const updateAppStatus = async () => {
  */
 const collapse = () => {
     collapsed.value = !collapsed.value
+    localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(collapsed.value))
 }
 
 </script>
