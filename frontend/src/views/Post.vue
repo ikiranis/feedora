@@ -279,6 +279,17 @@
             </div>
             
             <div class="scrollable-post-view" ref="scrollableContainerRef">
+                <!-- Posts of the current view added by a parse since the list was loaded -->
+                <div v-if="newPostsCount > 0" class="new-posts-badge-wrapper">
+                    <button type="button" class="btn btn-sm btn-primary rounded-pill shadow-sm new-posts-badge d-flex align-items-center gap-1"
+                        @click="showNewPosts" :disabled="loading"
+                        :title="language.get('Show the new posts') || 'Show the new posts'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-up" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5"/>
+                        </svg>
+                        {{ newPostsCount }} {{ newPostsCount === 1 ? (language.get('new post') || 'new post') : (language.get('new posts') || 'new posts') }}
+                    </button>
+                </div>
                 <div class="container pt-1 pb-4">
                     <div v-if="posts.length > 0" class="row" :class="showDetails ? 'g-4' : 'g-0'">
                         <div v-for="(post, index) in posts" :key="post.id" :data-post-id="post.id"
@@ -330,7 +341,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getPosts, parseFeeds, markAsRead, markAsUnread, markAllAsRead, getUnreadCounts, setPostSaved } from '@/api/post';
+import { getPosts, parseFeeds, markAsRead, markAsUnread, markAllAsRead, getUnreadCounts, setPostSaved, countNewPosts } from '@/api/post';
 import { getFeedOperationStatus, getLastParsedAt, getFeeds, deleteFeed } from '@/api/feed';
 import { getFolders, deleteFolder } from '@/api/folder';
 import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType, Feed } from '@/types';
@@ -360,6 +371,7 @@ const loading = ref(false);
 const allLoaded = ref(false);
 // Server time of the first page's listing. Marking all as read only marks the posts added up to it, not the ones parsed since.
 const listedAt = ref<string | null>(null);
+const newPostsCount = ref(0); // Unread posts of the current view added since listedAt, e.g. by a scheduled parse
 const lastParsedAt = ref<string | null>(null); // When the feeds were last parsed, by the scheduler or manually
 let lastParsedTimer: number | null = null;
 const scrollableContainerRef = ref<HTMLElement | null>(null); // Ref for the scrollable container
@@ -699,6 +711,7 @@ const fetchPosts = async (reset = false) => {
         if (reset) {
             posts.value = data;
             listedAt.value = pageListedAt;
+            newPostsCount.value = 0;
         } else {
             posts.value = posts.value.concat(data);
         }
@@ -784,6 +797,35 @@ const handleMarkAllAsRead = async (olderThanDays: number | null) => {
         loading.value = false;
         errorStore.set(true, e.response?.data?.message || language.get('Failed to mark posts as read') || 'Failed to mark posts as read.', e.response?.status || 500);
     }
+};
+
+/**
+ * Counts the unread posts of the current view added since the list was loaded, for the new posts badge.
+ * The saved view isn't counted, since parsed posts aren't saved.
+ */
+const fetchNewPostsCount = async () => {
+    if (showSaved.value || !listedAt.value) {
+        newPostsCount.value = 0;
+        return;
+    }
+    const view = { listedAt: listedAt.value, folderId: selectedFolderId.value, feedId: selectedFeedId.value };
+    try {
+        const count = await countNewPosts(view.listedAt, view.folderId, view.feedId, [...hiddenShortsFolders.value]);
+        // Ignored if the view changed or was reloaded in the meantime
+        if (view.listedAt === listedAt.value && view.folderId === selectedFolderId.value && view.feedId === selectedFeedId.value) {
+            newPostsCount.value = count;
+        }
+    } catch (e) {
+        console.warn('Could not count the new posts:', e);
+    }
+};
+
+/**
+ * Reloads the list from the top to show the new posts.
+ */
+const showNewPosts = () => {
+    scrollableContainerRef.value?.scrollTo({ top: 0 });
+    handleRefreshPosts();
 };
 
 /**
@@ -1283,9 +1325,10 @@ watch(searchTerm, (_) => {
     }, 500); // 500ms debounce delay
 });
 
-// A scan (scheduled or manual) ended, so the counts and the last parse time are refreshed
+// A scan (scheduled or manual) ended, so the counts, the new posts badge and the last parse time are refreshed
 watch(scanStore.finishedCount, () => {
     fetchUnreadCounts();
+    fetchNewPostsCount();
     fetchLastParsedAt();
 });
 
@@ -1346,6 +1389,22 @@ onUnmounted(() => {
 .scrollable-post-view {
     height: calc(100vh - 110px); /* Viewport minus top bar and posts toolbar */
     overflow-y: auto;
+}
+
+/* New posts badge, floating over the top of the posts list while it scrolls */
+.new-posts-badge-wrapper {
+    position: sticky;
+    top: 0;
+    height: 0;
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    overflow: visible;
+}
+
+.new-posts-badge {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
 }
 
 /* Folder sidebar on the left of the posts list */

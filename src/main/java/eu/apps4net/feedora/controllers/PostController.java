@@ -89,6 +89,15 @@ public class PostController {
         return postService.getUnreadCounts(currentUser, hideShortsFolderIds);
     }
 
+    // Unread posts of the view (all, a folder or a feed) added after addedAfter (getPosts' X-Listed-At), e.g. by a parse since the listing
+    @GetMapping("/countNew")
+    public Map<String, Long> countNewPosts(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime addedAfter,
+                                           @RequestParam(required = false) UUID folderId, @RequestParam(required = false) UUID feedId,
+                                           @RequestParam(required = false) List<UUID> hideShortsFolderIds) {
+        User currentUser = userService.getCurrentUser();
+        return Map.of("count", postService.countNewPosts(currentUser, folderId, feedId, addedAfter, hideShortsFolderIds));
+    }
+
     // The content, and the number of log entries of the post (e.g. when its page couldn't be read)
     @GetMapping("/content/{postId}")
     public Map<String, Object> getPostContent(@PathVariable UUID postId) {

@@ -338,6 +338,26 @@ class PostControllerTest extends ApiTestBase {
     }
 
     @Test
+    void countNewCountsTheUnreadPostsAddedAfterTheListing() throws Exception {
+        createFeeds();
+        createPost("Listed", bbc, user, false, now);
+        String listedAt = mockMvc.perform(auth(get("/api/posts/getPosts").param("page", "1").param("pageSize", "10")))
+                .andReturn().getResponse().getHeader(PostController.LISTED_AT_HEADER);
+        createPost("BBC since", bbc, user, false, now);
+        createPost("CNN since", cnn, user, false, now);
+        createPost("Verge since", verge, user, false, now);
+        createPost("Read since", bbc, user, true, now);
+
+        mockMvc.perform(auth(get("/api/posts/countNew").param("addedAfter", listedAt)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(3));
+        mockMvc.perform(auth(get("/api/posts/countNew").param("addedAfter", listedAt).param("folderId", news.getId().toString())))
+                .andExpect(jsonPath("$.count").value(2));
+        mockMvc.perform(auth(get("/api/posts/countNew").param("addedAfter", listedAt).param("feedId", bbc.getId().toString())))
+                .andExpect(jsonPath("$.count").value(1));
+    }
+
+    @Test
     void savedFlagCanBeSetAndCleared() throws Exception {
         createFeeds();
         Post post = createPost("Post", bbc, user, false, now);

@@ -3,6 +3,7 @@ package eu.apps4net.feedora.services;
 import eu.apps4net.feedora.exceptions.FeedFetchException;
 import eu.apps4net.feedora.models.Feed;
 import eu.apps4net.feedora.models.FeedStatistics;
+import eu.apps4net.feedora.models.Folder;
 import eu.apps4net.feedora.models.LiveStatus;
 import eu.apps4net.feedora.models.LogLevel;
 import eu.apps4net.feedora.models.LogType;
@@ -21,7 +22,10 @@ import com.rometools.rome.feed.synd.SyndEntry;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
@@ -609,6 +613,46 @@ public class PostService {
         result.put("folders", folderCounts);
         result.put("feeds", feedCounts);
         return result;
+    }
+
+    /**
+     * Counts the unread posts of a user added after the given time, e.g. parsed since the posts list was loaded.
+     * @param user The user
+     * @param folderId The folder whose feeds' posts to count, or null for all folders
+     * @param feedId The feed whose posts to count, or null for all feeds. Takes precedence over folderId.
+     * @param addedAfter Only count the posts added after this time
+     * @param hideShortsFolderIds Folders whose YouTube Shorts aren't counted (null or empty for none)
+     * @return The number of new unread posts
+     */
+    public long countNewPosts(User user, UUID folderId, UUID feedId, LocalDateTime addedAfter, List<UUID> hideShortsFolderIds) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Long> query = cb.createQuery(Long.class);
+        Root<Post> post = query.from(Post.class);
+
+        List<Predicate> predicates = new ArrayList<>();
+        predicates.add(cb.equal(post.get("user"), user));
+        predicates.add(cb.isFalse(post.get("read")));
+        predicates.add(cb.greaterThan(post.get("createdAt"), addedAfter));
+
+        if (feedId != null) {
+            predicates.add(cb.equal(post.get("feed").get("id"), feedId));
+        } else if (folderId != null) {
+            predicates.add(cb.equal(post.get("feed").get("folder").get("id"), folderId));
+        }
+
+        // Same rule as NOT_HIDDEN_SHORT of the posts list
+        if (hideShortsFolderIds != null && !hideShortsFolderIds.isEmpty()) {
+            Join<Post, Feed> feed = post.join("feed");
+            Join<Feed, Folder> folder = feed.join("folder", JoinType.LEFT);
+            predicates.add(cb.or(
+                    cb.isNull(post.get("link")),
+                    cb.notLike(post.get("link"), "%youtube.com/shorts/%"),
+                    cb.isNull(folder.get("id")),
+                    cb.not(folder.get("id").in(hideShortsFolderIds))));
+        }
+
+        query.select(cb.count(post)).where(predicates.toArray(new Predicate[0]));
+        return entityManager.createQuery(query).getSingleResult();
     }
 
     /**

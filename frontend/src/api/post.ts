@@ -62,6 +62,31 @@ export const getUnreadCounts = async (hideShortsFolderIds?: string[]): Promise<U
 };
 
 /**
+ * Count the unread posts of a view (all, a folder or a feed) added after the list was loaded, e.g. by a parse in the meantime.
+ * @param addedAfter - Server time of the listing (from getPosts' listedAt)
+ * @param folderId - Optional folder id to only count posts of that folder's feeds
+ * @param feedId - Optional feed id to only count posts of that feed
+ * @param hideShortsFolderIds - Folders whose YouTube Shorts aren't counted
+ * @returns {Promise<number>} The number of new unread posts
+ * @throws Error if the request fails
+ */
+export const countNewPosts = async (addedAfter: string, folderId?: string | null, feedId?: string | null,
+                                    hideShortsFolderIds?: string[]): Promise<number> => {
+    const params: any = { addedAfter };
+    if (folderId) {
+        params.folderId = folderId;
+    }
+    if (feedId) {
+        params.feedId = feedId;
+    }
+    if (hideShortsFolderIds?.length) {
+        params.hideShortsFolderIds = hideShortsFolderIds.join(',');
+    }
+    const response = await axios.get(config.defaultServer() + '/api/posts/countNew', { params });
+    return response.data.count;
+};
+
+/**
  * Fetch the full content of a post. The backend uses the content from the feed or, if missing,
  * extracts the article from the post's page.
  * @param {string} postId - The UUID of the post
