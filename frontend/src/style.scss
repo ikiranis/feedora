@@ -13,6 +13,8 @@
     --border-color: #ddd;
     --input-bg: #ffffff;
     --input-border: #ced4da;
+    --scrollbar-thumb: rgba(0, 0, 0, 0.2);
+    --scrollbar-thumb-hover: rgba(0, 0, 0, 0.4);
 }
 
 [data-bs-theme="dark"] {
@@ -27,6 +29,41 @@
     --border-color: #4a5568;
     --input-bg: #2d3748;
     --input-border: #4a5568;
+    --scrollbar-thumb: rgba(255, 255, 255, 0.18);
+    --scrollbar-thumb-hover: rgba(255, 255, 255, 0.35);
+}
+
+// Thin, rounded scrollbars without arrow buttons. WebKit/Blink use the pseudo-elements;
+// the standard properties are only applied where those aren't supported (Firefox),
+// because Chrome ignores the pseudo-elements once scrollbar-width/color are set.
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 3px;
+
+    &:hover {
+        background-color: var(--scrollbar-thumb-hover);
+    }
+}
+
+::-webkit-scrollbar-button {
+    display: none;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--scrollbar-thumb) transparent;
+    }
 }
 
 body {

@@ -756,11 +756,11 @@ const handleParseFeeds = async () => {
     try {
         loading.value = true;
         scanStore.active.value = true;
-        const result = await parseFeeds(selectedFolderId.value, selectedFeedId.value);
-        await fetchPosts(true); // Refresh posts
+        await parseFeeds(selectedFolderId.value, selectedFeedId.value);
+        // The current posts are kept, the parsed ones are shown in the new posts badge
         fetchUnreadCounts();
+        fetchNewPostsCount();
         fetchLastParsedAt();
-        errorStore.set(true, result, 200); // Use errorStore for success
     } catch (e: any) { // Added :any to e for response access
         if (e.response && e.response.data && e.response.data.message && typeof e.response.data.status === 'number') {
             errorStore.set(true, e.response.data.message, e.response.data.status);
