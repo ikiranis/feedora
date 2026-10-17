@@ -1653,4 +1653,24 @@
         <language code="el">Εμφάνιση των αναρτήσεων αυτής της ροής</language>
     </entry>
 
+    <entry id="Copy the link of the selected post to the clipboard">
+        <language code="en">Copy the link of the selected post to the clipboard</language>
+        <language code="el">Αντιγραφή του συνδέσμου της επιλεγμένης ανάρτησης στο πρόχειρο</language>
+    </entry>
+
+    <entry id="Copy link">
+        <language code="en">Copy link</language>
+        <language code="el">Αντιγραφή συνδέσμου</language>
+    </entry>
+
+    <entry id="Link copied">
+        <language code="en">Link copied</language>
+        <language code="el">Ο σύνδεσμος αντιγράφηκε</language>
+    </entry>
+
+    <entry id="Share on">
+        <language code="en">Share on</language>
+        <language code="el">Κοινοποίηση στο</language>
+    </entry>
+
 </root>

@@ -53,6 +53,7 @@
                             <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z"/>
                         </svg>
                     </button>
+                    <CopyLinkButton :link="post.link" :size="18" class="footer-action save-button" />
                     <a :href="post.link" target="_blank" class="footer-action" :title="language.get('Open original') || 'Open original'" @click.stop>
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
                             <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
@@ -127,6 +128,7 @@
                             <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
                         </svg>
                     </a>
+                    <PostShareActions :post="post" />
                     <button v-if="logCount" type="button" class="details-action logs-action" @click="emit('show-logs', post)"
                         :title="language.get('The content of this post couldn\'t be fully retrieved') + ' — ' + language.get('View logs')">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
@@ -179,6 +181,8 @@ import { hideBrokenImage } from '@/functions/hideBrokenImage';
 import { youtubeEmbedStore } from '@/functions/youtubeEmbedStore';
 import LiveBadge from '@/components/LiveBadge.vue';
 import VideoDuration from '@/components/VideoDuration.vue';
+import PostShareActions from '@/components/PostShareActions.vue';
+import CopyLinkButton from '@/components/CopyLinkButton.vue';
 import { language } from '@/functions/languageStore';
 import { computed, ref, watch } from 'vue';
 

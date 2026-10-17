@@ -36,6 +36,7 @@
                                     <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
                                 </svg>
                             </a>
+                            <PostShareActions :post="post" />
                             <button v-if="logCount" type="button" class="post-modal-action logs-action" @click="emit('show-logs', post)"
                                 :title="language.get('The content of this post couldn\'t be fully retrieved') + ' — ' + language.get('View logs')">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
@@ -84,6 +85,7 @@ import { hideBrokenImage } from '@/functions/hideBrokenImage';
 import { youtubeEmbedStore } from '@/functions/youtubeEmbedStore';
 import LiveBadge from '@/components/LiveBadge.vue';
 import VideoDuration from '@/components/VideoDuration.vue';
+import PostShareActions from '@/components/PostShareActions.vue';
 import { language } from '@/functions/languageStore';
 import { computed, ref, watch } from 'vue';
 

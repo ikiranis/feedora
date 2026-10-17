@@ -340,6 +340,7 @@ import PostElement from '@/components/PostElement.vue';
 import PostModal from '@/components/PostModal.vue';
 import LogsModal from '@/components/log/LogsModal.vue';
 import KeyboardShortcutsModal from '@/components/KeyboardShortcutsModal.vue';
+import { clipboardStore } from '@/functions/clipboardStore';
 import AddFolderModal from '@/components/folder/AddFolderModal.vue';
 import FeedStatisticsModal from '@/components/feed/FeedStatisticsModal.vue';
 import EditFeedModal from '@/components/feed/EditFeedModal.vue';
@@ -1120,7 +1121,8 @@ const getShortcutKey = (event: KeyboardEvent): string => {
 /**
  * Handles arrow key navigation between cards.
  * In list mode, Up/Down scroll the list instead (so long expanded posts can be read) and Left/Right move between posts.
- * Enter or O opens the selected post in a modal (Esc closes it), B opens its link in a background tab, F saves it for later (or unsaves it).
+ * Enter or O opens the selected post in a modal (Esc closes it), B opens its link in a background tab, F saves it for later (or unsaves it),
+ * C copies its link to the clipboard.
  * H shows the help modal with all the keyboard shortcuts.
  */
 const handleKeydown = (event: KeyboardEvent) => {
@@ -1187,6 +1189,12 @@ const handleKeydown = (event: KeyboardEvent) => {
         case 'f':
             if (current >= 0 && posts.value[current]) {
                 toggleSaved(posts.value[current].id);
+                event.preventDefault();
+            }
+            return;
+        case 'c':
+            if (current >= 0 && posts.value[current]?.link) {
+                clipboardStore.copy(posts.value[current].link);
                 event.preventDefault();
             }
             return;
