@@ -15,7 +15,8 @@
                         <a :href="post.link" target="_blank" class="post-modal-title">{{ post.title }}</a>
                         <div class="post-modal-meta">
                             <img v-if="siteIcon" :src="siteIcon" class="post-modal-icon" alt="" @error="iconFailed = true" />
-                            <span class="text-truncate">{{ post.feed?.title }}</span>
+                            <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
+                                @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ post.feed?.title }}</span>
                             <span v-if="post.author" class="text-truncate">&middot; {{ post.author }}</span>
                             <span v-if="post.pubDate" class="flex-shrink-0">&middot; {{ new Date(post.pubDate).toLocaleString() }}</span>
                         </div>
@@ -92,6 +93,7 @@ const emit = defineEmits<{
     'close': []
     'toggle-saved': [postId: string]
     'show-logs': [post: PostType]
+    'show-feed': [feedId: string]
 }>();
 
 const bodyRef = ref<HTMLElement | null>(null);
@@ -227,6 +229,15 @@ defineExpose({ scrollBy });
     color: #8b919c;
     font-size: 1.05rem;
     min-width: 0;
+}
+
+.feed-link {
+    cursor: pointer;
+}
+
+.feed-link:hover {
+    color: #4d8dff;
+    text-decoration: underline;
 }
 
 .post-modal-icon {

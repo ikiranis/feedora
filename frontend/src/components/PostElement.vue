@@ -31,7 +31,8 @@
             <a :href="post.link" target="_blank" class="post-title" @click.stop><LiveBadge :post="post" class="me-2" />{{ post.title }}</a>
             <div class="post-source">
                 <img v-if="siteIcon" :src="siteIcon" class="site-icon source-icon" alt="" loading="lazy" @error="iconFailed = true" />
-                <span class="text-truncate">{{ post.feed?.title }}</span>
+                <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
+                    @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ post.feed?.title }}</span>
                 <span v-if="post.feed?.folderName" class="post-folder text-truncate">&middot; {{ post.feed.folderName }}</span>
             </div>
             <p v-if="!youtubeVideo && excerpt" class="post-excerpt" :class="{ 'no-media': !thumbnailUrl }">{{ excerpt }}</p>
@@ -74,7 +75,8 @@
                 :title="post.read ? (language.get('Mark as unread') || 'Mark as unread') : (language.get('Mark as read') || 'Mark as read')"></button>
             <div class="list-source" :title="post.feed?.folderName ? `${post.feed?.title} — ${post.feed.folderName}` : post.feed?.title">
                 <img v-if="siteIcon" :src="siteIcon" class="site-icon list-source-icon" alt="" loading="lazy" @error="iconFailed = true" />
-                <span class="text-truncate">{{ post.feed?.title }}</span>
+                <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
+                    @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ post.feed?.title }}</span>
             </div>
             <div class="list-main">
                 <span v-if="youtubeVideo" class="list-video-badge">
@@ -107,7 +109,8 @@
                 <a :href="post.link" target="_blank" class="details-title">{{ post.title }}</a>
                 <div class="details-meta">
                     <img v-if="siteIcon" :src="siteIcon" class="details-icon" alt="" @error="iconFailed = true" />
-                    <span class="text-truncate">{{ post.feed?.title }}</span>
+                    <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
+                        @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ post.feed?.title }}</span>
                     <span v-if="post.author" class="text-truncate">&middot; {{ post.author }}</span>
                     <span v-if="post.pubDate" class="flex-shrink-0">&middot; {{ new Date(post.pubDate).toLocaleString() }}</span>
                 </div>
@@ -317,6 +320,7 @@ const emit = defineEmits<{
     'toggle-saved': [postId: string]
     'toggle-read': [postId: string]
     'show-logs': [post: PostType]
+    'show-feed': [feedId: string]
     'close': []
 }>();
 
@@ -509,6 +513,15 @@ const handleCardClick = async () => {
     width: 20px;
     height: 20px;
     border-radius: 50%;
+}
+
+.feed-link {
+    cursor: pointer;
+}
+
+.feed-link:hover {
+    color: #4d8dff;
+    text-decoration: underline;
 }
 
 .post-folder {

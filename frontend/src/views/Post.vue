@@ -286,7 +286,7 @@
                             @click="selectedIndex = !showDetails && selectedIndex === index ? -1 : index">
                             <PostElement :post="post" :show-details="showDetails" :selected="index === selectedIndex"
                                 @post-read="handlePostRead" @toggle-saved="toggleSaved" @toggle-read="toggleRead" @show-logs="showPostLogs"
-                                @close="selectedIndex = -1" />
+                                @show-feed="showFeed" @close="selectedIndex = -1" />
                         </div>
                         <div v-if="allLoaded && posts.length > 0 && !searchTerm.trim()" class="text-center w-100 text-muted my-4">
                             {{ language.get('No more posts') || 'No more posts' }}
@@ -311,7 +311,7 @@
     </div>
 
     <PostModal v-if="modalPost" ref="postModalRef" :post="modalPost"
-        @close="modalOpen = false" @toggle-saved="toggleSaved" @show-logs="showPostLogs" />
+        @close="modalOpen = false" @toggle-saved="toggleSaved" @show-logs="showPostLogs" @show-feed="showFeed" />
 
     <LogsModal :post-id="logsPost?.id" :feed-id="logsPost?.feed?.id" :title="logsPost?.title" :show="!!logsPost"
         @logs-cleared="handlePostLogsCleared" @modal-hidden="logsPost = null" />
@@ -661,6 +661,15 @@ const selectAll = () => applyFilter(null, null);
 const selectFolder = (folderId: string) => applyFilter(folderId, null);
 const selectFeed = (feedId: string) => applyFilter(null, feedId);
 const selectSaved = () => applyFilter(null, null, true);
+
+/**
+ * Shows the posts of a post's feed, closing the opened post.
+ */
+const showFeed = (feedId: string) => {
+    modalOpen.value = false;
+    selectedIndex.value = -1;
+    selectFeed(feedId);
+};
 
 /**
  * Fetches posts from the API. It supports pagination and resetting the post list.
