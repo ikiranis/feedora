@@ -71,6 +71,12 @@ class YouTubeLiveCheckerTest {
     }
 
     @Test
+    void videoLength() throws Exception {
+        assertThat(YouTubeLiveChecker.parse(page("\"lengthSeconds\":\"634\",\"isLiveContent\":false"), ID).duration()).isEqualTo(634);
+        assertThat(YouTubeLiveChecker.parse(page("\"lengthSeconds\":\"0\",\"isUpcoming\":true"), ID).duration()).isNull();
+    }
+
+    @Test
     void apiResponse() throws Exception {
         String json = """
                 {"items": [
@@ -79,20 +85,24 @@ class YouTubeLiveCheckerTest {
                   {"id": "livenow0001", "snippet": {"liveBroadcastContent": "live"},
                    "liveStreamingDetails": {"scheduledStartTime": "2026-10-16T20:00:00Z", "actualStartTime": "2026-10-16T20:03:00Z"}},
                   {"id": "endedstream", "snippet": {"liveBroadcastContent": "none"},
-                   "liveStreamingDetails": {"actualStartTime": "2026-10-14T16:00:06Z", "actualEndTime": "2026-10-15T00:02:06Z"}},
-                  {"id": "ordinaryvid", "snippet": {"liveBroadcastContent": "none"}}
+                   "liveStreamingDetails": {"actualStartTime": "2026-10-14T16:00:06Z", "actualEndTime": "2026-10-15T00:02:06Z"},
+                   "contentDetails": {"duration": "PT8H2M"}},
+                  {"id": "ordinaryvid", "snippet": {"liveBroadcastContent": "none"}, "contentDetails": {"duration": "PT10M34S"}},
+                  {"id": "nolength001", "snippet": {"liveBroadcastContent": "none"}, "contentDetails": {"duration": "P0D"}}
                 ]}""";
         Map<String, YouTubeLiveChecker.LiveInfo> results = YouTubeLiveChecker.parseApiResponse(json,
-                List.of("upcoming001", "livenow0001", "endedstream", "ordinaryvid", "removedvide"));
+                List.of("upcoming001", "livenow0001", "endedstream", "ordinaryvid", "nolength001", "removedvide"));
 
         assertThat(results.get("upcoming001").status()).isEqualTo(LiveStatus.UPCOMING);
         assertThat(results.get("upcoming001").startAt()).isEqualTo(local("2026-10-17T09:30:00Z"));
         assertThat(results.get("livenow0001").status()).isEqualTo(LiveStatus.LIVE);
         assertThat(results.get("livenow0001").startAt()).isEqualTo(local("2026-10-16T20:03:00Z"));
-        assertThat(results.get("endedstream")).isEqualTo(new YouTubeLiveChecker.LiveInfo(null, null));
-        assertThat(results.get("ordinaryvid")).isEqualTo(new YouTubeLiveChecker.LiveInfo(null, null));
+        assertThat(results.get("upcoming001").duration()).isNull();
+        assertThat(results.get("endedstream")).isEqualTo(new YouTubeLiveChecker.LiveInfo(null, null, 8 * 3600 + 2 * 60));
+        assertThat(results.get("ordinaryvid")).isEqualTo(new YouTubeLiveChecker.LiveInfo(null, null, 634));
+        assertThat(results.get("nolength001")).isEqualTo(new YouTubeLiveChecker.LiveInfo(null, null, null));
         // Private or removed videos are missing from the answer
-        assertThat(results.get("removedvide")).isEqualTo(new YouTubeLiveChecker.LiveInfo(null, null));
+        assertThat(results.get("removedvide")).isEqualTo(new YouTubeLiveChecker.LiveInfo(null, null, null));
     }
 
     private static LocalDateTime local(String timestamp) {

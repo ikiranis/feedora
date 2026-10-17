@@ -24,7 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Finds out whether a YouTube video is a scheduled live stream/premiere or is live now.
+ * Finds out whether a YouTube video is a scheduled live stream/premiere or is live now, and its length.
  * YouTube's RSS feeds don't say, so it asks the YouTube Data API when an API key is set,
  * otherwise it reads the video's watch page (which YouTube may refuse to servers).
  */
@@ -50,12 +50,14 @@ public class YouTubeLiveChecker {
     private static final Pattern VIDEO_ID_PATH = Pattern.compile("^/(?:shorts|embed|live)/([\\w-]{11})");
     private static final Pattern VIDEO_ID_PARAM = Pattern.compile("[?&]v=([\\w-]{11})");
     private static final Pattern START_TIMESTAMP = Pattern.compile("\"startTimestamp\":\"([^\"]+)\"");
+    private static final Pattern LENGTH_SECONDS = Pattern.compile("\"lengthSeconds\":\"(\\d+)\"");
     private static final Pattern PLAYABILITY = Pattern.compile("\"playabilityStatus\":\\{\"status\":\"(\\w+)\"(?:,\"reason\":\"([^\"]*)\")?");
 
     /**
-     * Live state of a video, with the (scheduled) start time if known.
+     * Live state of a video, with the (scheduled) start time if known, and its length in seconds
+     * (null if unknown, e.g. for scheduled or live streams).
      */
-    public record LiveInfo(LiveStatus status, LocalDateTime startAt) {}
+    public record LiveInfo(LiveStatus status, LocalDateTime startAt, Integer duration) {}
 
     /**
      * Live states of the checked videos by video id, and the errors of the failed checks.
@@ -100,13 +102,13 @@ public class YouTubeLiveChecker {
     }
 
     /**
-     * Asks the YouTube Data API for the live state of up to 50 videos (costs 1 unit of the daily quota).
+     * Asks the YouTube Data API for the live state and length of up to 50 videos (costs 1 unit of the daily quota).
      *
      * @throws Exception if the API answers with an error, e.g. an invalid API key or exceeded quota
      */
     private static Map<String, LiveInfo> checkWithApi(List<String> videoIds, String apiKey) throws Exception {
-        URI uri = URI.create(API_URL + "?part=snippet,liveStreamingDetails"
-                + "&fields=items(id,snippet/liveBroadcastContent,liveStreamingDetails)"
+        URI uri = URI.create(API_URL + "?part=snippet,liveStreamingDetails,contentDetails"
+                + "&fields=items(id,snippet/liveBroadcastContent,liveStreamingDetails,contentDetails/duration)"
                 + "&id=" + String.join(",", videoIds)
                 + "&key=" + URLEncoder.encode(apiKey, StandardCharsets.UTF_8));
         HttpRequest request = HttpRequest.newBuilder(uri).timeout(TIMEOUT).GET().build();
@@ -133,13 +135,13 @@ public class YouTubeLiveChecker {
     }
 
     /**
-     * Extracts the live states from a YouTube Data API videos answer.
+     * Extracts the live states and lengths from a YouTube Data API videos answer.
      * Videos missing from the answer are private or removed, so they have no live state.
      */
     static Map<String, LiveInfo> parseApiResponse(String json, List<String> videoIds) throws Exception {
         Map<String, LiveInfo> results = new HashMap<>();
         for (String id : videoIds) {
-            results.put(id, new LiveInfo(null, null));
+            results.put(id, new LiveInfo(null, null, null));
         }
         for (JsonNode item : MAPPER.readTree(json).path("items")) {
             String content = item.path("snippet").path("liveBroadcastContent").asText("");
@@ -150,7 +152,8 @@ public class YouTubeLiveChecker {
             String start = status == LiveStatus.LIVE && details.hasNonNull("actualStartTime")
                     ? details.path("actualStartTime").asText()
                     : details.path("scheduledStartTime").asText(null);
-            results.put(item.path("id").asText(), new LiveInfo(status, status != null ? toLocalDateTime(start) : null));
+            Integer duration = status != null ? null : toSeconds(item.path("contentDetails").path("duration").asText(null));
+            results.put(item.path("id").asText(), new LiveInfo(status, status != null ? toLocalDateTime(start) : null, duration));
         }
         return results;
     }
@@ -163,6 +166,22 @@ public class YouTubeLiveChecker {
             return OffsetDateTime.parse(timestamp).atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime();
         } catch (Exception e) {
             // Unknown start time format
+            return null;
+        }
+    }
+
+    /**
+     * Seconds of an ISO 8601 duration (e.g. PT1H2M3S), or null if it's missing, zero (streams not ended yet) or unknown.
+     */
+    private static Integer toSeconds(String duration) {
+        if (duration == null) {
+            return null;
+        }
+        try {
+            long seconds = Duration.parse(duration).getSeconds();
+            return seconds > 0 && seconds <= Integer.MAX_VALUE ? (int) seconds : null;
+        } catch (Exception e) {
+            // Unknown duration format, e.g. with weeks
             return null;
         }
     }
@@ -204,7 +223,7 @@ public class YouTubeLiveChecker {
     }
 
     /**
-     * Reads the watch page of a video and returns its live state.
+     * Reads the watch page of a video and returns its live state and length.
      *
      * @param videoId The YouTube video id
      * @return The live state; its status is null for ordinary videos and ended streams
@@ -259,7 +278,7 @@ public class YouTubeLiveChecker {
     }
 
     /**
-     * Extracts the live state from a watch page. Only the video's player data is read,
+     * Extracts the live state and length from a watch page. Only the video's player data is read,
      * since the page data that follows it lists other (related) videos, which may be live too.
      *
      * @throws Exception if the page doesn't have the video's details, so its live state is unknown
@@ -285,6 +304,10 @@ public class YouTubeLiveChecker {
 
         Matcher startMatch = START_TIMESTAMP.matcher(player);
         LocalDateTime startAt = status != null && startMatch.find() ? toLocalDateTime(startMatch.group(1)) : null;
-        return new LiveInfo(status, startAt);
+
+        // Scheduled and live streams have no length yet ("0")
+        Matcher lengthMatch = LENGTH_SECONDS.matcher(player);
+        Integer duration = status == null && lengthMatch.find() ? toSeconds("PT" + lengthMatch.group(1) + "S") : null;
+        return new LiveInfo(status, startAt, duration);
     }
 }

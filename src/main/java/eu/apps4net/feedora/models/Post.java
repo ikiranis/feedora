@@ -47,6 +47,8 @@ public class Post {
     @Enumerated(EnumType.STRING)
     private LiveStatus liveStatus;
     private LocalDateTime liveStartAt;
+    // YouTube videos: length in seconds, null if unknown (e.g. scheduled or live streams)
+    private Integer duration;
     // When the live state was last checked; null for posts never checked (e.g. added before live states existed)
     @JsonIgnore
     private LocalDateTime liveCheckedAt;
@@ -105,6 +107,9 @@ public class Post {
 
     public LocalDateTime getLiveStartAt() { return liveStartAt; }
     public void setLiveStartAt(LocalDateTime liveStartAt) { this.liveStartAt = liveStartAt; }
+
+    public Integer getDuration() { return duration; }
+    public void setDuration(Integer duration) { this.duration = duration; }
 
     public LocalDateTime getLiveCheckedAt() { return liveCheckedAt; }
     public void setLiveCheckedAt(LocalDateTime liveCheckedAt) { this.liveCheckedAt = liveCheckedAt; }

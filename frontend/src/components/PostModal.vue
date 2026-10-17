@@ -63,6 +63,7 @@
                             </span>
                             {{ language.get('Watch on YouTube') || 'Watch on YouTube' }}
                         </span>
+                        <VideoDuration :seconds="post.duration" />
                     </a>
                     <div v-if="contentLoading" class="post-modal-loading">
                         <span class="spinner-border spinner-border-sm" role="status"></span>
@@ -82,6 +83,7 @@ import { postContentStore } from '@/functions/postContentStore';
 import { hideBrokenImage } from '@/functions/hideBrokenImage';
 import { youtubeEmbedStore } from '@/functions/youtubeEmbedStore';
 import LiveBadge from '@/components/LiveBadge.vue';
+import VideoDuration from '@/components/VideoDuration.vue';
 import { language } from '@/functions/languageStore';
 import { computed, ref, watch } from 'vue';
 

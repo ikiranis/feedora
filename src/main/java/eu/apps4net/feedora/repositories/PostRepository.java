@@ -89,21 +89,22 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     @Query("SELECT p.link FROM Post p WHERE p.feed = :feed AND p.user = :user AND p.link IS NOT NULL")
     List<String> findLinksByFeedAndUser(@Param("feed") Feed feed, @Param("user") User user);
 
-    // Id, link, live status and start of the feed's scheduled or live videos, to check whether their state changed,
-    // of its YouTube videos published since the given date that were never checked,
-    // and of its saved YouTube videos (any age) not checked since recheckBefore
-    @Query("SELECT p.id, p.link, p.liveStatus, p.liveStartAt FROM Post p WHERE p.feed = :feed AND p.user = :user AND " +
+    // Id, link, live status, start and length of the feed's scheduled or live videos, to check whether their state changed,
+    // of its YouTube videos published since the given date that were never checked, or have no length and weren't
+    // checked since recheckBefore (e.g. checked before lengths existed), and of its saved YouTube videos (any age)
+    // not checked since recheckBefore
+    @Query("SELECT p.id, p.link, p.liveStatus, p.liveStartAt, p.duration FROM Post p WHERE p.feed = :feed AND p.user = :user AND " +
            "(p.liveStatus IS NOT NULL OR ((p.link LIKE '%youtube.com/%' OR p.link LIKE '%youtu.be/%') AND " +
-           "((p.liveCheckedAt IS NULL AND p.pubDate > :since) OR " +
+           "((p.pubDate > :since AND (p.liveCheckedAt IS NULL OR (p.duration IS NULL AND p.liveCheckedAt < :recheckBefore))) OR " +
            "(p.saved = true AND (p.liveCheckedAt IS NULL OR p.liveCheckedAt < :recheckBefore)))))")
     List<Object[]> findLiveVideosByFeedAndUser(@Param("feed") Feed feed, @Param("user") User user,
                                                @Param("since") LocalDateTime since, @Param("recheckBefore") LocalDateTime recheckBefore);
 
     @Modifying
     @Transactional
-    @Query("UPDATE Post p SET p.liveStatus = :status, p.liveStartAt = :startAt, p.liveCheckedAt = :checkedAt WHERE p.id = :id")
+    @Query("UPDATE Post p SET p.liveStatus = :status, p.liveStartAt = :startAt, p.duration = :duration, p.liveCheckedAt = :checkedAt WHERE p.id = :id")
     int setLiveState(@Param("id") UUID id, @Param("status") LiveStatus status, @Param("startAt") LocalDateTime startAt,
-                     @Param("checkedAt") LocalDateTime checkedAt);
+                     @Param("duration") Integer duration, @Param("checkedAt") LocalDateTime checkedAt);
     
     @Modifying
     @Transactional

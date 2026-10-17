@@ -118,6 +118,8 @@ export interface PostType {
     // YouTube videos: scheduled live stream/premiere or live now, and its (scheduled) start
     liveStatus: 'UPCOMING' | 'LIVE' | null;
     liveStartAt: string | null;
+    // YouTube videos: length in seconds, null if unknown (e.g. scheduled or live streams)
+    duration: number | null;
     feed: Feed;
     user: UserType;
 }

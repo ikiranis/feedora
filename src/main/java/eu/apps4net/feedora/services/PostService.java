@@ -275,11 +275,12 @@ public class PostService {
     }
 
     /**
-     * Checks the live state (scheduled live stream/premiere, or live now) of a feed's YouTube videos, in one batch:
+     * Checks the live state (scheduled live stream/premiere, or live now) and length of a feed's YouTube videos, in one batch:
      * - the new posts published within LIVE_CHECK_MAX_AGE_DAYS, before they're saved
      * - stored videos that are live, or scheduled to start by now, since their state changes over time
      *   (scheduled → live → ended); videos scheduled for later are only checked once their start time comes
-     * - stored recent videos that were never checked, e.g. added before live states existed,
+     * - stored recent videos that were never checked, e.g. added before live states existed, or have no length
+     *   (once a day, e.g. checked before lengths existed),
      *   and saved videos once a day, since they're kept for long and may be scheduled later
      * Videos that couldn't be checked are left unchanged, and checked again on the feed's next parse.
      *
@@ -304,7 +305,7 @@ public class PostService {
             }
             String videoId = YouTubeLiveChecker.videoId((String) video[1]);
             if (videoId == null) {
-                postRepository.setLiveState((UUID) video[0], null, null, now);
+                postRepository.setLiveState((UUID) video[0], null, null, (Integer) video[4], now);
                 continue;
             }
             storedVideos.add(video);
@@ -327,7 +328,8 @@ public class PostService {
             if (info != null) {
                 // Ended streams keep their start time, and no longer have a live status
                 LocalDateTime startAt = info.startAt() != null ? info.startAt() : (LocalDateTime) video[3];
-                postRepository.setLiveState((UUID) video[0], info.status(), startAt, now);
+                Integer duration = info.duration() != null ? info.duration() : (Integer) video[4];
+                postRepository.setLiveState((UUID) video[0], info.status(), startAt, duration, now);
             }
         }
         for (Post post : newVideos) {
@@ -335,6 +337,7 @@ public class PostService {
             if (info != null) {
                 post.setLiveStatus(info.status());
                 post.setLiveStartAt(info.startAt());
+                post.setDuration(info.duration());
                 post.setLiveCheckedAt(now);
             }
         }

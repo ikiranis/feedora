@@ -20,6 +20,7 @@
                 </svg>
             </span>
             <span v-if="youtubeVideo && embeddable === false" class="media-external">{{ watchOnYoutube }}</span>
+            <VideoDuration v-if="youtubeVideo" :seconds="post.duration" />
         </div>
 
         <div class="card-content">
@@ -156,6 +157,7 @@
                     </svg>
                 </span>
                 <span v-if="embeddable === false" class="media-external">{{ watchOnYoutube }}</span>
+                <VideoDuration :seconds="post.duration" />
             </a>
             <div v-if="contentLoading" class="content-loading">
                 <span class="spinner-border spinner-border-sm" role="status"></span>
@@ -176,6 +178,7 @@ import { postContentStore } from '@/functions/postContentStore';
 import { hideBrokenImage } from '@/functions/hideBrokenImage';
 import { youtubeEmbedStore } from '@/functions/youtubeEmbedStore';
 import LiveBadge from '@/components/LiveBadge.vue';
+import VideoDuration from '@/components/VideoDuration.vue';
 import { language } from '@/functions/languageStore';
 import { computed, ref, watch } from 'vue';
 
