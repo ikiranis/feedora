@@ -329,6 +329,7 @@ const observedPosts = ref<Set<string>>(new Set()); // Unread posts currently vis
 const lastScrollTop = ref(0); // Scroll position at the previous scroll event, to detect scrolling down
 const searchTerm = ref('');
 const searchTimeout = ref<number | null>(null);
+let skipSearchWatch = false; // Set when the search is cleared by a filter change, to avoid a second fetch
 const selectedIndex = ref(-1); // Index of the card selected via keyboard navigation
 const modalOpen = ref(false); // The selected post is shown in full in a modal
 const postModalRef = ref<InstanceType<typeof PostModal> | null>(null);
@@ -570,6 +571,11 @@ const applyFilter = (folderId: string | null, feedId: string | null, saved = fal
     selectedFolderId.value = folderId;
     selectedFeedId.value = feedId;
     showSaved.value = saved;
+    if (searchTerm.value) {
+        // The posts are reloaded below, so the search watcher must not fetch them again
+        skipSearchWatch = true;
+        searchTerm.value = '';
+    }
     scrollableContainerRef.value?.scrollTo({ top: 0 });
     handleRefreshPosts();
 };
@@ -1099,7 +1105,13 @@ watch(searchTerm, (_) => {
     if (searchTimeout.value) {
         clearTimeout(searchTimeout.value);
     }
-    
+
+    // The search was cleared by a filter change, which already reloads the posts
+    if (skipSearchWatch) {
+        skipSearchWatch = false;
+        return;
+    }
+
     // Set new timeout for debounced search
     searchTimeout.value = setTimeout(() => {
         // Cleanup intersection observer before search
