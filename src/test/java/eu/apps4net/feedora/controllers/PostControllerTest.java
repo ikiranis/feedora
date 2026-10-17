@@ -122,6 +122,37 @@ class PostControllerTest extends ApiTestBase {
     }
 
     @Test
+    void youtubeShortsCanBeHiddenByFolder() throws Exception {
+        createFeeds();
+        Folder videos = createFolder("Videos", user);
+        Feed channel = createFeed("Channel", "http://youtube.example/rss", videos, user);
+        createPost("Video", channel, user, false, now.minusDays(4), "https://www.youtube.com/watch?v=aaaaaaaaaaa");
+        createPost("Short", channel, user, false, now.minusDays(3), "https://www.youtube.com/shorts/bbbbbbbbbbb");
+        createPost("News short", bbc, user, false, now.minusDays(2), "https://www.youtube.com/shorts/ccccccccccc");
+        createPost("Orphan short", verge, user, false, now.minusDays(1), "https://www.youtube.com/shorts/ddddddddddd");
+        String hidden = videos.getId().toString();
+
+        mockMvc.perform(auth(get("/api/posts/getPosts").param("page", "1").param("pageSize", "10")))
+                .andExpect(jsonPath("$[*].title", contains("Orphan short", "News short", "Short", "Video")));
+
+        // Only the Shorts of the given folders are left out, in every view
+        mockMvc.perform(auth(get("/api/posts/getPosts").param("page", "1").param("pageSize", "10").param("hideShortsFolderIds", hidden)))
+                .andExpect(jsonPath("$[*].title", contains("Orphan short", "News short", "Video")));
+        mockMvc.perform(auth(get("/api/posts/getPosts").param("page", "1").param("pageSize", "10")
+                        .param("folderId", hidden).param("hideShortsFolderIds", hidden)))
+                .andExpect(jsonPath("$[*].title", contains("Video")));
+        mockMvc.perform(auth(get("/api/posts/getPosts").param("page", "1").param("pageSize", "10")
+                        .param("feedId", channel.getId().toString()).param("search", "o").param("hideShortsFolderIds", hidden)))
+                .andExpect(jsonPath("$[*].title", contains("Video")));
+
+        mockMvc.perform(auth(get("/api/posts/unreadCounts").param("hideShortsFolderIds", hidden)))
+                .andExpect(jsonPath("$.total").value(3))
+                .andExpect(jsonPath("$.folders." + hidden).value(1))
+                .andExpect(jsonPath("$.feeds[?(@.title == 'Channel')].count", contains(1)))
+                .andExpect(jsonPath("$.feeds[?(@.title == 'Verge')].count", contains(1)));
+    }
+
+    @Test
     void getPostsReturnsSavedPostsReadOrUnread() throws Exception {
         createFeeds();
         Post savedUnread = createPost("Saved unread", bbc, user, false, now.minusDays(1));

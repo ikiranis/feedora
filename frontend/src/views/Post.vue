@@ -228,6 +228,23 @@
                                     d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z" />
                             </svg>
                         </button>
+                        <button v-if="!showSaved && currentFolderId" type="button" class="btn btn-outline-secondary me-3"
+                            :class="{ active: hideShorts }" @click="hideShorts = !hideShorts" :disabled="loading"
+                            :title="hideShorts
+                                ? (language.get('Show YouTube Shorts in this folder') || 'Show YouTube Shorts in this folder')
+                                : (language.get('Hide YouTube Shorts in this folder') || 'Hide YouTube Shorts in this folder')">
+                            <svg v-if="hideShorts" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                fill="currentColor" class="bi bi-eye-slash" viewBox="0 0 16 16">
+                                <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/>
+                                <path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/>
+                                <path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>
+                            </svg>
+                            <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                                <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                                <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                            </svg>
+                        </button>
                         <button @click="handleParseFeeds" class="btn btn-outline-primary me-3"
                             :title="language.get('Parse RSS Feeds') || 'Parse RSS Feeds'" :disabled="loading">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
@@ -363,6 +380,38 @@ const editedFolder = ref<FolderType | null>(null); // Folder shown in the edit f
 const statisticsFeed = ref<Feed | null>(null); // Feed shown in the statistics modal
 const editedFeed = ref<Feed | null>(null); // Feed shown in the edit feed modal
 const showRead = ref(localStorage.getItem('posts-show-read') === 'true'); // Lists the read posts too, persisted in localStorage
+
+// Folders whose YouTube Shorts are hidden, persisted in localStorage. Feeds use their folder's setting,
+// and the "All Posts" view leaves out the Shorts of these folders too.
+const HIDE_SHORTS_KEY = 'posts-hide-shorts-folders';
+const hiddenShortsFolders = ref<Set<string>>((() => {
+    try {
+        return new Set<string>(JSON.parse(localStorage.getItem(HIDE_SHORTS_KEY) || '[]'));
+    } catch {
+        return new Set<string>();
+    }
+})());
+
+// Folder of the current view (the selected folder, or the folder of the selected feed), null for the other views
+const currentFolderId = computed<string | null>(() => selectedFolderId.value
+    ?? unreadCounts.value.feeds.find(f => f.id === selectedFeedId.value)?.folderId
+    ?? null);
+
+// Whether the Shorts of the current folder are hidden. Changing it reloads the posts and the unread counts.
+const hideShorts = computed<boolean>({
+    get: () => !!currentFolderId.value && hiddenShortsFolders.value.has(currentFolderId.value),
+    set: (value) => {
+        const folderId = currentFolderId.value;
+        if (!folderId) return;
+        const folderIds = new Set(hiddenShortsFolders.value);
+        if (value) folderIds.add(folderId);
+        else folderIds.delete(folderId);
+        hiddenShortsFolders.value = folderIds;
+        localStorage.setItem(HIDE_SHORTS_KEY, JSON.stringify([...folderIds]));
+        scrollableContainerRef.value?.scrollTo({ top: 0 });
+        handleRefreshPosts();
+    },
+});
 
 // Choices of the "Mark all as read" dropdown, by the age of the posts to mark (null marks all of them)
 const markAsReadToggleRef = ref<HTMLElement | null>(null);
@@ -581,7 +630,7 @@ const removeFolder = async (folder: FolderType) => {
  */
 const fetchUnreadCounts = async () => {
     try {
-        unreadCounts.value = await getUnreadCounts();
+        unreadCounts.value = await getUnreadCounts([...hiddenShortsFolders.value]);
     } catch (e) {
         console.error('Error fetching unread counts:', e);
     }
@@ -623,7 +672,8 @@ const fetchPosts = async (reset = false) => {
             selectedIndex.value = -1;
         }
 
-        const data = await getPosts(page.value, pageSize, searchTerm.value, selectedFolderId.value, selectedFeedId.value, showSaved.value, showRead.value);
+        const data = await getPosts(page.value, pageSize, searchTerm.value, selectedFolderId.value, selectedFeedId.value, showSaved.value, showRead.value,
+            [...hiddenShortsFolders.value]);
 
         if (data.length < pageSize) {
             allLoaded.value = true;

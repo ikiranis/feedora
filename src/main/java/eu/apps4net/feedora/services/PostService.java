@@ -485,6 +485,26 @@ public class PostService {
      */
     public List<Post> getPostsForUser(User user, int page, int pageSize, String searchTerm, UUID folderId, UUID feedId,
                                       boolean saved, boolean includeRead) {
+        return getPostsForUser(user, page, pageSize, searchTerm, folderId, feedId, saved, includeRead, null);
+    }
+
+    /**
+     * Returns paginated posts for a given user, optionally filtered by search term and by feed or folder.
+     * @param user The user
+     * @param page The page number (1-indexed)
+     * @param pageSize The number of posts per page
+     * @param searchTerm The search term to filter posts by title or description (case-insensitive)
+     * @param folderId The folder whose feeds' posts to return, or null for all folders
+     * @param feedId The feed whose posts to return, or null for all feeds. Takes precedence over folderId.
+     * @param saved If true, returns the saved posts (read or unread) instead. Takes precedence over feedId and folderId.
+     * @param includeRead If true, returns the read posts too, otherwise only the unread ones
+     * @param hideShortsFolderIds Folders whose YouTube Shorts are left out (null or empty for none). Not applied to the saved posts.
+     * @return List of posts, or of saved posts
+     */
+    public List<Post> getPostsForUser(User user, int page, int pageSize, String searchTerm, UUID folderId, UUID feedId,
+                                      boolean saved, boolean includeRead, List<UUID> hideShortsFolderIds) {
+        boolean hideShorts = hideShortsFolderIds != null && !hideShortsFolderIds.isEmpty();
+        List<UUID> shortsFolderIds = shortsFolderIdsParam(hideShortsFolderIds);
         Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "pubDate"));
         boolean hasSearch = searchTerm != null && !searchTerm.trim().isEmpty();
 
@@ -496,19 +516,27 @@ public class PostService {
 
         if (feedId != null) {
             return hasSearch
-                    ? postRepository.findByUserAndFeedAndTitleOrDescriptionContaining(user, includeRead, feedId, searchTerm.trim(), pageable)
-                    : postRepository.findByUserAndFeed(user, includeRead, feedId, pageable);
+                    ? postRepository.findByUserAndFeedAndTitleOrDescriptionContaining(user, includeRead, feedId, searchTerm.trim(), hideShorts, shortsFolderIds, pageable)
+                    : postRepository.findByUserAndFeed(user, includeRead, feedId, hideShorts, shortsFolderIds, pageable);
         }
 
         if (folderId != null) {
             return hasSearch
-                    ? postRepository.findByUserAndFolderAndTitleOrDescriptionContaining(user, includeRead, folderId, searchTerm.trim(), pageable)
-                    : postRepository.findByUserAndFolder(user, includeRead, folderId, pageable);
+                    ? postRepository.findByUserAndFolderAndTitleOrDescriptionContaining(user, includeRead, folderId, searchTerm.trim(), hideShorts, shortsFolderIds, pageable)
+                    : postRepository.findByUserAndFolder(user, includeRead, folderId, hideShorts, shortsFolderIds, pageable);
         }
 
         return hasSearch
-                ? postRepository.findByUserAndTitleOrDescriptionContaining(user, includeRead, searchTerm.trim(), pageable)
-                : postRepository.findByUser(user, includeRead, pageable);
+                ? postRepository.findByUserAndTitleOrDescriptionContaining(user, includeRead, searchTerm.trim(), hideShorts, shortsFolderIds, pageable)
+                : postRepository.findByUser(user, includeRead, hideShorts, shortsFolderIds, pageable);
+    }
+
+    /**
+     * Value of the hideShortsFolderIds query parameter: the given folders, or a placeholder when there are none,
+     * since an empty list can't be bound to NOT IN (the queries ignore it when hideShorts is false).
+     */
+    private static List<UUID> shortsFolderIdsParam(List<UUID> hideShortsFolderIds) {
+        return hideShortsFolderIds != null && !hideShortsFolderIds.isEmpty() ? hideShortsFolderIds : List.of(new UUID(0, 0));
     }
 
     /**
@@ -519,11 +547,24 @@ public class PostService {
      *         "folders" (folder id → unread count) and "feeds" (list of {id, title, htmlUrl, folderId, count})
      */
     public Map<String, Object> getUnreadCounts(User user) {
+        return getUnreadCounts(user, null);
+    }
+
+    /**
+     * Returns the unread post counts for a given user, in total, per folder and per feed.
+     * All the user's feeds are included (with count 0 if they have no unread posts), but only folders with unread posts.
+     * @param user The user
+     * @param hideShortsFolderIds Folders whose YouTube Shorts aren't counted (null or empty for none)
+     * @return Map with "total" (long), "saved" (long, number of saved posts read or unread),
+     *         "folders" (folder id → unread count) and "feeds" (list of {id, title, htmlUrl, folderId, count})
+     */
+    public Map<String, Object> getUnreadCounts(User user, List<UUID> hideShortsFolderIds) {
         long total = 0;
         Map<String, Long> folderCounts = new HashMap<>();
         List<Map<String, Object>> feedCounts = new ArrayList<>();
 
-        for (Object[] row : postRepository.countUnreadByFeed(user)) {
+        for (Object[] row : postRepository.countUnreadByFeed(user,
+                hideShortsFolderIds != null && !hideShortsFolderIds.isEmpty(), shortsFolderIdsParam(hideShortsFolderIds))) {
             String folderId = row[3] != null ? row[3].toString() : null;
             long count = (Long) row[4];
             total += count;

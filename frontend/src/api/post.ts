@@ -11,10 +11,11 @@ import type { UnreadCountsType } from "@/types";
  * @param feedId - Optional feed id to only return posts of that feed
  * @param saved - If true, return the saved posts (read or unread) instead of the unread ones
  * @param includeRead - If true, return the read posts too, not only the unread ones
+ * @param hideShortsFolderIds - Folders whose YouTube Shorts are left out (not applied to the saved posts)
  * @returns {Promise<any>} List of posts
  * @throws Error if the request fails
  */
-export const getPosts = async (page: number, pageSize: number, search?: string, folderId?: string | null, feedId?: string | null, saved?: boolean, includeRead?: boolean) => {
+export const getPosts = async (page: number, pageSize: number, search?: string, folderId?: string | null, feedId?: string | null, saved?: boolean, includeRead?: boolean, hideShortsFolderIds?: string[]) => {
     try {
         const params: any = { page, pageSize };
         if (search && search.trim()) {
@@ -32,6 +33,9 @@ export const getPosts = async (page: number, pageSize: number, search?: string, 
         if (includeRead) {
             params.includeRead = true;
         }
+        if (hideShortsFolderIds?.length) {
+            params.hideShortsFolderIds = hideShortsFolderIds.join(',');
+        }
         
         const response = await axios.get(config.defaultServer() + '/api/posts/getPosts', {
             params,
@@ -47,11 +51,13 @@ export const getPosts = async (page: number, pageSize: number, search?: string, 
 
 /**
  * Fetch the unread post counts for the current user, in total, per folder and per feed.
+ * @param hideShortsFolderIds - Folders whose YouTube Shorts aren't counted
  * @returns {Promise<UnreadCountsType>} Total unread count, saved posts count, a map of folder id to unread count and the feeds with unread posts
  * @throws Error if the request fails
  */
-export const getUnreadCounts = async (): Promise<UnreadCountsType> => {
-    const response = await axios.get(config.defaultServer() + '/api/posts/unreadCounts');
+export const getUnreadCounts = async (hideShortsFolderIds?: string[]): Promise<UnreadCountsType> => {
+    const params = hideShortsFolderIds?.length ? { hideShortsFolderIds: hideShortsFolderIds.join(',') } : {};
+    const response = await axios.get(config.defaultServer() + '/api/posts/unreadCounts', { params });
     return response.data;
 };
 

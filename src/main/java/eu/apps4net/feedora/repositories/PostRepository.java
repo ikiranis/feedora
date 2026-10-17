@@ -22,30 +22,41 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     List<Post> findByUser(User user);
     List<Post> findByUser(User user, Pageable pageable);
     List<Post> findByUserAndReadFalse(User user);
+
+    // Excludes the YouTube Shorts of the feeds in the given folders, when hideShorts is true
+    String NOT_HIDDEN_SHORT = " AND (:hideShorts = false OR p.link IS NULL OR p.link NOT LIKE '%youtube.com/shorts/%' OR " +
+            "p.feed.folder IS NULL OR p.feed.folder.id NOT IN :hideShortsFolderIds)";
+
     // Posts of the user, only the unread ones unless includeRead is true
-    @Query("SELECT p FROM Post p WHERE p.user = :user AND (p.read = false OR :includeRead = true)")
-    List<Post> findByUser(@Param("user") User user, @Param("includeRead") boolean includeRead, Pageable pageable);
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND (p.read = false OR :includeRead = true)" + NOT_HIDDEN_SHORT)
+    List<Post> findByUser(@Param("user") User user, @Param("includeRead") boolean includeRead, @Param("hideShorts") boolean hideShorts,
+                            @Param("hideShortsFolderIds") List<UUID> hideShortsFolderIds, Pageable pageable);
 
     @Query("SELECT p FROM Post p WHERE p.user = :user AND (p.read = false OR :includeRead = true) AND " +
            "(LOWER(p.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-           "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
-    List<Post> findByUserAndTitleOrDescriptionContaining(@Param("user") User user, @Param("includeRead") boolean includeRead, @Param("searchTerm") String searchTerm, Pageable pageable);
+           "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))" + NOT_HIDDEN_SHORT)
+    List<Post> findByUserAndTitleOrDescriptionContaining(@Param("user") User user, @Param("includeRead") boolean includeRead, @Param("searchTerm") String searchTerm, @Param("hideShorts") boolean hideShorts,
+                            @Param("hideShortsFolderIds") List<UUID> hideShortsFolderIds, Pageable pageable);
 
-    @Query("SELECT p FROM Post p WHERE p.user = :user AND (p.read = false OR :includeRead = true) AND p.feed.folder.id = :folderId")
-    List<Post> findByUserAndFolder(@Param("user") User user, @Param("includeRead") boolean includeRead, @Param("folderId") UUID folderId, Pageable pageable);
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND (p.read = false OR :includeRead = true) AND p.feed.folder.id = :folderId" + NOT_HIDDEN_SHORT)
+    List<Post> findByUserAndFolder(@Param("user") User user, @Param("includeRead") boolean includeRead, @Param("folderId") UUID folderId, @Param("hideShorts") boolean hideShorts,
+                            @Param("hideShortsFolderIds") List<UUID> hideShortsFolderIds, Pageable pageable);
 
     @Query("SELECT p FROM Post p WHERE p.user = :user AND (p.read = false OR :includeRead = true) AND p.feed.folder.id = :folderId AND " +
            "(LOWER(p.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-           "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
-    List<Post> findByUserAndFolderAndTitleOrDescriptionContaining(@Param("user") User user, @Param("includeRead") boolean includeRead, @Param("folderId") UUID folderId, @Param("searchTerm") String searchTerm, Pageable pageable);
+           "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))" + NOT_HIDDEN_SHORT)
+    List<Post> findByUserAndFolderAndTitleOrDescriptionContaining(@Param("user") User user, @Param("includeRead") boolean includeRead, @Param("folderId") UUID folderId, @Param("searchTerm") String searchTerm, @Param("hideShorts") boolean hideShorts,
+                            @Param("hideShortsFolderIds") List<UUID> hideShortsFolderIds, Pageable pageable);
 
-    @Query("SELECT p FROM Post p WHERE p.user = :user AND (p.read = false OR :includeRead = true) AND p.feed.id = :feedId")
-    List<Post> findByUserAndFeed(@Param("user") User user, @Param("includeRead") boolean includeRead, @Param("feedId") UUID feedId, Pageable pageable);
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND (p.read = false OR :includeRead = true) AND p.feed.id = :feedId" + NOT_HIDDEN_SHORT)
+    List<Post> findByUserAndFeed(@Param("user") User user, @Param("includeRead") boolean includeRead, @Param("feedId") UUID feedId, @Param("hideShorts") boolean hideShorts,
+                            @Param("hideShortsFolderIds") List<UUID> hideShortsFolderIds, Pageable pageable);
 
     @Query("SELECT p FROM Post p WHERE p.user = :user AND (p.read = false OR :includeRead = true) AND p.feed.id = :feedId AND " +
            "(LOWER(p.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
-           "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
-    List<Post> findByUserAndFeedAndTitleOrDescriptionContaining(@Param("user") User user, @Param("includeRead") boolean includeRead, @Param("feedId") UUID feedId, @Param("searchTerm") String searchTerm, Pageable pageable);
+           "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))" + NOT_HIDDEN_SHORT)
+    List<Post> findByUserAndFeedAndTitleOrDescriptionContaining(@Param("user") User user, @Param("includeRead") boolean includeRead, @Param("feedId") UUID feedId, @Param("searchTerm") String searchTerm, @Param("hideShorts") boolean hideShorts,
+                            @Param("hideShortsFolderIds") List<UUID> hideShortsFolderIds, Pageable pageable);
 
     // Saved posts are returned whether read or not
     List<Post> findByUserAndSavedTrue(User user, Pageable pageable);
@@ -59,11 +70,13 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     List<Post> findByUserAndSavedFalse(User user);
 
     // Rows of [feed id, feed title, feed website, folder id (nullable), unread count] for every feed of the user,
-    // including feeds without unread posts (count 0)
+    // including feeds without unread posts (count 0). The YouTube Shorts of the given folders aren't counted when hideShorts is true.
     @Query("SELECT f.id, f.title, f.htmlUrl, fo.id, COUNT(p) FROM Feed f LEFT JOIN f.folder fo " +
-           "LEFT JOIN f.posts p ON p.user = :user AND p.read = false " +
+           "LEFT JOIN f.posts p ON p.user = :user AND p.read = false AND (:hideShorts = false OR p.link IS NULL OR " +
+           "p.link NOT LIKE '%youtube.com/shorts/%' OR fo IS NULL OR fo.id NOT IN :hideShortsFolderIds) " +
            "WHERE f.user = :user GROUP BY f.id, f.title, f.htmlUrl, fo.id")
-    List<Object[]> countUnreadByFeed(@Param("user") User user);
+    List<Object[]> countUnreadByFeed(@Param("user") User user, @Param("hideShorts") boolean hideShorts,
+                                      @Param("hideShortsFolderIds") List<UUID> hideShortsFolderIds);
 
     // Rows of [user id, number of posts, number of unread posts, number of saved posts] for every user that has posts
     @Query("SELECT p.user.id, COUNT(p), SUM(CASE WHEN p.read = false THEN 1 ELSE 0 END), SUM(CASE WHEN p.saved = true THEN 1 ELSE 0 END) " +

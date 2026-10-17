@@ -345,7 +345,7 @@ class PostServiceTest {
         postService.getPostsForUser(user, 2, 15);
 
         ArgumentCaptor<Pageable> pageable = ArgumentCaptor.forClass(Pageable.class);
-        verify(postRepository).findByUser(eq(user), eq(false), pageable.capture());
+        verify(postRepository).findByUser(eq(user), eq(false), eq(false), any(), pageable.capture());
         assertThat(pageable.getValue().getPageNumber()).isEqualTo(1);
         assertThat(pageable.getValue().getPageSize()).isEqualTo(15);
         assertThat(pageable.getValue().getSort().getOrderFor("pubDate").getDirection()).isEqualTo(Sort.Direction.DESC);
@@ -357,19 +357,19 @@ class PostServiceTest {
         UUID feedId = UUID.randomUUID();
 
         postService.getPostsForUser(user, 1, 10, " term ");
-        verify(postRepository).findByUserAndTitleOrDescriptionContaining(eq(user), eq(false), eq("term"), any());
+        verify(postRepository).findByUserAndTitleOrDescriptionContaining(eq(user), eq(false), eq("term"), eq(false), any(), any());
 
         postService.getPostsForUser(user, 1, 10, null, folderId, null, false, true);
-        verify(postRepository).findByUserAndFolder(eq(user), eq(true), eq(folderId), any());
+        verify(postRepository).findByUserAndFolder(eq(user), eq(true), eq(folderId), eq(false), any(), any());
 
         postService.getPostsForUser(user, 1, 10, "x", folderId, null, false, false);
-        verify(postRepository).findByUserAndFolderAndTitleOrDescriptionContaining(eq(user), eq(false), eq(folderId), eq("x"), any());
+        verify(postRepository).findByUserAndFolderAndTitleOrDescriptionContaining(eq(user), eq(false), eq(folderId), eq("x"), eq(false), any(), any());
 
         postService.getPostsForUser(user, 1, 10, null, folderId, feedId, false, false);
-        verify(postRepository).findByUserAndFeed(eq(user), eq(false), eq(feedId), any());
+        verify(postRepository).findByUserAndFeed(eq(user), eq(false), eq(feedId), eq(false), any(), any());
 
         postService.getPostsForUser(user, 1, 10, "x", null, feedId, false, false);
-        verify(postRepository).findByUserAndFeedAndTitleOrDescriptionContaining(eq(user), eq(false), eq(feedId), eq("x"), any());
+        verify(postRepository).findByUserAndFeedAndTitleOrDescriptionContaining(eq(user), eq(false), eq(feedId), eq("x"), eq(false), any(), any());
 
         postService.getPostsForUser(user, 1, 10, null, folderId, feedId, true, false);
         verify(postRepository).findByUserAndSavedTrue(eq(user), any());
@@ -379,13 +379,24 @@ class PostServiceTest {
     }
 
     @Test
+    void getPostsForUserPassesTheFoldersWhoseShortsAreHidden() {
+        UUID folderId = UUID.randomUUID();
+
+        postService.getPostsForUser(user, 1, 10, null, null, null, false, false, List.of(folderId));
+        verify(postRepository).findByUser(eq(user), eq(false), eq(true), eq(List.of(folderId)), any());
+
+        postService.getPostsForUser(user, 1, 10, null, folderId, null, false, false, List.of());
+        verify(postRepository).findByUserAndFolder(eq(user), eq(false), eq(folderId), eq(false), any(), any());
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     void getUnreadCountsSumsPerFolder() {
         UUID folderId = UUID.randomUUID();
         UUID feedA = UUID.randomUUID();
         UUID feedB = UUID.randomUUID();
         UUID feedC = UUID.randomUUID();
-        when(postRepository.countUnreadByFeed(user)).thenReturn(List.of(
+        when(postRepository.countUnreadByFeed(eq(user), eq(false), any())).thenReturn(List.of(
                 new Object[]{feedA, "A", "http://a", folderId, 2L},
                 new Object[]{feedB, "B", "http://b", folderId, 3L},
                 new Object[]{feedC, "C", "http://c", null, 4L}));

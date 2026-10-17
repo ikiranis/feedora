@@ -67,15 +67,17 @@ public class PostController {
     public List<Post> getPosts(@RequestParam int page, @RequestParam int pageSize, @RequestParam(required = false) String search,
                                @RequestParam(required = false) UUID folderId, @RequestParam(required = false) UUID feedId,
                                @RequestParam(defaultValue = "false") boolean saved,
-                               @RequestParam(defaultValue = "false") boolean includeRead) {
+                               @RequestParam(defaultValue = "false") boolean includeRead,
+                               @RequestParam(required = false) List<UUID> hideShortsFolderIds) {
         User currentUser = userService.getCurrentUser();
-        return postService.getPostsForUser(currentUser, page, pageSize, search, folderId, feedId, saved, includeRead);
+        return postService.getPostsForUser(currentUser, page, pageSize, search, folderId, feedId, saved, includeRead, hideShortsFolderIds);
     }
 
+    // hideShortsFolderIds: folders whose YouTube Shorts aren't counted
     @GetMapping("/unreadCounts")
-    public Map<String, Object> getUnreadCounts() {
+    public Map<String, Object> getUnreadCounts(@RequestParam(required = false) List<UUID> hideShortsFolderIds) {
         User currentUser = userService.getCurrentUser();
-        return postService.getUnreadCounts(currentUser);
+        return postService.getUnreadCounts(currentUser, hideShortsFolderIds);
     }
 
     // The content, and the number of log entries of the post (e.g. when its page couldn't be read)

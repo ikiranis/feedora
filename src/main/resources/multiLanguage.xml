@@ -1598,4 +1598,14 @@
         <language code="el">Τέλος επεξεργασίας φακέλων</language>
     </entry>
 
+    <entry id="Hide YouTube Shorts in this folder">
+        <language code="en">Hide YouTube Shorts in this folder</language>
+        <language code="el">Απόκρυψη των YouTube Shorts σε αυτόν τον φάκελο</language>
+    </entry>
+
+    <entry id="Show YouTube Shorts in this folder">
+        <language code="en">Show YouTube Shorts in this folder</language>
+        <language code="el">Εμφάνιση των YouTube Shorts σε αυτόν τον φάκελο</language>
+    </entry>
+
 </root>

@@ -91,7 +91,11 @@ public abstract class ApiTestBase {
     }
 
     protected Post createPost(String title, Feed feed, User owner, boolean read, LocalDateTime pubDate) {
-        Post post = new Post(title, "http://example.com/post/" + UUID.randomUUID(), "Description of " + title, pubDate, "Author", read);
+        return createPost(title, feed, owner, read, pubDate, "http://example.com/post/" + UUID.randomUUID());
+    }
+
+    protected Post createPost(String title, Feed feed, User owner, boolean read, LocalDateTime pubDate, String link) {
+        Post post = new Post(title, link, "Description of " + title, pubDate, "Author", read);
         post.setFeed(feed);
         post.setUser(owner);
         return postRepository.save(post);
