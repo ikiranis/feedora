@@ -77,7 +77,9 @@ const formatDate = (date: string | null) => date ? new Date(date).toLocaleString
 
 const formatNumber = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
-const formatInterval = (minutes: number) => minutes < 60
+const formatInterval = (minutes: number) => minutes === 1
+    ? language.get('Every minute')
+    : minutes < 60
     ? language.get('Every {0} minutes').replace('{0}', String(minutes))
     : language.get('Every {0} hours').replace('{0}', formatNumber(minutes / 60));
 

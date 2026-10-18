@@ -15,10 +15,12 @@ import java.util.UUID;
 @Entity
 public class FeedStatistics {
     // Check intervals, from the posting frequency of the feed
+    public static final int VERY_BUSY_INTERVAL_MINUTES = 1;     // more than VERY_BUSY_POSTS_PER_HOUR posts per hour
     public static final int BUSY_INTERVAL_MINUTES = 5;          // more than BUSY_POSTS_PER_HOUR posts per hour
     public static final int FREQUENT_INTERVAL_MINUTES = 10;     // more than 1 post per hour
     public static final int DAILY_INTERVAL_MINUTES = 60;        // more than 1 post per day
     public static final int RARE_INTERVAL_MINUTES = 6 * 60;     // up to 1 post per day
+    public static final int VERY_BUSY_POSTS_PER_HOUR = 30;
     public static final int BUSY_POSTS_PER_HOUR = 10;
     // After this many failed checks in a row, the feed is checked as rarely as possible
     public static final int MAX_CONSECUTIVE_ERRORS = 3;
@@ -124,13 +126,16 @@ public class FeedStatistics {
      * @return true if the feed was never checked or its next check is due
      */
     public boolean isDue(LocalDateTime now) {
-        // A minute of tolerance, so a feed isn't skipped because the scheduler ran a bit earlier than its next check
-        return nextCheckAt == null || !nextCheckAt.isAfter(now.plusMinutes(1));
+        // Some tolerance, so a feed isn't skipped because the scheduler ran a bit earlier than its next check.
+        // It's less than the scheduler's period of a minute, so the feeds aren't checked a run too early.
+        return nextCheckAt == null || !nextCheckAt.isAfter(now.plusSeconds(30));
     }
 
     private void scheduleNextCheck(LocalDateTime checkedAt) {
         if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
             checkIntervalMinutes = RARE_INTERVAL_MINUTES;
+        } else if (postsPerHour > VERY_BUSY_POSTS_PER_HOUR) {
+            checkIntervalMinutes = VERY_BUSY_INTERVAL_MINUTES;
         } else if (postsPerHour > BUSY_POSTS_PER_HOUR) {
             checkIntervalMinutes = BUSY_INTERVAL_MINUTES;
         } else if (postsPerHour > 1) {

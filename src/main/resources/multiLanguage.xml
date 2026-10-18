@@ -1324,6 +1324,11 @@
         <language code="el">Ποτέ</language>
     </entry>
 
+    <entry id="Every minute">
+        <language code="en">Every minute</language>
+        <language code="el">Κάθε λεπτό</language>
+    </entry>
+
     <entry id="Every {0} minutes">
         <language code="en">Every {0} minutes</language>
         <language code="el">Κάθε {0} λεπτά</language>

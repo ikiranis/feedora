@@ -59,6 +59,6 @@ public class FeedParseWorkerConfig {
                 e.printStackTrace();
             }
         // Runs at the shortest check interval, each feed is checked only when its own interval has passed
-        }, 0, FeedStatistics.BUSY_INTERVAL_MINUTES, TimeUnit.MINUTES);
+        }, 0, FeedStatistics.VERY_BUSY_INTERVAL_MINUTES, TimeUnit.MINUTES);
     }
 }
