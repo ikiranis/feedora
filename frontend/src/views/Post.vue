@@ -2,7 +2,7 @@
     <div class="d-flex posts-layout">
         <aside class="folder-sidebar d-none d-md-block">
             <nav class="folder-sidebar-inner py-4">
-                <div class="folder-item" :class="{ active: !showSaved && !selectedFolderId && !selectedFeedId }"
+                <div class="folder-item" :class="{ active: !showKeptPosts && !selectedFolderId && !selectedFeedId }"
                     role="button" @click="selectAll" :title="language.get('All Posts') || 'All Posts'">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-collection flex-shrink-0" viewBox="0 0 16 16">
@@ -20,6 +20,16 @@
                     </svg>
                     <span class="folder-name">{{ language.get('Saved') || 'Saved' }}</span>
                     <span class="folder-count">{{ unreadCounts.saved }}</span>
+                </div>
+
+                <div class="folder-item" :class="{ active: showFavorites }"
+                    role="button" @click="selectFavorites" :title="language.get('Favorites') || 'Favorites'">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        class="bi bi-star flex-shrink-0" viewBox="0 0 16 16">
+                        <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.56.56 0 0 0-.163-.505L1.71 6.745l4.052-.576a.53.53 0 0 0 .393-.288L8 2.223l1.847 3.658a.53.53 0 0 0 .393.288l4.052.575-2.906 2.77a.56.56 0 0 0-.163.506l.694 3.957-3.686-1.894a.5.5 0 0 0-.461 0z"/>
+                    </svg>
+                    <span class="folder-name">{{ language.get('Favorites') || 'Favorites' }}</span>
+                    <span class="folder-count">{{ unreadCounts.favorites }}</span>
                 </div>
 
                 <hr class="my-2" />
@@ -164,7 +174,7 @@
                         </div>
                     </div>
                     <div class="col-auto d-flex align-items-center">
-                        <div v-if="!showSaved" class="btn-group btn-group-sm me-2" role="group"
+                        <div v-if="!showKeptPosts" class="btn-group btn-group-sm me-2" role="group"
                             :aria-label="language.get('Posts to show') || 'Posts to show'">
                             <button type="button" class="btn btn-outline-secondary" :class="{ active: !showRead }"
                                 @click="showRead = false" :disabled="loading"
@@ -177,7 +187,7 @@
                                 {{ language.get('All') || 'All' }}
                             </button>
                         </div>
-                        <div v-if="!showSaved" class="btn-group btn-group-sm me-2">
+                        <div v-if="!showKeptPosts" class="btn-group btn-group-sm me-2">
                             <button type="button" class="btn btn-outline-primary d-flex align-items-center gap-2"
                                 @click="handleMarkAllAsRead(null)" :disabled="loading"
                                 :title="language.get('Mark all as read') || 'Mark all as read'">
@@ -228,7 +238,7 @@
                                     d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z" />
                             </svg>
                         </button>
-                        <button v-if="!showSaved && currentFolderId" type="button" class="btn btn-sm btn-outline-secondary me-2"
+                        <button v-if="!showKeptPosts && currentFolderId" type="button" class="btn btn-sm btn-outline-secondary me-2"
                             :class="{ active: hideShorts }" @click="hideShorts = !hideShorts" :disabled="loading"
                             :title="hideShorts
                                 ? (language.get('Show YouTube Shorts in this folder') || 'Show YouTube Shorts in this folder')
@@ -296,7 +306,7 @@
                             :class="showDetails ? 'col-12 col-md-6 col-lg-4' : 'col-12'"
                             @click="selectedIndex = !showDetails && selectedIndex === index ? -1 : index">
                             <PostElement :post="post" :show-details="showDetails" :selected="index === selectedIndex"
-                                @post-read="handlePostRead" @toggle-saved="toggleSaved" @toggle-read="toggleRead" @show-logs="showPostLogs"
+                                @post-read="handlePostRead" @toggle-saved="toggleSaved" @toggle-favorite="toggleFavorite" @toggle-read="toggleRead" @show-logs="showPostLogs"
                                 @show-feed="showFeed" @close="selectedIndex = -1" @open="selectedIndex = index; modalOpen = true" />
                         </div>
                         <div v-if="allLoaded && posts.length > 0 && !searchTerm.trim()" class="text-center w-100 text-muted my-4">
@@ -304,7 +314,8 @@
                         </div>
                     </div>
                     <div v-else-if="!loading && posts.length === 0 && !searchTerm.trim()" class="text-center text-muted mt-5">
-                        {{ showSaved ? (language.get('No saved posts') || 'No saved posts') : language.get('No posts found') }}
+                        {{ showFavorites ? (language.get('No favorite posts') || 'No favorite posts')
+                            : showSaved ? (language.get('No saved posts') || 'No saved posts') : language.get('No posts found') }}
                     </div>
                     <div v-else-if="!loading && posts.length === 0 && searchTerm.trim()" class="text-center text-muted mt-5">
                         {{ language.get('No posts match your search') || 'No posts match your search' }}
@@ -322,7 +333,7 @@
     </div>
 
     <PostModal v-if="modalPost" ref="postModalRef" :post="modalPost"
-        @close="modalOpen = false" @toggle-saved="toggleSaved" @show-logs="showPostLogs" @show-feed="showFeed" />
+        @close="modalOpen = false" @toggle-saved="toggleSaved" @toggle-favorite="toggleFavorite" @show-logs="showPostLogs" @show-feed="showFeed" />
 
     <LogsModal :post-id="logsPost?.id" :feed-id="logsPost?.feed?.id" :title="logsPost?.title" :show="!!logsPost"
         @logs-cleared="handlePostLogsCleared" @modal-hidden="logsPost = null" />
@@ -341,7 +352,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getPosts, parseFeeds, markAsRead, markAsUnread, markAllAsRead, getUnreadCounts, setPostSaved, countNewPosts } from '@/api/post';
+import { getPosts, parseFeeds, markAsRead, markAsUnread, markAllAsRead, getUnreadCounts, setPostSaved, setPostFavorite, countNewPosts } from '@/api/post';
 import { getFeedOperationStatus, getLastParsedAt, getFeeds, deleteFeed } from '@/api/feed';
 import { getFolders, deleteFolder } from '@/api/folder';
 import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType, Feed } from '@/types';
@@ -388,10 +399,13 @@ const modalPost = computed(() => modalOpen.value ? posts.value[selectedIndex.val
 const logsPost = ref<PostType | null>(null); // The post whose log entries are shown in the logs modal
 const showShortcuts = ref(false); // The help modal with the keyboard shortcuts is shown
 const folders = ref<FolderType[]>([]);
-const unreadCounts = ref<UnreadCountsType>({ total: 0, saved: 0, folders: {}, feeds: [] });
+const unreadCounts = ref<UnreadCountsType>({ total: 0, saved: 0, favorites: 0, folders: {}, feeds: [] });
 const selectedFolderId = ref<string | null>(null); // null shows the posts of all folders
 const selectedFeedId = ref<string | null>(null); // null shows the posts of all feeds
 const showSaved = ref(false); // Shows the saved posts (read or unread) instead of the unread ones
+const showFavorites = ref(false); // Shows the favorite posts (read or unread) instead of the unread ones
+// The saved or favorites view, which lists kept posts regardless of read state, folder or Shorts settings
+const showKeptPosts = computed(() => showSaved.value || showFavorites.value);
 const expandedFolders = ref<Set<string>>(new Set());
 const failedFeedIcons = ref<Set<string>>(new Set());
 const showEmptyFolders = ref(localStorage.getItem('posts-show-empty-folders') === 'true'); // Persisted in localStorage
@@ -444,7 +458,7 @@ const markAsReadOptions: { label: string; days: number | null }[] = [
     { label: 'Older than 1 month', days: 30 },
 ];
 
-// Cards (true) or list (false) mode of each view (all, saved, a folder or a feed), persisted in localStorage
+// Cards (true) or list (false) mode of each view (all, saved, favorites, a folder or a feed), persisted in localStorage
 const VIEW_MODES_KEY = 'posts-view-modes';
 const defaultShowDetails = localStorage.getItem('posts-show-details') !== 'false'; // Legacy global setting
 const viewModes = ref<Record<string, boolean>>((() => {
@@ -458,6 +472,7 @@ const viewModes = ref<Record<string, boolean>>((() => {
 // Key of the view mode for the current filter
 const viewModeKey = computed(() => {
     if (showSaved.value) return 'saved';
+    if (showFavorites.value) return 'favorites';
     if (selectedFeedId.value) return `feed:${selectedFeedId.value}`;
     if (selectedFolderId.value) return `folder:${selectedFolderId.value}`;
     return 'all';
@@ -657,13 +672,14 @@ const fetchUnreadCounts = async () => {
 };
 
 /**
- * Changes the folder/feed/saved filter of the posts list and reloads it.
+ * Changes the folder/feed/saved/favorites filter of the posts list and reloads it.
  * Selecting the current filter again also reloads it, to fetch the latest posts.
  */
-const applyFilter = (folderId: string | null, feedId: string | null, saved = false) => {
+const applyFilter = (folderId: string | null, feedId: string | null, saved = false, favorites = false) => {
     selectedFolderId.value = folderId;
     selectedFeedId.value = feedId;
     showSaved.value = saved;
+    showFavorites.value = favorites;
     if (searchTerm.value) {
         // The posts are reloaded below, so the search watcher must not fetch them again
         skipSearchWatch = true;
@@ -677,6 +693,7 @@ const selectAll = () => applyFilter(null, null);
 const selectFolder = (folderId: string) => applyFilter(folderId, null);
 const selectFeed = (feedId: string) => applyFilter(null, feedId);
 const selectSaved = () => applyFilter(null, null, true);
+const selectFavorites = () => applyFilter(null, null, false, true);
 
 /**
  * Shows the posts of a post's feed, closing the opened post.
@@ -702,7 +719,7 @@ const fetchPosts = async (reset = false) => {
         }
 
         const { posts: data, listedAt: pageListedAt } = await getPosts(page.value, pageSize, searchTerm.value, selectedFolderId.value, selectedFeedId.value, showSaved.value, showRead.value,
-            [...hiddenShortsFolders.value]);
+            [...hiddenShortsFolders.value], showFavorites.value);
 
         if (data.length < pageSize) {
             allLoaded.value = true;
@@ -801,10 +818,10 @@ const handleMarkAllAsRead = async (olderThanDays: number | null) => {
 
 /**
  * Counts the unread posts of the current view added since the list was loaded, for the new posts badge.
- * The saved view isn't counted, since parsed posts aren't saved.
+ * The saved and favorites views aren't counted, since parsed posts aren't saved or favorite.
  */
 const fetchNewPostsCount = async () => {
-    if (showSaved.value || !listedAt.value) {
+    if (showKeptPosts.value || !listedAt.value) {
         newPostsCount.value = 0;
         return;
     }
@@ -970,6 +987,24 @@ const toggleSaved = async (postId: string) => {
     } catch (e: any) {
         console.error('Failed to save post:', e);
         errorStore.set(true, e.response?.data?.message || language.get('Failed to save post') || 'Failed to save post.', e.response?.status || 500);
+    }
+};
+
+/**
+ * Adds a post to the favorites, or removes it from them.
+ * In the favorites view the post stays listed until the next refresh, so it can be added again.
+ */
+const toggleFavorite = async (postId: string) => {
+    const post = posts.value.find(p => p.id === postId);
+    if (!post) return;
+    const favorite = !post.favorite;
+    try {
+        await setPostFavorite(postId, favorite);
+        post.favorite = favorite;
+        unreadCounts.value.favorites = Math.max(0, unreadCounts.value.favorites + (favorite ? 1 : -1));
+    } catch (e: any) {
+        console.error('Failed to change the favorite state of the post:', e);
+        errorStore.set(true, e.response?.data?.message || language.get('Failed to update favorites') || 'Failed to update favorites.', e.response?.status || 500);
     }
 };
 
@@ -1171,7 +1206,7 @@ const getShortcutKey = (event: KeyboardEvent): string => {
  * Handles arrow key navigation between cards.
  * In list mode, Up/Down scroll the list instead (so long expanded posts can be read) and Left/Right move between posts.
  * Enter or O opens the selected post in a modal (Esc closes it), B opens its link in a background tab, F saves it for later (or unsaves it),
- * C copies its link to the clipboard.
+ * S adds it to the favorites (or removes it), C copies its link to the clipboard.
  * H shows the help modal with all the keyboard shortcuts.
  */
 const handleKeydown = (event: KeyboardEvent) => {
@@ -1238,6 +1273,12 @@ const handleKeydown = (event: KeyboardEvent) => {
         case 'f':
             if (current >= 0 && posts.value[current]) {
                 toggleSaved(posts.value[current].id);
+                event.preventDefault();
+            }
+            return;
+        case 's':
+            if (current >= 0 && posts.value[current]) {
+                toggleFavorite(posts.value[current].id);
                 event.preventDefault();
             }
             return;

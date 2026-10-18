@@ -63,6 +63,11 @@ public class Post {
     @ColumnDefault("false")
     private boolean saved;
 
+    // Favorite (starred). Like saved posts, favorites are never deleted by the cleanups. The default lets the column be added to existing databases.
+    @Column(name = "is_favorite", nullable = false)
+    @ColumnDefault("false")
+    private boolean favorite;
+
     // YouTube videos: scheduled live stream/premiere or live now (null otherwise), and its (scheduled) start
     @Enumerated(EnumType.STRING)
     private LiveStatus liveStatus;
@@ -136,6 +141,9 @@ public class Post {
 
     public boolean isSaved() { return saved; }
     public void setSaved(boolean saved) { this.saved = saved; }
+
+    public boolean isFavorite() { return favorite; }
+    public void setFavorite(boolean favorite) { this.favorite = favorite; }
 
     public LiveStatus getLiveStatus() { return liveStatus; }
     public void setLiveStatus(LiveStatus liveStatus) { this.liveStatus = liveStatus; }

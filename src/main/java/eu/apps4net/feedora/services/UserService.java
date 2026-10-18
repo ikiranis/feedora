@@ -151,6 +151,7 @@ public class UserService {
                         dto.postCount = toLong(posts[1]);
                         dto.unreadCount = toLong(posts[2]);
                         dto.savedCount = toLong(posts[3]);
+                        dto.favoriteCount = toLong(posts[4]);
                     }
                     return dto;
                 })

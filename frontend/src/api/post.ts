@@ -10,14 +10,15 @@ import type { PostType, UnreadCountsType } from "@/types";
  * @param folderId - Optional folder id to only return posts of that folder's feeds
  * @param feedId - Optional feed id to only return posts of that feed
  * @param saved - If true, return the saved posts (read or unread) instead of the unread ones
+ * @param favorite - If true, return the favorite posts (read or unread) instead. Takes precedence over saved.
  * @param includeRead - If true, return the read posts too, not only the unread ones
- * @param hideShortsFolderIds - Folders whose YouTube Shorts are left out (not applied to the saved posts)
+ * @param hideShortsFolderIds - Folders whose YouTube Shorts are left out (not applied to the saved and favorite posts)
  * @returns {Promise<{posts: any[], listedAt: string | null}>} List of posts, and the server time of the listing,
  *          for markAllAsRead to skip the posts added after it
  * @throws Error if the request fails
  */
 export const getPosts = async (page: number, pageSize: number, search?: string, folderId?: string | null, feedId?: string | null, saved?: boolean, includeRead?: boolean,
-                               hideShortsFolderIds?: string[]): Promise<{ posts: any[], listedAt: string | null }> => {
+                               hideShortsFolderIds?: string[], favorite?: boolean): Promise<{ posts: any[], listedAt: string | null }> => {
     try {
         const params: any = { page, pageSize };
         if (search && search.trim()) {
@@ -31,6 +32,9 @@ export const getPosts = async (page: number, pageSize: number, search?: string, 
         }
         if (saved) {
             params.saved = true;
+        }
+        if (favorite) {
+            params.favorite = true;
         }
         if (includeRead) {
             params.includeRead = true;
@@ -52,7 +56,7 @@ export const getPosts = async (page: number, pageSize: number, search?: string, 
 /**
  * Fetch the unread post counts for the current user, in total, per folder and per feed.
  * @param hideShortsFolderIds - Folders whose YouTube Shorts aren't counted
- * @returns {Promise<UnreadCountsType>} Total unread count, saved posts count, a map of folder id to unread count and the feeds with unread posts
+ * @returns {Promise<UnreadCountsType>} Total unread count, saved and favorite posts counts, a map of folder id to unread count and the feeds with unread posts
  * @throws Error if the request fails
  */
 export const getUnreadCounts = async (hideShortsFolderIds?: string[]): Promise<UnreadCountsType> => {
@@ -185,6 +189,16 @@ export const markAllAsRead = async (folderId?: string | null, feedId?: string | 
  */
 export const setPostSaved = async (postId: string, saved: boolean) => {
     await axios.put(config.defaultServer() + `/api/posts/saved/${postId}`, null, { params: { saved } });
+};
+
+/**
+ * Add a post to the favorites, or remove it from them. Favorite posts are never deleted by the cleanups.
+ * @param {string} postId - The UUID of the post
+ * @param {boolean} favorite - true to add the post to the favorites, false to remove it from them
+ * @throws Error if the request fails
+ */
+export const setPostFavorite = async (postId: string, favorite: boolean) => {
+    await axios.put(config.defaultServer() + `/api/posts/favorite/${postId}`, null, { params: { favorite } });
 };
 
 /**

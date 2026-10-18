@@ -380,6 +380,12 @@ class PostServiceTest {
 
         postService.getPostsForUser(user, 1, 10, "x", folderId, feedId, true, false);
         verify(postRepository).findByUserAndSavedTrueAndTitleOrDescriptionContaining(eq(user), eq("x"), any());
+
+        postService.getPostsForUser(user, 1, 10, null, folderId, feedId, true, true, false, null);
+        verify(postRepository).findByUserAndFavoriteTrue(eq(user), any());
+
+        postService.getPostsForUser(user, 1, 10, "x", folderId, feedId, true, true, false, null);
+        verify(postRepository).findByUserAndFavoriteTrueAndTitleOrDescriptionContaining(eq(user), eq("x"), any());
     }
 
     @Test
@@ -405,11 +411,13 @@ class PostServiceTest {
                 new Object[]{feedB, "B", "http://b", folderId, 3L},
                 new Object[]{feedC, "C", "http://c", null, 4L}));
         when(postRepository.countByUserAndSavedTrue(user)).thenReturn(5L);
+        when(postRepository.countByUserAndFavoriteTrue(user)).thenReturn(2L);
 
         Map<String, Object> counts = postService.getUnreadCounts(user);
 
         assertThat(counts.get("total")).isEqualTo(9L);
         assertThat(counts.get("saved")).isEqualTo(5L);
+        assertThat(counts.get("favorites")).isEqualTo(2L);
         assertThat((Map<String, Long>) counts.get("folders")).containsExactly(Map.entry(folderId.toString(), 5L));
         List<Map<String, Object>> feeds = (List<Map<String, Object>>) counts.get("feeds");
         assertThat(feeds).hasSize(3);
@@ -417,9 +425,9 @@ class PostServiceTest {
     }
 
     @Test
-    void deleteAllPostsForUserKeepsSavedPosts() {
+    void deleteAllPostsForUserKeepsSavedAndFavoritePosts() {
         List<Post> unsaved = List.of(post("a", user, null));
-        when(postRepository.findByUserAndSavedFalse(user)).thenReturn(unsaved);
+        when(postRepository.findByUserAndSavedFalseAndFavoriteFalse(user)).thenReturn(unsaved);
 
         postService.deleteAllPostsForUser(user);
 
@@ -497,6 +505,17 @@ class PostServiceTest {
                 .isInstanceOf(NotFoundException.class)
                 .hasMessage("Post not found");
         assertThat(theirs.isSaved()).isFalse();
+    }
+
+    @Test
+    void setPostFavoriteRejectsOtherUsersPosts() {
+        Post theirs = post("theirs", otherUser, null);
+        when(postRepository.findById(theirs.getId())).thenReturn(Optional.of(theirs));
+
+        assertThatThrownBy(() -> postService.setPostFavorite(theirs.getId(), user, true))
+                .isInstanceOf(NotFoundException.class)
+                .hasMessage("Post not found");
+        assertThat(theirs.isFavorite()).isFalse();
     }
 
     @Test

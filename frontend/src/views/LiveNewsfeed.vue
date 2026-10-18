@@ -35,7 +35,7 @@
                 <TransitionGroup :name="animate ? 'live-post' : ''" tag="div" class="d-flex flex-column gap-4">
                     <div v-for="post in posts" :key="post.id" class="live-item" :class="{ fresh: freshPostIds.has(post.id) }">
                         <PostElement :post="post" :show-details="true"
-                            @post-read="handlePostRead" @toggle-read="toggleRead" @toggle-saved="toggleSaved"
+                            @post-read="handlePostRead" @toggle-read="toggleRead" @toggle-saved="toggleSaved" @toggle-favorite="toggleFavorite"
                             @show-logs="logsPost = $event" @show-feed="showFeed" @open="modalPostId = $event" />
                     </div>
                 </TransitionGroup>
@@ -53,7 +53,7 @@
     </div>
 
     <PostModal v-if="modalPost" :post="modalPost"
-        @close="modalPostId = null" @toggle-saved="toggleSaved" @show-logs="logsPost = $event" @show-feed="showFeed" />
+        @close="modalPostId = null" @toggle-saved="toggleSaved" @toggle-favorite="toggleFavorite" @show-logs="logsPost = $event" @show-feed="showFeed" />
 
     <LogsModal :post-id="logsPost?.id" :feed-id="logsPost?.feed?.id" :title="logsPost?.title" :show="!!logsPost"
         @logs-cleared="logsPost && postContentStore.clearLogCount(logsPost.id)" @modal-hidden="logsPost = null" />
@@ -64,7 +64,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { getLivePosts, getLiveRefreshSeconds, getPosts, markAsRead, markAsUnread, setPostSaved } from '@/api/post';
+import { getLivePosts, getLiveRefreshSeconds, getPosts, markAsRead, markAsUnread, setPostSaved, setPostFavorite } from '@/api/post';
 import { PostType } from '@/types';
 import { language } from '@/functions/languageStore';
 import { postContentStore } from '@/functions/postContentStore';
@@ -252,6 +252,18 @@ const toggleSaved = async (postId: string) => {
     } catch (e: any) {
         console.error('Failed to save post:', e);
         errorStore.set(true, e.response?.data?.message || language.get('Failed to save post') || 'Failed to save post.', e.response?.status || 500);
+    }
+};
+
+const toggleFavorite = async (postId: string) => {
+    const post = posts.value.find(p => p.id === postId);
+    if (!post) return;
+    try {
+        await setPostFavorite(postId, !post.favorite);
+        post.favorite = !post.favorite;
+    } catch (e: any) {
+        console.error('Failed to change the favorite state of the post:', e);
+        errorStore.set(true, e.response?.data?.message || language.get('Failed to update favorites') || 'Failed to update favorites.', e.response?.status || 500);
     }
 };
 

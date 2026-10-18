@@ -10,6 +10,7 @@ public class UserDTO {
     public long postCount;
     public long unreadCount;
     public long savedCount;
+    public long favoriteCount;
     public long logCount;
 
     public static UserDTO fromUser(User user) {

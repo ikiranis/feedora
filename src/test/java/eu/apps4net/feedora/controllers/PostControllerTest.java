@@ -174,6 +174,46 @@ class PostControllerTest extends ApiTestBase {
     }
 
     @Test
+    void getPostsReturnsFavoritePostsReadOrUnread() throws Exception {
+        createFeeds();
+        Post favoriteUnread = createPost("Favorite unread", bbc, user, false, now.minusDays(1));
+        Post favoriteRead = createPost("Favorite read", cnn, user, true, now);
+        Post saved = createPost("Saved only", bbc, user, false, now);
+        favoriteUnread.setFavorite(true);
+        favoriteRead.setFavorite(true);
+        saved.setSaved(true);
+        postRepository.save(favoriteUnread);
+        postRepository.save(favoriteRead);
+        postRepository.save(saved);
+
+        mockMvc.perform(auth(get("/api/posts/getPosts").param("page", "1").param("pageSize", "10").param("favorite", "true")))
+                .andExpect(jsonPath("$[*].title", contains("Favorite read", "Favorite unread")))
+                .andExpect(jsonPath("$[0].favorite").value(true));
+
+        mockMvc.perform(auth(get("/api/posts/getPosts").param("page", "1").param("pageSize", "10")
+                        .param("favorite", "true").param("search", "unread")))
+                .andExpect(jsonPath("$[*].title", contains("Favorite unread")));
+
+        mockMvc.perform(auth(get("/api/posts/unreadCounts")))
+                .andExpect(jsonPath("$.favorites").value(2))
+                .andExpect(jsonPath("$.saved").value(1));
+    }
+
+    @Test
+    void setFavoriteAddsAndRemovesTheUsersPost() throws Exception {
+        createFeeds();
+        Post post = createPost("Post", bbc, user, false, now);
+
+        mockMvc.perform(auth(put("/api/posts/favorite/" + post.getId()).param("favorite", "true")))
+                .andExpect(status().isOk());
+        assertThat(postRepository.findById(post.getId()).orElseThrow().isFavorite()).isTrue();
+
+        mockMvc.perform(auth(put("/api/posts/favorite/" + post.getId()).param("favorite", "false")))
+                .andExpect(status().isOk());
+        assertThat(postRepository.findById(post.getId()).orElseThrow().isFavorite()).isFalse();
+    }
+
+    @Test
     void getPostsRequiresPaging() throws Exception {
         mockMvc.perform(auth(get("/api/posts/getPosts"))).andExpect(status().isBadRequest());
     }
@@ -291,13 +331,17 @@ class PostControllerTest extends ApiTestBase {
         saved.setReadAt(now.minusDays(31));
         saved.setSaved(true);
         postRepository.save(saved);
+        Post favorite = createPost("Favorite", bbc, user, true, now.minusDays(60));
+        favorite.setReadAt(now.minusDays(31));
+        favorite.setFavorite(true);
+        postRepository.save(favorite);
         createPost("Unread", bbc, user, false, now.minusDays(60));
         createPost("No read date", bbc, user, true, now.minusDays(60));
 
         assertThat(postService.deleteExpiredReadPosts()).isEqualTo(1);
 
         assertThat(postRepository.findAll()).extracting(Post::getTitle)
-                .containsExactlyInAnyOrder("Recent", "Saved", "Unread", "No read date");
+                .containsExactlyInAnyOrder("Recent", "Saved", "Favorite", "Unread", "No read date");
         // Read before the date was kept, so it's deleted a full retention period from now
         assertThat(postRepository.findAll()).filteredOn(p -> p.getTitle().equals("No read date"))
                 .allSatisfy(p -> assertThat(p.getReadAt()).isAfter(now.minusMinutes(1)));

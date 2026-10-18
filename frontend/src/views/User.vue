@@ -34,7 +34,7 @@
     <div class="scrollable-user-view">
         <div class="container py-4">
             <!-- Totals over all users -->
-            <div v-if="users.length > 0 && authStore.isAdmin.value" class="row row-cols-2 row-cols-md-3 row-cols-xl-6 g-3 mb-4">
+            <div v-if="users.length > 0 && authStore.isAdmin.value" class="row row-cols-2 row-cols-md-4 stat-cards g-3 mb-4">
                 <div class="col" v-for="stat in statCards" :key="stat.label">
                     <div class="card text-center h-100">
                         <div class="card-body py-2">
@@ -57,6 +57,7 @@
                             <th class="text-end">{{ language.get('Posts') || 'Posts' }}</th>
                             <th class="text-end">{{ language.get('Unread') || 'Unread' }}</th>
                             <th class="text-end">{{ language.get('Saved') || 'Saved' }}</th>
+                            <th class="text-end">{{ language.get('Favorites') || 'Favorites' }}</th>
                             <th class="text-end">{{ language.get('Logs') || 'Logs' }}</th>
                             <th>{{ language.get('Actions') || 'Actions' }}</th>
                         </tr>
@@ -88,6 +89,7 @@
                             <td class="text-end">{{ user.postCount.toLocaleString() }}</td>
                             <td class="text-end">{{ user.unreadCount.toLocaleString() }}</td>
                             <td class="text-end">{{ user.savedCount.toLocaleString() }}</td>
+                            <td class="text-end">{{ user.favoriteCount.toLocaleString() }}</td>
                             <td class="text-end">{{ user.logCount.toLocaleString() }}</td>
                             <td>
                                 <div class="d-flex gap-2">
@@ -176,6 +178,7 @@ const statCards = computed(() => [
     { label: language.get('Posts') || 'Posts', value: sum('postCount') },
     { label: language.get('Unread') || 'Unread', value: sum('unreadCount') },
     { label: language.get('Saved') || 'Saved', value: sum('savedCount') },
+    { label: language.get('Favorites') || 'Favorites', value: sum('favoriteCount') },
 ]);
 
 const isCurrentUser = (user: UserWithStatisticsType) => authStore.user.value?.id === user.id;
@@ -253,6 +256,14 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* One row of seven totals on wide screens (Bootstrap's row-cols stop at 6) */
+@media (min-width: 1200px) {
+    .stat-cards > .col {
+        flex: 0 0 auto;
+        width: calc(100% / 7);
+    }
+}
+
 /* Make the main view scrollable instead of the whole page */
 .scrollable-user-view {
     height: 80vh;

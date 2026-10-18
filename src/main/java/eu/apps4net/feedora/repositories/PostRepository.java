@@ -67,7 +67,19 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     List<Post> findByUserAndSavedTrueAndTitleOrDescriptionContaining(@Param("user") User user, @Param("searchTerm") String searchTerm, Pageable pageable);
 
     long countByUserAndSavedTrue(User user);
-    List<Post> findByUserAndSavedFalse(User user);
+
+    // Favorite posts are returned whether read or not
+    List<Post> findByUserAndFavoriteTrue(User user, Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE p.user = :user AND p.favorite = true AND " +
+           "(LOWER(p.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+           "LOWER(CAST(p.description AS string)) LIKE LOWER(CONCAT('%', :searchTerm, '%')))")
+    List<Post> findByUserAndFavoriteTrueAndTitleOrDescriptionContaining(@Param("user") User user, @Param("searchTerm") String searchTerm, Pageable pageable);
+
+    long countByUserAndFavoriteTrue(User user);
+
+    // Posts that the cleanups may delete: neither saved nor favorite
+    List<Post> findByUserAndSavedFalseAndFavoriteFalse(User user);
 
     // Rows of [feed id, feed title, feed website, folder id (nullable), unread count] for every feed of the user,
     // including feeds without unread posts (count 0). The YouTube Shorts of the given folders aren't counted when hideShorts is true.
@@ -78,8 +90,9 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     List<Object[]> countUnreadByFeed(@Param("user") User user, @Param("hideShorts") boolean hideShorts,
                                       @Param("hideShortsFolderIds") List<UUID> hideShortsFolderIds);
 
-    // Rows of [user id, number of posts, number of unread posts, number of saved posts] for every user that has posts
-    @Query("SELECT p.user.id, COUNT(p), SUM(CASE WHEN p.read = false THEN 1 ELSE 0 END), SUM(CASE WHEN p.saved = true THEN 1 ELSE 0 END) " +
+    // Rows of [user id, number of posts, number of unread posts, number of saved posts, number of favorite posts] for every user that has posts
+    @Query("SELECT p.user.id, COUNT(p), SUM(CASE WHEN p.read = false THEN 1 ELSE 0 END), SUM(CASE WHEN p.saved = true THEN 1 ELSE 0 END), " +
+           "SUM(CASE WHEN p.favorite = true THEN 1 ELSE 0 END) " +
            "FROM Post p GROUP BY p.user.id")
     List<Object[]> countGroupedByUser();
 
@@ -91,12 +104,12 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
 
     // Id, link, live status, start and length of the feed's scheduled or live videos, to check whether their state changed,
     // of its YouTube videos published since the given date that were never checked, or have no length and weren't
-    // checked since recheckBefore (e.g. checked before lengths existed), and of its saved YouTube videos (any age)
+    // checked since recheckBefore (e.g. checked before lengths existed), and of its saved or favorite YouTube videos (any age)
     // not checked since recheckBefore
     @Query("SELECT p.id, p.link, p.liveStatus, p.liveStartAt, p.duration FROM Post p WHERE p.feed = :feed AND p.user = :user AND " +
            "(p.liveStatus IS NOT NULL OR ((p.link LIKE '%youtube.com/%' OR p.link LIKE '%youtu.be/%') AND " +
            "((p.pubDate > :since AND (p.liveCheckedAt IS NULL OR (p.duration IS NULL AND p.liveCheckedAt < :recheckBefore))) OR " +
-           "(p.saved = true AND (p.liveCheckedAt IS NULL OR p.liveCheckedAt < :recheckBefore)))))")
+           "((p.saved = true OR p.favorite = true) AND (p.liveCheckedAt IS NULL OR p.liveCheckedAt < :recheckBefore)))))")
     List<Object[]> findLiveVideosByFeedAndUser(@Param("feed") Feed feed, @Param("user") User user,
                                                @Param("since") LocalDateTime since, @Param("recheckBefore") LocalDateTime recheckBefore);
 
@@ -120,9 +133,9 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     @Query("UPDATE Post p SET p.readAt = :readAt WHERE p.read = true AND p.readAt IS NULL")
     int setMissingReadAt(@Param("readAt") LocalDateTime readAt);
 
-    // Saved posts are kept, even if read
+    // Saved and favorite posts are kept, even if read
     @Modifying
     @Transactional
-    @Query("DELETE FROM Post p WHERE p.read = true AND p.saved = false AND p.readAt < :before")
+    @Query("DELETE FROM Post p WHERE p.read = true AND p.saved = false AND p.favorite = false AND p.readAt < :before")
     int deleteReadBefore(@Param("before") LocalDateTime before);
 }

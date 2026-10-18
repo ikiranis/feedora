@@ -1049,6 +1049,31 @@
         <language code="el">Αποτυχία αποθήκευσης του άρθρου</language>
     </entry>
 
+    <entry id="Favorites">
+        <language code="en">Favorites</language>
+        <language code="el">Αγαπημένα</language>
+    </entry>
+
+    <entry id="Add to favorites">
+        <language code="en">Add to favorites</language>
+        <language code="el">Προσθήκη στα αγαπημένα</language>
+    </entry>
+
+    <entry id="Remove from favorites">
+        <language code="en">Remove from favorites</language>
+        <language code="el">Αφαίρεση από τα αγαπημένα</language>
+    </entry>
+
+    <entry id="No favorite posts">
+        <language code="en">No favorite posts</language>
+        <language code="el">Δεν υπάρχουν αγαπημένα άρθρα</language>
+    </entry>
+
+    <entry id="Failed to update favorites">
+        <language code="en">Failed to update favorites</language>
+        <language code="el">Αποτυχία ενημέρωσης των αγαπημένων</language>
+    </entry>
+
     <entry id="Mark all as read">
         <language code="en">Mark all as read</language>
         <language code="el">Σήμανση όλων ως αναγνωσμένα</language>
@@ -1672,6 +1697,11 @@
     <entry id="Save the selected post for later / unsave it">
         <language code="en">Save the selected post for later / unsave it</language>
         <language code="el">Αποθήκευση της επιλεγμένης ανάρτησης για αργότερα / αφαίρεση από τις αποθηκευμένες</language>
+    </entry>
+
+    <entry id="Add the selected post to the favorites / remove it">
+        <language code="en">Add the selected post to the favorites / remove it</language>
+        <language code="el">Προσθήκη της επιλεγμένης ανάρτησης στα αγαπημένα / αφαίρεση από αυτά</language>
     </entry>
 
     <entry id="Show / hide the keyboard shortcuts">

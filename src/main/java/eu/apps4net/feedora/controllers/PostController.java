@@ -82,13 +82,14 @@ public class PostController {
     public ResponseEntity<List<Post>> getPosts(@RequestParam int page, @RequestParam int pageSize, @RequestParam(required = false) String search,
                                @RequestParam(required = false) UUID folderId, @RequestParam(required = false) UUID feedId,
                                @RequestParam(defaultValue = "false") boolean saved,
+                               @RequestParam(defaultValue = "false") boolean favorite,
                                @RequestParam(defaultValue = "false") boolean includeRead,
                                @RequestParam(required = false) List<UUID> hideShortsFolderIds) {
         User currentUser = userService.getCurrentUser();
         LocalDateTime listedAt = LocalDateTime.now();
         return ResponseEntity.ok()
                 .header(LISTED_AT_HEADER, listedAt.toString())
-                .body(postService.getPostsForUser(currentUser, page, pageSize, search, folderId, feedId, saved, includeRead, hideShortsFolderIds));
+                .body(postService.getPostsForUser(currentUser, page, pageSize, search, folderId, feedId, saved, favorite, includeRead, hideShortsFolderIds));
     }
 
     // hideShortsFolderIds: folders whose YouTube Shorts aren't counted
@@ -138,6 +139,13 @@ public class PostController {
     public ResponseEntity<Void> setPostSaved(@PathVariable UUID postId, @RequestParam boolean saved) {
         User currentUser = userService.getCurrentUser();
         postService.setPostSaved(postId, currentUser, saved);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/favorite/{postId}")
+    public ResponseEntity<Void> setPostFavorite(@PathVariable UUID postId, @RequestParam boolean favorite) {
+        User currentUser = userService.getCurrentUser();
+        postService.setPostFavorite(postId, currentUser, favorite);
         return ResponseEntity.ok().build();
     }
 

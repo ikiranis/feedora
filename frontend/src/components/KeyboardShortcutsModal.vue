@@ -58,6 +58,7 @@ const shortcuts: { keys: string[], description: string }[] = [
     { keys: ['Esc'], description: 'Close the opened post' },
     { keys: ['B'], description: 'Open the link of the selected post in a background tab' },
     { keys: ['F'], description: 'Save the selected post for later / unsave it' },
+    { keys: ['S'], description: 'Add the selected post to the favorites / remove it' },
     { keys: ['C'], description: 'Copy the link of the selected post to the clipboard' },
     { keys: ['H'], description: 'Show / hide the keyboard shortcuts' },
 ];

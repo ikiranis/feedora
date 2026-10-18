@@ -370,7 +370,7 @@ public class PostService {
      *   (scheduled → live → ended); videos scheduled for later are only checked once their start time comes
      * - stored recent videos that were never checked, e.g. added before live states existed, or have no length
      *   (once a day, e.g. checked before lengths existed),
-     *   and saved videos once a day, since they're kept for long and may be scheduled later
+     *   and saved or favorite videos once a day, since they're kept for long and may be scheduled later
      * Videos that couldn't be checked are left unchanged, and checked again on the feed's next parse.
      *
      * @param feed The feed being parsed
@@ -606,10 +606,35 @@ public class PostService {
      */
     public List<Post> getPostsForUser(User user, int page, int pageSize, String searchTerm, UUID folderId, UUID feedId,
                                       boolean saved, boolean includeRead, List<UUID> hideShortsFolderIds) {
+        return getPostsForUser(user, page, pageSize, searchTerm, folderId, feedId, saved, false, includeRead, hideShortsFolderIds);
+    }
+
+    /**
+     * Returns paginated posts for a given user, optionally filtered by search term and by feed or folder.
+     * @param user The user
+     * @param page The page number (1-indexed)
+     * @param pageSize The number of posts per page
+     * @param searchTerm The search term to filter posts by title or description (case-insensitive)
+     * @param folderId The folder whose feeds' posts to return, or null for all folders
+     * @param feedId The feed whose posts to return, or null for all feeds. Takes precedence over folderId.
+     * @param saved If true, returns the saved posts (read or unread) instead. Takes precedence over feedId and folderId.
+     * @param favorite If true, returns the favorite posts (read or unread) instead. Takes precedence over saved, feedId and folderId.
+     * @param includeRead If true, returns the read posts too, otherwise only the unread ones
+     * @param hideShortsFolderIds Folders whose YouTube Shorts are left out (null or empty for none). Not applied to the saved and favorite posts.
+     * @return List of posts, or of saved or favorite posts
+     */
+    public List<Post> getPostsForUser(User user, int page, int pageSize, String searchTerm, UUID folderId, UUID feedId,
+                                      boolean saved, boolean favorite, boolean includeRead, List<UUID> hideShortsFolderIds) {
         boolean hideShorts = hideShortsFolderIds != null && !hideShortsFolderIds.isEmpty();
         List<UUID> shortsFolderIds = shortsFolderIdsParam(hideShortsFolderIds);
         Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.DESC, "pubDate"));
         boolean hasSearch = searchTerm != null && !searchTerm.trim().isEmpty();
+
+        if (favorite) {
+            return hasSearch
+                    ? postRepository.findByUserAndFavoriteTrueAndTitleOrDescriptionContaining(user, searchTerm.trim(), pageable)
+                    : postRepository.findByUserAndFavoriteTrue(user, pageable);
+        }
 
         if (saved) {
             return hasSearch
@@ -646,7 +671,7 @@ public class PostService {
      * Returns the unread post counts for a given user, in total, per folder and per feed.
      * All the user's feeds are included (with count 0 if they have no unread posts), but only folders with unread posts.
      * @param user The user
-     * @return Map with "total" (long), "saved" (long, number of saved posts read or unread),
+     * @return Map with "total" (long), "saved" (long, number of saved posts read or unread), "favorites" (long, number of favorite posts),
      *         "folders" (folder id → unread count) and "feeds" (list of {id, title, htmlUrl, folderId, count})
      */
     public Map<String, Object> getUnreadCounts(User user) {
@@ -658,7 +683,7 @@ public class PostService {
      * All the user's feeds are included (with count 0 if they have no unread posts), but only folders with unread posts.
      * @param user The user
      * @param hideShortsFolderIds Folders whose YouTube Shorts aren't counted (null or empty for none)
-     * @return Map with "total" (long), "saved" (long, number of saved posts read or unread),
+     * @return Map with "total" (long), "saved" (long, number of saved posts read or unread), "favorites" (long, number of favorite posts),
      *         "folders" (folder id → unread count) and "feeds" (list of {id, title, htmlUrl, folderId, count})
      */
     public Map<String, Object> getUnreadCounts(User user, List<UUID> hideShortsFolderIds) {
@@ -688,6 +713,7 @@ public class PostService {
         Map<String, Object> result = new HashMap<>();
         result.put("total", total);
         result.put("saved", postRepository.countByUserAndSavedTrue(user));
+        result.put("favorites", postRepository.countByUserAndFavoriteTrue(user));
         result.put("folders", folderCounts);
         result.put("feeds", feedCounts);
         return result;
@@ -759,11 +785,11 @@ public class PostService {
     }
 
     /**
-     * Delete all posts for a specific user, except the saved ones.
+     * Delete all posts for a specific user, except the saved and favorite ones.
      * @param user The user whose posts should be deleted
      */
     public void deleteAllPostsForUser(User user) {
-        List<Post> userPosts = postRepository.findByUserAndSavedFalse(user);
+        List<Post> userPosts = postRepository.findByUserAndSavedFalseAndFavoriteFalse(user);
         postRepository.deleteAll(userPosts);
     }
 
@@ -859,7 +885,7 @@ public class PostService {
 
     /**
      * Deletes the read posts that were read more than the retention period ago (feedora.posts.read-retention-days).
-     * Saved posts are kept. Read posts without a read date (read before it was kept) get the current date,
+     * Saved and favorite posts are kept. Read posts without a read date (read before it was kept) get the current date,
      * so they are deleted a full retention period from now. Runs daily from the post cleanup worker.
      * @return The number of deleted posts
      */
@@ -884,6 +910,21 @@ public class PostService {
                 .filter(p -> p.getUser().getId().equals(user.getId()))
                 .orElseThrow(() -> new NotFoundException(Language.getActionString("Post not found")));
         post.setSaved(saved);
+        postRepository.save(post);
+    }
+
+    /**
+     * Add a post to the favorites, or remove it from them, for a specific user.
+     * @param postId The UUID of the post
+     * @param user The user who owns the post
+     * @param favorite true to add the post to the favorites, false to remove it from them
+     * @throws NotFoundException if the post doesn't exist or belongs to another user
+     */
+    public void setPostFavorite(UUID postId, User user, boolean favorite) {
+        Post post = postRepository.findById(postId)
+                .filter(p -> p.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new NotFoundException(Language.getActionString("Post not found")));
+        post.setFavorite(favorite);
         postRepository.save(post);
     }
 }

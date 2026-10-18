@@ -77,6 +77,7 @@ export interface FeedUnreadCountType {
 export interface UnreadCountsType {
     total: number;
     saved: number;
+    favorites: number;
     folders: Record<string, number>;
     feeds: FeedUnreadCountType[];
 }
@@ -96,6 +97,7 @@ export interface UserWithStatisticsType extends UserType {
     postCount: number;
     unreadCount: number;
     savedCount: number;
+    favoriteCount: number;
     logCount: number;
 }
 
@@ -121,6 +123,7 @@ export interface PostType {
     author: string | null;
     read: boolean;
     saved: boolean;
+    favorite: boolean;
     // YouTube videos: scheduled live stream/premiere or live now, and its (scheduled) start
     liveStatus: 'UPCOMING' | 'LIVE' | null;
     liveStartAt: string | null;

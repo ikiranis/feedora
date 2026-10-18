@@ -48,6 +48,15 @@
                             <path d="M7.002 12a1 1 0 1 1 2 0 1 1 0 0 1-2 0M7.1 5.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0z"/>
                         </svg>
                     </button>
+                    <button type="button" class="footer-action save-button favorite-button" :class="{ favorite: post.favorite }" @click.stop="emit('toggle-favorite', post.id)"
+                        :title="post.favorite ? (language.get('Remove from favorites') || 'Remove from favorites') : (language.get('Add to favorites') || 'Add to favorites')">
+                        <svg v-if="post.favorite" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                        </svg>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.56.56 0 0 0-.163-.505L1.71 6.745l4.052-.576a.53.53 0 0 0 .393-.288L8 2.223l1.847 3.658a.53.53 0 0 0 .393.288l4.052.575-2.906 2.77a.56.56 0 0 0-.163.506l.694 3.957-3.686-1.894a.5.5 0 0 0-.461 0z"/>
+                        </svg>
+                    </button>
                     <button type="button" class="footer-action save-button" :class="{ saved: post.saved }" @click.stop="emit('toggle-saved', post.id)"
                         :title="post.saved ? (language.get('Remove from saved') || 'Remove from saved') : (language.get('Save for later') || 'Save for later')">
                         <svg v-if="post.saved" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
@@ -93,6 +102,15 @@
                 <a :href="post.link" target="_blank" class="list-title" @click="handleTitleClick">{{ post.title }}</a>
                 <span v-if="excerpt" class="list-excerpt">{{ excerpt }}</span>
             </div>
+            <button type="button" class="list-save save-button favorite-button" :class="{ favorite: post.favorite }" @click.stop="emit('toggle-favorite', post.id)"
+                :title="post.favorite ? (language.get('Remove from favorites') || 'Remove from favorites') : (language.get('Add to favorites') || 'Add to favorites')">
+                <svg v-if="post.favorite" xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                </svg>
+                <svg v-else xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.56.56 0 0 0-.163-.505L1.71 6.745l4.052-.576a.53.53 0 0 0 .393-.288L8 2.223l1.847 3.658a.53.53 0 0 0 .393.288l4.052.575-2.906 2.77a.56.56 0 0 0-.163.506l.694 3.957-3.686-1.894a.5.5 0 0 0-.461 0z"/>
+                </svg>
+            </button>
             <button type="button" class="list-save save-button" :class="{ saved: post.saved }" @click.stop="emit('toggle-saved', post.id)"
                     :title="post.saved ? (language.get('Remove from saved') || 'Remove from saved') : (language.get('Save for later') || 'Save for later')">
                     <svg v-if="post.saved" xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
@@ -118,6 +136,15 @@
                     <span v-if="post.pubDate" class="flex-shrink-0">&middot; {{ new Date(post.pubDate).toLocaleString() }}</span>
                 </div>
                 <div class="details-actions">
+                    <button type="button" class="details-action save-button favorite-button" :class="{ favorite: post.favorite }" @click="emit('toggle-favorite', post.id)"
+                        :title="post.favorite ? (language.get('Remove from favorites') || 'Remove from favorites') : (language.get('Add to favorites') || 'Add to favorites')">
+                        <svg v-if="post.favorite" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                        </svg>
+                        <svg v-else xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.56.56 0 0 0-.163-.505L1.71 6.745l4.052-.576a.53.53 0 0 0 .393-.288L8 2.223l1.847 3.658a.53.53 0 0 0 .393.288l4.052.575-2.906 2.77a.56.56 0 0 0-.163.506l.694 3.957-3.686-1.894a.5.5 0 0 0-.461 0z"/>
+                        </svg>
+                    </button>
                     <button type="button" class="details-action save-button" :class="{ saved: post.saved }" @click="emit('toggle-saved', post.id)"
                         :title="post.saved ? (language.get('Remove from saved') || 'Remove from saved') : (language.get('Save for later') || 'Save for later')">
                         <svg v-if="post.saved" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
@@ -351,6 +378,7 @@ watch([isOpened, () => props.post.id], ([opened]) => {
 const emit = defineEmits<{
     'post-read': [postId: string]
     'toggle-saved': [postId: string]
+    'toggle-favorite': [postId: string]
     'toggle-read': [postId: string]
     'show-logs': [post: PostType]
     'show-feed': [feedId: string]
@@ -646,6 +674,10 @@ const handleCardClick = async () => {
     color: #4d8dff;
 }
 
+.favorite-button.favorite {
+    color: #f5b301;
+}
+
 .read-indicator {
     width: 18px;
     height: 18px;
@@ -804,10 +836,11 @@ const handleCardClick = async () => {
     transition: opacity 0.15s, color 0.2s;
 }
 
-/* In list mode the button only shows on hover or selection, unless the post is saved */
+/* In list mode the buttons only show on hover or selection, unless the post is saved / favorite */
 .list-row:hover .list-save,
 .list-row.selected-post .list-save,
-.list-save.saved {
+.list-save.saved,
+.list-save.favorite {
     opacity: 1;
 }
 
@@ -817,6 +850,10 @@ const handleCardClick = async () => {
 
 .list-save.saved {
     color: #4d8dff;
+}
+
+.list-save.favorite {
+    color: #f5b301;
 }
 
 .list-time {
@@ -891,6 +928,10 @@ const handleCardClick = async () => {
 
 .details-action.saved {
     color: #4d8dff;
+}
+
+.details-action.favorite {
+    color: #f5b301;
 }
 
 .details-action.logs-action,
