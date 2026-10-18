@@ -109,6 +109,11 @@ router.beforeEach(async (to, from, next) => {
         return;
     }
     
+    // Errors of the page the user was on (e.g. requests that failed when the session expired) don't belong on the login page
+    if (to.name === 'Auth') {
+        errorStore.clear();
+    }
+
     // Clear errors when successfully navigating to protected routes after authentication
     if (to.meta.requiresAuth && isAuthenticated && from.name === 'Auth') {
         errorStore.clear();

@@ -97,8 +97,8 @@ export const authStore = {
         try {
             user.value = await getCurrentUser();
         } catch (error) {
-            // If fetching user fails, token might be invalid
-            this.logout();
+            // The token is invalid or expired. Clear it right away, before the router decides where to go
+            this.clearSession();
             throw error;
         }
     },
@@ -114,6 +114,11 @@ export const authStore = {
         }
         
         // Clear local state regardless of API call result
+        this.clearSession();
+    },
+
+    // Forget the token and user locally, without calling the API
+    clearSession(): void {
         token.value = null;
         user.value = null;
         localStorage.removeItem('auth_token');
@@ -130,8 +135,7 @@ export const authStore = {
             try {
                 await this.fetchCurrentUser();
             } catch (error) {
-                // Token is invalid, clear it
-                this.logout();
+                // fetchCurrentUser already cleared the invalid token
             }
         }
     }

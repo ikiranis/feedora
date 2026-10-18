@@ -28,17 +28,17 @@ class SecurityConfigTest extends ApiTestBase {
     void frontendFilesInSubfoldersDontNeedAToken() throws Exception {
         // <img> requests don't send the JWT, so e.g. the language flags must be public
         mockMvc.perform(get("/flags/en.svg"))
-                .andExpect(result -> assertNotEquals(403, result.getResponse().getStatus()));
+                .andExpect(result -> assertNotEquals(401, result.getResponse().getStatus()));
     }
 
     @Test
     void protectedEndpointsRejectRequestsWithoutToken() throws Exception {
-        mockMvc.perform(get("/api/folders")).andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/posts/unreadCounts")).andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/feed/getAllFeeds")).andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/logs")).andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/setting/all")).andExpect(status().isForbidden());
-        mockMvc.perform(get("/api/users")).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/folders")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/posts/unreadCounts")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/feed/getAllFeeds")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/logs")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/setting/all")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/users")).andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -49,9 +49,9 @@ class SecurityConfigTest extends ApiTestBase {
     @Test
     void malformedTokenIsRejected() throws Exception {
         mockMvc.perform(get("/api/folders").header("Authorization", "Bearer not-a-jwt"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
         mockMvc.perform(get("/api/folders").header("Authorization", token))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -64,14 +64,14 @@ class SecurityConfigTest extends ApiTestBase {
                 .compact();
 
         mockMvc.perform(get("/api/folders").header("Authorization", "Bearer " + forged))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     void tokenOfDeletedUserIsRejected() throws Exception {
         userRepository.delete(user);
 
-        mockMvc.perform(auth(get("/api/folders"))).andExpect(status().isForbidden());
+        mockMvc.perform(auth(get("/api/folders"))).andExpect(status().isUnauthorized());
     }
 
     @Test

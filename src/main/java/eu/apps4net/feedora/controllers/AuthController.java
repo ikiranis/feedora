@@ -130,7 +130,7 @@ public class AuthController {
                 return ResponseEntity.ok(response);
             }
             
-            return ResponseEntity.badRequest().body(Language.getString("Please check your input"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Language.getString("Please check your input"));
             
         } catch (Exception e) {
             return ResponseEntity.internalServerError().body(Language.getString("Please check your input"));

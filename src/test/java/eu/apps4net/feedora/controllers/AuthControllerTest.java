@@ -176,9 +176,9 @@ class AuthControllerTest extends ApiTestBase {
     }
 
     @Test
-    void meWithoutAuthenticationIsBadRequest() throws Exception {
+    void meWithoutAuthenticationIsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/auth/me"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isUnauthorized())
                 .andExpect(content().string("Please check your input"));
     }
 
