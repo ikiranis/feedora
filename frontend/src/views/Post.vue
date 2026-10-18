@@ -1475,11 +1475,14 @@ onUnmounted(() => {
     z-index: 10;
     display: flex;
     justify-content: center;
+    align-items: flex-start; /* Don't stretch the badge to the wrapper's zero height */
     overflow: visible;
 }
 
 .new-posts-badge {
     margin-top: 0.5rem;
+    flex-shrink: 0;
+    white-space: nowrap;
     font-size: 0.8rem;
 }
 
