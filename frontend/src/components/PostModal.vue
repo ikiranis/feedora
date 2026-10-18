@@ -1,7 +1,8 @@
 <template>
     <Teleport to="body">
         <div class="post-modal-backdrop" @click.self="emit('close')">
-            <div ref="bodyRef" class="post-modal" role="dialog" aria-modal="true" :aria-label="post.title">
+            <div ref="bodyRef" class="post-modal" role="dialog" aria-modal="true" :aria-label="post.title"
+                @touchstart="onTouchStart" @touchend="onTouchEnd" @touchcancel="touchStart = null">
                 <button type="button" class="post-modal-close" :aria-label="language.get('Close') || 'Close'"
                     :title="language.get('Close') || 'Close'" @click="emit('close')">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
@@ -9,7 +10,9 @@
                     </svg>
                 </button>
 
-                <article class="post-modal-article">
+                <!-- The slide animation only plays after a swipe, so switching posts with the keyboard isn't animated -->
+                <article :key="post.id" class="post-modal-article" :class="swipeDirection && `slide-from-${swipeDirection}`"
+                    @animationend.self="swipeDirection = null">
                     <!-- Tweets have no real title, their text is the content -->
                     <header class="post-modal-header" :class="{ 'is-tweet': isTweet }">
                         <LiveBadge :post="post" class="title-live-badge" />
@@ -112,6 +115,8 @@ const emit = defineEmits<{
     'toggle-favorite': [postId: string]
     'show-logs': [post: PostType]
     'show-feed': [feedId: string]
+    'next': []
+    'previous': []
 }>();
 
 const bodyRef = ref<HTMLElement | null>(null);
@@ -171,6 +176,53 @@ watch(() => props.post.id, () => {
     else postContentStore.load(props.post.id);
 }, { immediate: true });
 
+// Swipe left/right on touch screens to go to the next/previous post
+const SWIPE_MIN_DISTANCE = 70; // px the finger must move horizontally
+const SWIPE_MAX_SLOPE = 0.6; // Vertical movement allowed per horizontal px, so scrolling the article isn't taken as a swipe
+const touchStart = ref<{ x: number, y: number } | null>(null);
+// Side the shown post slides in from after a swipe
+const swipeDirection = ref<'left' | 'right' | null>(null);
+
+/**
+ * Returns true when the element or one of its parents (inside the modal) scrolls horizontally,
+ * e.g. a wide table or code block, where a horizontal swipe should scroll it instead.
+ */
+const inHorizontalScroller = (element: Element | null): boolean => {
+    while (element && element !== bodyRef.value) {
+        if (element.scrollWidth > element.clientWidth && ['auto', 'scroll'].includes(getComputedStyle(element).overflowX)) {
+            return true;
+        }
+        element = element.parentElement;
+    }
+    return false;
+};
+
+const onTouchStart = (event: TouchEvent) => {
+    // Multi-touch is a pinch zoom, not a swipe
+    if (event.touches.length !== 1 || inHorizontalScroller(event.target as Element)) {
+        touchStart.value = null;
+        return;
+    }
+    touchStart.value = { x: event.touches[0].clientX, y: event.touches[0].clientY };
+};
+
+const onTouchEnd = (event: TouchEvent) => {
+    const start = touchStart.value;
+    touchStart.value = null;
+    // Ignore swipes while the page is zoomed in, where they pan the page
+    if (!start || (window.visualViewport && window.visualViewport.scale > 1.01)) return;
+
+    const touch = event.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < SWIPE_MIN_DISTANCE || Math.abs(dy) > Math.abs(dx) * SWIPE_MAX_SLOPE) return;
+
+    // Swiping left brings the next post in from the right
+    swipeDirection.value = dx < 0 ? 'right' : 'left';
+    if (dx < 0) emit('next');
+    else emit('previous');
+};
+
 /**
  * Scrolls the modal body, used by the keyboard handler of the posts view.
  */
@@ -195,6 +247,26 @@ defineExpose({ scrollBy });
 .post-modal {
     height: 100%;
     overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* The post shown after a swipe slides in from the side it was swiped from */
+.slide-from-right {
+    animation: slide-from-right 0.22s ease-out;
+}
+
+.slide-from-left {
+    animation: slide-from-left 0.22s ease-out;
+}
+
+@keyframes slide-from-right {
+    from { transform: translateX(40px); opacity: 0; }
+    to { transform: none; opacity: 1; }
+}
+
+@keyframes slide-from-left {
+    from { transform: translateX(-40px); opacity: 0; }
+    to { transform: none; opacity: 1; }
 }
 
 .post-modal-close {
