@@ -1014,4 +1014,27 @@ const handleCardClick = async () => {
     width: 100% !important;
     height: auto !important;
 }
+
+/* Tweets: their photos side by side, cropped to the same height */
+.summary-description :deep(.tweet-photos) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.summary-description :deep(.tweet-photos img) {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 500px !important;
+    margin: 0;
+    object-fit: cover;
+    border-radius: 0.75rem;
+}
+
+.summary-description :deep(.tweet-photos img:only-child) {
+    object-fit: contain;
+    width: auto !important;
+    max-width: 100% !important;
+}
 </style>

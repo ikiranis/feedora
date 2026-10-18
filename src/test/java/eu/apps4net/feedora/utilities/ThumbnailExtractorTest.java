@@ -66,4 +66,16 @@ class ThumbnailExtractorTest {
 
         assertThat(ThumbnailExtractor.find(entry)).isNull();
     }
+
+    @Test
+    void attachedImagesListsEnclosuresAndMediaContentImagesOnce() throws Exception {
+        SyndEntry entry = parseItem("<description>Text</description>"
+                + "<enclosure url=\"http://example.com/a.jpg\" length=\"1\" type=\"image/jpeg\"/>"
+                + "<media:content medium=\"image\" url=\"http://example.com/b.jpg\"/>"
+                + "<media:content medium=\"video\" url=\"http://example.com/v.mp4\"/>"
+                + "<media:group><media:content type=\"image/png\" url=\"/c.png\"/><media:content medium=\"image\" url=\"http://example.com/b.jpg\"/></media:group>");
+
+        assertThat(ThumbnailExtractor.attachedImages(entry))
+                .containsExactly("http://example.com/a.jpg", "http://example.com/b.jpg", "http://example.com/c.png");
+    }
 }

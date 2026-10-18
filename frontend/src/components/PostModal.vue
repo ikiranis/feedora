@@ -423,4 +423,27 @@ defineExpose({ scrollBy });
     font-size: 0.95rem;
     color: #8b919c;
 }
+
+/* Tweets: their photos side by side, cropped to the same height */
+.post-modal-content :deep(.tweet-photos) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+    gap: 0.5rem;
+    margin: 1rem 0;
+}
+
+.post-modal-content :deep(.tweet-photos img) {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 500px !important;
+    margin: 0;
+    object-fit: cover;
+    border-radius: 0.75rem;
+}
+
+.post-modal-content :deep(.tweet-photos img:only-child) {
+    object-fit: contain;
+    width: auto !important;
+    max-width: 100% !important;
+}
 </style>

@@ -218,8 +218,13 @@ public class PostService {
                                 entry.getAuthor(),
                                 false
                             );
-                            post.setContent(getEntryContent(entry));
                             post.setThumbnail(ThumbnailExtractor.find(entry));
+                            if (LinkPreviewExtractor.isTweet(entry.getLink())) {
+                                String tweet = LinkPreviewExtractor.tweetContent(post.getDescription(), ThumbnailExtractor.attachedImages(entry), entry.getLink());
+                                post.setContent(tweet != null ? LinkPreviewExtractor.TWEET_CONTENT_MARKER + tweet : null);
+                            } else {
+                                post.setContent(getEntryContent(entry));
+                            }
                             post.setFeed(feed);
                             post.setUser(user);
                             postsToSave.add(post);
@@ -488,8 +493,8 @@ public class PostService {
      * Returns the full content of a post. Uses the content stored from the feed if it's longer than the description,
      * otherwise downloads the post's page, extracts the article and stores it for next time.
      * Falls back to the description if nothing better can be found.
-     * Tweets always get their description: their page only shows a login wall to anyone not logged in to X,
-     * and content stored before this rule may be that login wall.
+     * Tweets get their text and photos stored when parsed (their page only shows a login wall to anyone not logged in to X);
+     * for tweets added before, their description and thumbnail (their first photo), since stored content may be that login wall.
      * @param postId The UUID of the post
      * @param user The user who owns the post
      * @return Sanitized content HTML, or null if the post has no content at all
@@ -500,10 +505,16 @@ public class PostService {
                 .filter(p -> p.getUser().getId().equals(user.getId()))
                 .orElseThrow(() -> new NotFoundException(Language.getActionString("Post not found")));
 
-        String description = ArticleExtractor.sanitize(post.getDescription(), post.getLink());
         if (LinkPreviewExtractor.isTweet(post.getLink())) {
-            return description;
+            String stored = post.getContent();
+            if (stored != null && stored.startsWith(LinkPreviewExtractor.TWEET_CONTENT_MARKER)) {
+                return stored.substring(LinkPreviewExtractor.TWEET_CONTENT_MARKER.length());
+            }
+            List<String> images = post.getThumbnail() != null ? List.of(post.getThumbnail()) : List.of();
+            return LinkPreviewExtractor.tweetContent(post.getDescription(), images, post.getLink());
         }
+
+        String description = ArticleExtractor.sanitize(post.getDescription(), post.getLink());
         int descriptionLength = ArticleExtractor.textLength(description);
 
         String stored = post.getContent();

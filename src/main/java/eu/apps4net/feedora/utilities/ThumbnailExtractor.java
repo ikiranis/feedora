@@ -7,7 +7,10 @@ import org.jdom2.Element;
 import org.jsoup.Jsoup;
 
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Finds the image to show as a post's thumbnail on its card.
@@ -51,6 +54,43 @@ public final class ThumbnailExtractor {
         }
 
         return mediaImage(entry.getForeignMarkup(), link);
+    }
+
+    /**
+     * Returns all the images attached to a feed entry: image enclosures and Media RSS media:content images
+     * (also inside media:group), in feed order, without duplicates. Used for tweets, whose photos are only given this way.
+     *
+     * @param entry The feed entry
+     * @return Absolute http(s) image URLs, empty if the entry has none
+     */
+    public static List<String> attachedImages(SyndEntry entry) {
+        Set<String> images = new LinkedHashSet<>();
+        if (entry.getEnclosures() != null) {
+            for (SyndEnclosure enclosure : entry.getEnclosures()) {
+                if (enclosure.getType() != null && enclosure.getType().startsWith("image/")) {
+                    String image = absolute(enclosure.getUrl(), entry.getLink());
+                    if (image != null) images.add(image);
+                }
+            }
+        }
+        addMediaContentImages(entry.getForeignMarkup(), entry.getLink(), images);
+        return new ArrayList<>(images);
+    }
+
+    private static void addMediaContentImages(List<Element> elements, String baseUri, Set<String> images) {
+        if (elements == null) return;
+        for (Element element : elements) {
+            if (!MEDIA_RSS_NAMESPACE.equals(element.getNamespaceURI())) continue;
+            if (element.getName().equals("group")) {
+                addMediaContentImages(element.getChildren(), baseUri, images);
+            } else if (element.getName().equals("content")) {
+                String type = element.getAttributeValue("type", "");
+                if (type.startsWith("image/") || "image".equals(element.getAttributeValue("medium"))) {
+                    String image = absolute(element.getAttributeValue("url"), baseUri);
+                    if (image != null) images.add(image);
+                }
+            }
+        }
     }
 
     /**

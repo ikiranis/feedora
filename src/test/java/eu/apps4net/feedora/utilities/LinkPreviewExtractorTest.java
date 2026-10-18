@@ -3,6 +3,8 @@ package eu.apps4net.feedora.utilities;
 import eu.apps4net.feedora.support.TestHttpServer;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -49,6 +51,19 @@ class LinkPreviewExtractorTest {
     void findsNoLinkInTextWithout() {
         assertThat(LinkPreviewExtractor.findLink("<p>No link <img src=\"https://pbs.twimg.com/media/a.jpg\"></p>")).isNull();
         assertThat(LinkPreviewExtractor.findLink(null)).isNull();
+    }
+
+    @Test
+    void tweetContentAddsPhotosTheDescriptionDoesntShow() {
+        String content = LinkPreviewExtractor.tweetContent("<p>Text <img src=\"https://pbs.twimg.com/media/a.jpg?format=jpg&amp;name=900x900\"></p>",
+                List.of("https://pbs.twimg.com/media/a.jpg?format=jpg&name=900x900", "https://pbs.twimg.com/media/b.jpg",
+                        "https://pbs.twimg.com/card_img/1/c?format=jpg"),
+                "https://x.com/AP/status/1");
+
+        assertThat(content).isEqualTo("<p>Text <img src=\"https://pbs.twimg.com/media/a.jpg?format=jpg&amp;name=900x900\"></p>"
+                + "<div class=\"tweet-photos\"><img src=\"https://pbs.twimg.com/media/b.jpg\" alt=\"\"></div>");
+        assertThat(LinkPreviewExtractor.tweetContent("<p>Text</p>", List.of(), null)).isEqualTo("<p>Text</p>");
+        assertThat(LinkPreviewExtractor.tweetContent(null, List.of(), null)).isNull();
     }
 
     @Test

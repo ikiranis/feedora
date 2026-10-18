@@ -12,6 +12,7 @@ import eu.apps4net.feedora.repositories.FeedStatisticsRepository;
 import eu.apps4net.feedora.repositories.PostRepository;
 import eu.apps4net.feedora.support.TestHttpServer;
 import eu.apps4net.feedora.utilities.ArticleExtractor;
+import eu.apps4net.feedora.utilities.LinkPreviewExtractor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -522,6 +523,29 @@ class PostServiceTest {
         assertThat(postService.getPostContent(post.getId(), user)).isEqualTo("<p>The tweet text</p>");
         verifyNoInteractions(logService);
         verify(postRepository, never()).save(any());
+    }
+
+    @Test
+    void getPostContentReturnsStoredTweetContent() {
+        Post post = post("tweet", user, null);
+        post.setLink("https://x.com/AP/status/1");
+        post.setContent(LinkPreviewExtractor.TWEET_CONTENT_MARKER + "<p>Text</p><div class=\"tweet-photos\"><img src=\"https://pbs.twimg.com/media/a.jpg\" alt=\"\"></div>");
+        when(postRepository.findById(post.getId())).thenReturn(Optional.of(post));
+
+        assertThat(postService.getPostContent(post.getId(), user))
+                .isEqualTo("<p>Text</p><div class=\"tweet-photos\"><img src=\"https://pbs.twimg.com/media/a.jpg\" alt=\"\"></div>");
+    }
+
+    @Test
+    void getPostContentAddsThumbnailToOlderTweets() {
+        Post post = post("tweet", user, null);
+        post.setLink("https://x.com/AP/status/1");
+        post.setDescription("<p>Legend.</p>");
+        post.setThumbnail("https://pbs.twimg.com/media/a.jpg");
+        when(postRepository.findById(post.getId())).thenReturn(Optional.of(post));
+
+        assertThat(postService.getPostContent(post.getId(), user))
+                .isEqualTo("<p>Legend.</p><div class=\"tweet-photos\"><img src=\"https://pbs.twimg.com/media/a.jpg\" alt=\"\"></div>");
     }
 
     @Test

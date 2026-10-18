@@ -3,8 +3,12 @@ package eu.apps4net.feedora.utilities;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Entities;
 
 import java.net.URI;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,6 +27,10 @@ public final class LinkPreviewExtractor {
     // Pages that forward with a meta refresh instead of an HTTP redirect (e.g. t.co for browsers) are followed this many times
     private static final int MAX_META_REFRESHES = 3;
     private static final Pattern REFRESH_URL = Pattern.compile("(?i)url\\s*=\\s*['\"]?([^'\"]+)");
+
+    // Prefix of a tweet's stored content (its text and photos, see tweetContent), to tell it from content stored before
+    // it was made, e.g. X's login page read as the tweet's article
+    public static final String TWEET_CONTENT_MARKER = "<!--feedora-tweet-v1-->";
 
     public record LinkPreview(String url, String title, String image) {}
 
@@ -69,6 +77,32 @@ public final class LinkPreviewExtractor {
             if (isPreviewable(url)) return new FoundLink(url, null);
         }
         return null;
+    }
+
+    /**
+     * Content of a tweet to show when it's opened: its sanitized description, followed by its photos that the description
+     * doesn't show (feeds give them as attachments). The image of Twitter's link card is left out, the link preview shows it.
+     *
+     * @param description The description HTML
+     * @param images The tweet's attached images
+     * @param link The tweet's link, to resolve relative URLs
+     * @return The content HTML, or null if the tweet has neither text nor photos
+     */
+    public static String tweetContent(String description, List<String> images, String link) {
+        String html = ArticleExtractor.sanitize(description, link);
+        Set<String> shown = new HashSet<>();
+        if (html != null) {
+            Jsoup.parseBodyFragment(html).select("img[src]").forEach(img -> shown.add(img.attr("src")));
+        }
+
+        StringBuilder photos = new StringBuilder();
+        for (String image : images) {
+            if (image.contains("//pbs.twimg.com/card_img/") || !shown.add(image)) continue;
+            photos.append("<img src=\"").append(Entities.escape(image)).append("\" alt=\"\">");
+        }
+        if (photos.isEmpty()) return html;
+        // The photos are laid out side by side (class added after sanitizing, which removes classes)
+        return (html != null ? html : "") + "<div class=\"tweet-photos\">" + photos + "</div>";
     }
 
     private static boolean isPreviewable(String url) {
