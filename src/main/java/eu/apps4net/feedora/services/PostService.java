@@ -15,6 +15,7 @@ import eu.apps4net.feedora.repositories.PostRepository;
 import eu.apps4net.feedora.configurations.Language;
 import eu.apps4net.feedora.exceptions.NotFoundException;
 import eu.apps4net.feedora.utilities.ArticleExtractor;
+import eu.apps4net.feedora.utilities.LinkPreviewExtractor;
 import eu.apps4net.feedora.utilities.RssFetcher;
 import eu.apps4net.feedora.utilities.ThumbnailExtractor;
 import eu.apps4net.feedora.utilities.YouTubeLiveChecker;
@@ -44,11 +45,13 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.time.LocalDateTime;
@@ -83,6 +86,10 @@ public class PostService {
     // New YouTube videos published within this many days are checked for being scheduled or live streams.
     // Older ones are skipped, so a feed's first check doesn't read the page of every video in it.
     private static final int LIVE_CHECK_MAX_AGE_DAYS = 7;
+
+    // New tweets published within this many days get a preview of their link, read by up to this many threads per feed
+    private static final int LINK_PREVIEW_MAX_AGE_DAYS = 7;
+    private static final int LINK_PREVIEW_THREADS = 4;
 
     /**
      * Checks all the feeds of a user for new posts, and adds them as Posts in the database.
@@ -222,6 +229,7 @@ public class PostService {
                         }
                     }
                     List<String> liveCheckErrors = checkLiveStates(feed, user, postsToSave, youtubeApiKey);
+                    addLinkPreviews(postsToSave);
                     newPosts = savePosts(feed, postsToSave);
                     if (!liveCheckErrors.isEmpty()) {
                         logService.logFeed(feed, LogLevel.WARNING, LogType.YOUTUBE_LIVE_CHECK,
@@ -297,6 +305,51 @@ public class PostService {
                 }
             }
             return saved;
+        }
+    }
+
+    /**
+     * Adds a preview (page URL, title and image) of the first link in the text of new tweets published within
+     * LINK_PREVIEW_MAX_AGE_DAYS, before they're saved. Each link is read once, even if several tweets share it.
+     * Tweets whose link couldn't be read get no preview; it's not worth a log entry.
+     *
+     * @param newPosts The feed's new posts, not saved yet
+     */
+    private void addLinkPreviews(List<Post> newPosts) {
+        LocalDateTime oldest = LocalDateTime.now().minusDays(LINK_PREVIEW_MAX_AGE_DAYS);
+        Map<String, List<Post>> postsByLink = new LinkedHashMap<>();
+        for (Post post : newPosts) {
+            if (!LinkPreviewExtractor.isTweet(post.getLink()) || post.getPubDate().isBefore(oldest)) continue;
+            String link = LinkPreviewExtractor.findLink(post.getDescription());
+            if (link != null) postsByLink.computeIfAbsent(link, l -> new ArrayList<>()).add(post);
+        }
+        if (postsByLink.isEmpty()) return;
+
+        ExecutorService executor = Executors.newFixedThreadPool(Math.min(postsByLink.size(), LINK_PREVIEW_THREADS));
+        try {
+            List<Future<?>> tasks = new ArrayList<>();
+            postsByLink.forEach((link, posts) -> tasks.add(executor.submit(() -> {
+                try {
+                    LinkPreviewExtractor.LinkPreview preview = LinkPreviewExtractor.fetch(link);
+                    if (preview == null) return;
+                    for (Post post : posts) {
+                        post.setLinkUrl(preview.url());
+                        post.setLinkTitle(preview.title());
+                        post.setLinkImage(preview.image());
+                    }
+                } catch (Exception ignored) {
+                    // The tweet is shown without a preview
+                }
+            })));
+            for (Future<?> task : tasks) {
+                task.get();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception ignored) {
+            // The tasks catch their own errors
+        } finally {
+            executor.shutdownNow();
         }
     }
 

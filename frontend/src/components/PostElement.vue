@@ -29,12 +29,20 @@
             <div class="post-source">
                 <img v-if="siteIcon" :src="siteIcon" class="site-icon source-icon" alt="" loading="lazy" @error="iconFailed = true" />
                 <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
-                    @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ post.feed?.title }}</span>
+                    @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ tweetAuthor || post.feed?.title }}</span>
                 <span v-if="post.feed?.folderName" class="post-folder text-truncate">&middot; {{ post.feed.folderName }}</span>
             </div>
             <!-- Without a title, the tweet text takes its place and opens the post in the modal -->
-            <p v-if="!youtubeVideo && excerpt" class="post-excerpt" :class="{ 'no-media': !thumbnailUrl, 'tweet-text': isTweet }"
-                @click="isTweet && emit('open', post.id)">{{ excerpt }}</p>
+            <p v-if="!youtubeVideo && cardExcerpt" class="post-excerpt" :class="{ 'no-media': !thumbnailUrl, 'tweet-text': isTweet }"
+                @click="isTweet && emit('open', post.id)">{{ cardExcerpt }}</p>
+            <!-- Tweets: preview of the link in the text -->
+            <a v-if="linkPreview" :href="linkPreview.url" target="_blank" rel="noopener noreferrer" class="link-preview" :title="linkPreview.url" @click.stop>
+                <img v-if="linkPreview.image" :src="linkPreview.image" class="link-preview-image" alt="" loading="lazy" @error="linkImageFailed = true" />
+                <span class="link-preview-text">
+                    <span v-if="linkPreview.title" class="link-preview-title">{{ linkPreview.title }}</span>
+                    <span class="link-preview-host">{{ linkPreview.host }}</span>
+                </span>
+            </a>
 
             <div class="card-footer-row">
                 <span class="post-time" :title="post.pubDate ? new Date(post.pubDate).toLocaleString() : ''">{{ shortDate }}</span>
@@ -284,9 +292,61 @@ const thumbnailUrl = computed(() => {
 });
 
 /**
- * Plain-text excerpt of the description.
+ * Plain-text excerpt of the description; line breaks and paragraphs become spaces, so words don't run together.
  */
-const excerpt = computed(() => descriptionDoc.value?.body.textContent?.replace(/\s+/g, ' ').trim() || '');
+const excerpt = computed(() => {
+    if (!descriptionDoc.value) return '';
+    const body = descriptionDoc.value.body.cloneNode(true) as HTMLElement;
+    body.querySelectorAll('br').forEach(br => br.replaceWith(' '));
+    body.querySelectorAll('p, div, li').forEach(block => block.append(' '));
+    return body.textContent?.replace(/\s+/g, ' ').trim() || '';
+});
+
+/**
+ * Tweet author from the feed's dc:creator, e.g. "NEWS 24/7 (@News247gr)"; shown on the card instead of the feed name.
+ */
+const tweetAuthor = computed(() => isTweet.value ? props.post.author?.trim() || null : null);
+
+const linkImageFailed = ref(false);
+
+/**
+ * Tweets: preview of the link in the text, found when the feed was parsed.
+ */
+const linkPreview = computed(() => {
+    if (!isTweet.value || !props.post.linkUrl) return null;
+    try {
+        return {
+            url: props.post.linkUrl,
+            title: props.post.linkTitle,
+            image: linkImageFailed.value ? null : props.post.linkImage,
+            host: new URL(props.post.linkUrl).hostname.replace(/^www\./, ''),
+        };
+    } catch {
+        return null;
+    }
+});
+
+/**
+ * Card excerpt; tweet descriptions start with the author, which the card already shows,
+ * and the link the preview shows is removed from the text.
+ */
+const cardExcerpt = computed(() => {
+    let text = tweetAuthor.value && excerpt.value.startsWith(tweetAuthor.value)
+        ? excerpt.value.slice(tweetAuthor.value.length).trim()
+        : excerpt.value;
+    if (linkPreview.value) {
+        // Same rule as the backend (LinkPreviewExtractor.findLink): the first link that isn't to Twitter/X
+        const link = text.match(/https?:\/\/[^\s<>"]+/g)?.find(url => {
+            try {
+                return !/(^|\.)(twitter|x)\.com$/.test(new URL(url).hostname);
+            } catch {
+                return false;
+            }
+        });
+        if (link) text = text.replace(link, ' ').replace(/\s+/g, ' ').trim();
+    }
+    return text;
+});
 
 /**
  * Publication time for today's posts, otherwise the date.
@@ -302,6 +362,7 @@ const shortDate = computed(() => {
 watch(() => props.post.id, () => {
     iconFailed.value = false;
     thumbnailFailed.value = false;
+    linkImageFailed.value = false;
 });
 
 // Full article HTML from the shared cache (preloaded by the posts list), shown when the post is opened in list mode
@@ -575,6 +636,63 @@ const handleCardClick = async () => {
 
 .post-excerpt.tweet-text.no-media {
     -webkit-line-clamp: 8;
+}
+
+/* Tweets: preview of the link in the text */
+.link-preview {
+    display: flex;
+    align-items: stretch;
+    margin-top: 0.85rem;
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+[data-bs-theme="dark"] .link-preview {
+    border-color: #2a2e36;
+}
+
+.link-preview:hover {
+    border-color: #4d8dff;
+    background-color: rgba(77, 141, 255, 0.06);
+}
+
+.link-preview-image {
+    width: 5.5rem;
+    min-height: 5.5rem;
+    flex-shrink: 0;
+    object-fit: cover;
+    background-color: #000;
+}
+
+.link-preview-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.25rem;
+    min-width: 0;
+    padding: 0.6rem 0.8rem;
+}
+
+.link-preview-title {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 0.92rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.link-preview-host {
+    overflow: hidden;
+    color: #8b919c;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .card-footer-row {

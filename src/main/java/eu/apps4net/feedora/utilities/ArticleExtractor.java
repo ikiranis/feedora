@@ -72,7 +72,7 @@ public class ArticleExtractor {
      *
      * @throws HttpStatusException if the server responds with an error status
      */
-    private static Document fetch(String url) throws Exception {
+    static Document fetch(String url) throws Exception {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .timeout(TIMEOUT)
                 .header("User-Agent", USER_AGENT)
@@ -127,7 +127,7 @@ public class ArticleExtractor {
      *
      * @return Absolute image URL, or null if the page declares none
      */
-    private static String findLeadImage(Document page) {
+    static String findLeadImage(Document page) {
         Element meta = page.selectFirst("meta[property=og:image], meta[name=og:image], meta[name=twitter:image], meta[property=twitter:image]");
         String url = meta != null ? meta.absUrl("content") : "";
         if (url.isEmpty()) {

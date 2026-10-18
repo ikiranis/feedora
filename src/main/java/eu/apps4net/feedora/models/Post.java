@@ -34,6 +34,15 @@ public class Post {
     @Column(length = 2048)
     private String thumbnail;
 
+    // Tweets: preview of the first link in the text (page URL after redirects, title and image), found when parsed.
+    // Null if the tweet has no link or its page couldn't be read (see LinkPreviewExtractor).
+    @Column(length = 2048)
+    private String linkUrl;
+    @Column(length = 1000)
+    private String linkTitle;
+    @Column(length = 2048)
+    private String linkImage;
+
     private LocalDateTime pubDate;
     private String author;
 
@@ -100,6 +109,15 @@ public class Post {
 
     public String getThumbnail() { return thumbnail; }
     public void setThumbnail(String thumbnail) { this.thumbnail = thumbnail; }
+
+    public String getLinkUrl() { return linkUrl; }
+    public void setLinkUrl(String linkUrl) { this.linkUrl = linkUrl; }
+
+    public String getLinkTitle() { return linkTitle; }
+    public void setLinkTitle(String linkTitle) { this.linkTitle = linkTitle; }
+
+    public String getLinkImage() { return linkImage; }
+    public void setLinkImage(String linkImage) { this.linkImage = linkImage; }
 
     public LocalDateTime getPubDate() { return pubDate; }
     public void setPubDate(LocalDateTime pubDate) { this.pubDate = pubDate; }

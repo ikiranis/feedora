@@ -113,6 +113,10 @@ export interface PostType {
     description: string | null;
     // Image for the card, found in the feed entry when parsed; null if none (or for posts added before it was kept)
     thumbnail: string | null;
+    // Tweets: preview of the first link in the text (page URL, title and image), found when parsed; null if none
+    linkUrl: string | null;
+    linkTitle: string | null;
+    linkImage: string | null;
     pubDate: string | null;
     author: string | null;
     read: boolean;
