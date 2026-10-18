@@ -512,6 +512,19 @@ class PostServiceTest {
     }
 
     @Test
+    void getPostContentReturnsDescriptionOfTweetsWithoutDownloading() {
+        Post post = post("tweet", user, null);
+        post.setLink("https://x.com/AP/status/1");
+        post.setDescription("<p>The tweet text</p>");
+        post.setContent(ArticleExtractor.VERSION_MARKER + "<h2>Log in or sign up for X</h2><p>See what's happening and join the conversation</p>");
+        when(postRepository.findById(post.getId())).thenReturn(Optional.of(post));
+
+        assertThat(postService.getPostContent(post.getId(), user)).isEqualTo("<p>The tweet text</p>");
+        verifyNoInteractions(logService);
+        verify(postRepository, never()).save(any());
+    }
+
+    @Test
     void getPostContentReusesOlderStoredContentWhenThePageCantBeRead() {
         Post post = post("post", user, null);
         post.setLink("http://127.0.0.1:1/unreachable");

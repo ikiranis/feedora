@@ -20,14 +20,29 @@ class LinkPreviewExtractorTest {
     void findsFirstLinkSkippingTwitterLinks() {
         String description = "<p>Quoted https://x.com/AP/status/1<br/>➡️https://shorturl.at/rE58o<br/><br/>#slgr https://b.example/</p>";
 
-        assertThat(LinkPreviewExtractor.findLink(description)).isEqualTo("https://shorturl.at/rE58o");
+        assertThat(LinkPreviewExtractor.findLink(description)).isEqualTo(new LinkPreviewExtractor.FoundLink("https://shorturl.at/rE58o", null));
+    }
+
+    @Test
+    void prefersTwitterLinkCard() {
+        String description = "<p>Review https://a.example/</p><p><a href=\"https://x.com/CNET\">@CNET</a></p>"
+                + "<p><a href=\"https://t.co/w8mAcJSEuv\">Lenovo Yoga Review - CNET</a></p>";
+
+        assertThat(LinkPreviewExtractor.findLink(description))
+                .isEqualTo(new LinkPreviewExtractor.FoundLink("https://t.co/w8mAcJSEuv", "Lenovo Yoga Review - CNET"));
+    }
+
+    @Test
+    void skipsAnchorsWhoseTextIsALink() {
+        assertThat(LinkPreviewExtractor.findLink("<p><a href=\"https://t.co/a\">https://b.example/page</a></p>"))
+                .isEqualTo(new LinkPreviewExtractor.FoundLink("https://b.example/page", null));
     }
 
     @Test
     void removesEllipsisAndPunctuationAfterLink() {
-        assertThat(LinkPreviewExtractor.findLink("<p>Text https://a.example/article/1032039/slug-cut…</p>"))
+        assertThat(LinkPreviewExtractor.findLink("<p>Text https://a.example/article/1032039/slug-cut…</p>").url())
                 .isEqualTo("https://a.example/article/1032039/slug-cut");
-        assertThat(LinkPreviewExtractor.findLink("Read (https://a.example/page).")).isEqualTo("https://a.example/page");
+        assertThat(LinkPreviewExtractor.findLink("Read (https://a.example/page).").url()).isEqualTo("https://a.example/page");
     }
 
     @Test
@@ -49,6 +64,19 @@ class LinkPreviewExtractorTest {
             assertThat(preview.url()).isEqualTo(server.url("/article"));
             assertThat(preview.title()).isEqualTo("Article title");
             assertThat(preview.image()).isEqualTo(server.url("/img.jpg"));
+        }
+    }
+
+    @Test
+    void followsMetaRefresh() throws Exception {
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/t", 200, "text/html", "<html><head><meta http-equiv=\"refresh\" content=\"0;URL=/article\"><title>/article</title></head></html>");
+            server.respond("/article", 200, "text/html", "<html><head><meta property=\"og:title\" content=\"Article title\"></head></html>");
+
+            LinkPreviewExtractor.LinkPreview preview = LinkPreviewExtractor.fetch(server.url("/t"));
+
+            assertThat(preview.url()).isEqualTo(server.url("/article"));
+            assertThat(preview.title()).isEqualTo("Article title");
         }
     }
 

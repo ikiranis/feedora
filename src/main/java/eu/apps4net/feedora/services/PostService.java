@@ -309,18 +309,19 @@ public class PostService {
     }
 
     /**
-     * Adds a preview (page URL, title and image) of the first link in the text of new tweets published within
-     * LINK_PREVIEW_MAX_AGE_DAYS, before they're saved. Each link is read once, even if several tweets share it.
-     * Tweets whose link couldn't be read get no preview; it's not worth a log entry.
+     * Adds a preview (page URL, title and image) of the link of new tweets published within LINK_PREVIEW_MAX_AGE_DAYS
+     * (see LinkPreviewExtractor.findLink), before they're saved. Each link is read once, even if several tweets share it.
+     * Tweets whose link couldn't be read get the title of Twitter's link card if they have one, otherwise no preview;
+     * it's not worth a log entry.
      *
      * @param newPosts The feed's new posts, not saved yet
      */
     private void addLinkPreviews(List<Post> newPosts) {
         LocalDateTime oldest = LocalDateTime.now().minusDays(LINK_PREVIEW_MAX_AGE_DAYS);
-        Map<String, List<Post>> postsByLink = new LinkedHashMap<>();
+        Map<LinkPreviewExtractor.FoundLink, List<Post>> postsByLink = new LinkedHashMap<>();
         for (Post post : newPosts) {
             if (!LinkPreviewExtractor.isTweet(post.getLink()) || post.getPubDate().isBefore(oldest)) continue;
-            String link = LinkPreviewExtractor.findLink(post.getDescription());
+            LinkPreviewExtractor.FoundLink link = LinkPreviewExtractor.findLink(post.getDescription());
             if (link != null) postsByLink.computeIfAbsent(link, l -> new ArrayList<>()).add(post);
         }
         if (postsByLink.isEmpty()) return;
@@ -329,16 +330,20 @@ public class PostService {
         try {
             List<Future<?>> tasks = new ArrayList<>();
             postsByLink.forEach((link, posts) -> tasks.add(executor.submit(() -> {
+                LinkPreviewExtractor.LinkPreview preview = null;
                 try {
-                    LinkPreviewExtractor.LinkPreview preview = LinkPreviewExtractor.fetch(link);
-                    if (preview == null) return;
-                    for (Post post : posts) {
-                        post.setLinkUrl(preview.url());
-                        post.setLinkTitle(preview.title());
-                        post.setLinkImage(preview.image());
-                    }
+                    preview = LinkPreviewExtractor.fetch(link.url());
                 } catch (Exception ignored) {
-                    // The tweet is shown without a preview
+                    // Twitter's link card is used if the tweet has one, otherwise the tweet is shown without a preview
+                }
+                // The page's own title is preferred, Twitter's link card title is the fallback
+                String title = preview != null && preview.title() != null ? preview.title() : link.title();
+                String image = preview != null ? preview.image() : null;
+                if (title == null && image == null) return;
+                for (Post post : posts) {
+                    post.setLinkUrl(preview != null ? preview.url() : link.url());
+                    post.setLinkTitle(title);
+                    post.setLinkImage(image);
                 }
             })));
             for (Future<?> task : tasks) {
@@ -483,6 +488,8 @@ public class PostService {
      * Returns the full content of a post. Uses the content stored from the feed if it's longer than the description,
      * otherwise downloads the post's page, extracts the article and stores it for next time.
      * Falls back to the description if nothing better can be found.
+     * Tweets always get their description: their page only shows a login wall to anyone not logged in to X,
+     * and content stored before this rule may be that login wall.
      * @param postId The UUID of the post
      * @param user The user who owns the post
      * @return Sanitized content HTML, or null if the post has no content at all
@@ -494,6 +501,9 @@ public class PostService {
                 .orElseThrow(() -> new NotFoundException(Language.getActionString("Post not found")));
 
         String description = ArticleExtractor.sanitize(post.getDescription(), post.getLink());
+        if (LinkPreviewExtractor.isTweet(post.getLink())) {
+            return description;
+        }
         int descriptionLength = ArticleExtractor.textLength(description);
 
         String stored = post.getContent();

@@ -36,13 +36,7 @@
             <p v-if="!youtubeVideo && cardExcerpt" class="post-excerpt" :class="{ 'no-media': !thumbnailUrl, 'tweet-text': isTweet }"
                 @click="isTweet && emit('open', post.id)">{{ cardExcerpt }}</p>
             <!-- Tweets: preview of the link in the text -->
-            <a v-if="linkPreview" :href="linkPreview.url" target="_blank" rel="noopener noreferrer" class="link-preview" :title="linkPreview.url" @click.stop>
-                <img v-if="linkPreview.image" :src="linkPreview.image" class="link-preview-image" alt="" loading="lazy" @error="linkImageFailed = true" />
-                <span class="link-preview-text">
-                    <span v-if="linkPreview.title" class="link-preview-title">{{ linkPreview.title }}</span>
-                    <span class="link-preview-host">{{ linkPreview.host }}</span>
-                </span>
-            </a>
+            <LinkPreview v-if="linkPreview" :preview="linkPreview" :hide-image="cardShowsLinkImage" />
 
             <div class="card-footer-row">
                 <span class="post-time" :title="post.pubDate ? new Date(post.pubDate).toLocaleString() : ''">{{ shortDate }}</span>
@@ -112,9 +106,10 @@
         </div>
         <!-- Expanded details for the selected post -->
         <div v-if="selected" class="list-details" @click.stop>
-            <header class="details-header">
+            <!-- Tweets have no real title, their text is the content -->
+            <header class="details-header" :class="{ 'is-tweet': isTweet }">
                 <LiveBadge :post="post" class="title-live-badge" />
-                <a :href="post.link" target="_blank" class="details-title">{{ post.title }}</a>
+                <a v-if="!isTweet" :href="post.link" target="_blank" class="details-title">{{ post.title }}</a>
                 <div class="details-meta">
                     <img v-if="siteIcon" :src="siteIcon" class="details-icon" alt="" @error="iconFailed = true" />
                     <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
@@ -176,9 +171,10 @@
                 {{ language.get('Loading full article...') || 'Loading full article...' }}
             </div>
             <!-- While the full content loads, show only the spinner so the description isn't swapped out (no flicker) -->
-            <div v-else-if="fullContent || post.description" class="summary-description"
-                :class="{ 'post-content': fullContent }" v-html="fullContent || post.description"
+            <div v-else-if="detailsHtml" class="summary-description"
+                :class="{ 'post-content': fullContent }" v-html="detailsHtml"
                 @error.capture="hideBrokenImage"></div>
+            <LinkPreview v-if="linkPreview" :preview="linkPreview" large />
         </div>
     </div>
 </template>
@@ -193,6 +189,8 @@ import LiveBadge from '@/components/LiveBadge.vue';
 import VideoDuration from '@/components/VideoDuration.vue';
 import PostShareActions from '@/components/PostShareActions.vue';
 import CopyLinkButton from '@/components/CopyLinkButton.vue';
+import LinkPreview from '@/components/LinkPreview.vue';
+import { isCardImage, isTweetLink, plainText, removePreviewedLink, tweetLinkPreview } from '@/functions/tweet';
 import { language } from '@/functions/languageStore';
 import { computed, ref, watch } from 'vue';
 
@@ -246,14 +244,7 @@ const youtubeVideo = computed(() => {
 /**
  * Whether the post links to Twitter/X; tweets get no title on the card, since their title only repeats the text.
  */
-const isTweet = computed(() => {
-    try {
-        const host = new URL(props.post.link).hostname.replace(/^(www\.|mobile\.)/, '');
-        return host === 'twitter.com' || host === 'x.com';
-    } catch {
-        return false;
-    }
-});
+const isTweet = computed(() => isTweetLink(props.post.link));
 
 const youtubeEmbedUrl = computed(() =>
     youtubeVideo.value ? youtubeEmbedStore.embedUrl(youtubeVideo.value.id) : null
@@ -294,58 +285,30 @@ const thumbnailUrl = computed(() => {
 /**
  * Plain-text excerpt of the description; line breaks and paragraphs become spaces, so words don't run together.
  */
-const excerpt = computed(() => {
-    if (!descriptionDoc.value) return '';
-    const body = descriptionDoc.value.body.cloneNode(true) as HTMLElement;
-    body.querySelectorAll('br').forEach(br => br.replaceWith(' '));
-    body.querySelectorAll('p, div, li').forEach(block => block.append(' '));
-    return body.textContent?.replace(/\s+/g, ' ').trim() || '';
-});
-
+const excerpt = computed(() => plainText(props.post.description));
 /**
  * Tweet author from the feed's dc:creator, e.g. "NEWS 24/7 (@News247gr)"; shown on the card instead of the feed name.
  */
 const tweetAuthor = computed(() => isTweet.value ? props.post.author?.trim() || null : null);
 
-const linkImageFailed = ref(false);
-
 /**
- * Tweets: preview of the link in the text, found when the feed was parsed.
+ * Tweets: preview of the link in the text.
  */
-const linkPreview = computed(() => {
-    if (!isTweet.value || !props.post.linkUrl) return null;
-    try {
-        return {
-            url: props.post.linkUrl,
-            title: props.post.linkTitle,
-            image: linkImageFailed.value ? null : props.post.linkImage,
-            host: new URL(props.post.linkUrl).hostname.replace(/^www\./, ''),
-        };
-    } catch {
-        return null;
-    }
-});
+const linkPreview = computed(() => tweetLinkPreview(props.post));
+
+// The card already shows the link's image when the tweet's thumbnail is Twitter's link card image
+const cardShowsLinkImage = computed(() =>
+    !!thumbnailUrl.value && (thumbnailUrl.value === linkPreview.value?.image || isCardImage(thumbnailUrl.value))
+);
 
 /**
  * Card excerpt; tweet descriptions start with the author, which the card already shows,
  * and the link the preview shows is removed from the text.
  */
 const cardExcerpt = computed(() => {
-    let text = tweetAuthor.value && excerpt.value.startsWith(tweetAuthor.value)
-        ? excerpt.value.slice(tweetAuthor.value.length).trim()
-        : excerpt.value;
-    if (linkPreview.value) {
-        // Same rule as the backend (LinkPreviewExtractor.findLink): the first link that isn't to Twitter/X
-        const link = text.match(/https?:\/\/[^\s<>"]+/g)?.find(url => {
-            try {
-                return !/(^|\.)(twitter|x)\.com$/.test(new URL(url).hostname);
-            } catch {
-                return false;
-            }
-        });
-        if (link) text = text.replace(link, ' ').replace(/\s+/g, ' ').trim();
-    }
-    return text;
+    if (!isTweet.value) return excerpt.value;
+    const text = linkPreview.value && props.post.description ? plainText(removePreviewedLink(props.post.description)) : excerpt.value;
+    return tweetAuthor.value && text.startsWith(tweetAuthor.value) ? text.slice(tweetAuthor.value.length).trim() : text;
 });
 
 /**
@@ -362,12 +325,18 @@ const shortDate = computed(() => {
 watch(() => props.post.id, () => {
     iconFailed.value = false;
     thumbnailFailed.value = false;
-    linkImageFailed.value = false;
 });
 
 // Full article HTML from the shared cache (preloaded by the posts list), shown when the post is opened in list mode
 const fullContent = computed(() => postContentStore.get(props.post.id) ?? null);
-const contentLoading = computed(() => postContentStore.isLoading(props.post.id));
+
+/**
+ * HTML of the opened post in list mode; for tweets with a link preview, without the link the preview shows.
+ */
+const detailsHtml = computed(() => {
+    const html = fullContent.value || props.post.description;
+    return html && linkPreview.value ? removePreviewedLink(html) : html;
+});const contentLoading = computed(() => postContentStore.isLoading(props.post.id));
 // Log entries of the post, e.g. when its page couldn't be read
 const logCount = computed(() => postContentStore.logCount(props.post.id));
 const isOpened = computed(() => !!props.selected && !props.showDetails && !youtubeVideo.value);
@@ -638,62 +607,6 @@ const handleCardClick = async () => {
     -webkit-line-clamp: 8;
 }
 
-/* Tweets: preview of the link in the text */
-.link-preview {
-    display: flex;
-    align-items: stretch;
-    margin-top: 0.85rem;
-    border: 1px solid var(--border-color);
-    border-radius: 0.75rem;
-    overflow: hidden;
-    color: inherit;
-    text-decoration: none;
-    transition: border-color 0.2s, background-color 0.2s;
-}
-
-[data-bs-theme="dark"] .link-preview {
-    border-color: #2a2e36;
-}
-
-.link-preview:hover {
-    border-color: #4d8dff;
-    background-color: rgba(77, 141, 255, 0.06);
-}
-
-.link-preview-image {
-    width: 5.5rem;
-    min-height: 5.5rem;
-    flex-shrink: 0;
-    object-fit: cover;
-    background-color: #000;
-}
-
-.link-preview-text {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 0.25rem;
-    min-width: 0;
-    padding: 0.6rem 0.8rem;
-}
-
-.link-preview-title {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    font-size: 0.92rem;
-    font-weight: 600;
-    line-height: 1.35;
-}
-
-.link-preview-host {
-    overflow: hidden;
-    color: #8b919c;
-    font-size: 0.82rem;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
 
 .card-footer-row {
     display: flex;
@@ -950,6 +863,10 @@ const handleCardClick = async () => {
     color: #8b919c;
     font-size: 1.05rem;
     min-width: 0;
+}
+
+.details-header.is-tweet .details-meta {
+    margin-top: 0;
 }
 
 .details-actions {

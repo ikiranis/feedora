@@ -10,9 +10,10 @@
                 </button>
 
                 <article class="post-modal-article">
-                    <header class="post-modal-header">
+                    <!-- Tweets have no real title, their text is the content -->
+                    <header class="post-modal-header" :class="{ 'is-tweet': isTweet }">
                         <LiveBadge :post="post" class="title-live-badge" />
-                        <a :href="post.link" target="_blank" class="post-modal-title">{{ post.title }}</a>
+                        <a v-if="!isTweet" :href="post.link" target="_blank" class="post-modal-title">{{ post.title }}</a>
                         <div class="post-modal-meta">
                             <img v-if="siteIcon" :src="siteIcon" class="post-modal-icon" alt="" @error="iconFailed = true" />
                             <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
@@ -70,8 +71,9 @@
                         <span class="spinner-border spinner-border-sm" role="status"></span>
                         {{ language.get('Loading full article...') || 'Loading full article...' }}
                     </div>
-                    <div v-else-if="fullContent || post.description" class="post-modal-content" v-html="fullContent || post.description"
+                    <div v-else-if="contentHtml" class="post-modal-content" :class="{ 'tweet-content': isTweet }" v-html="contentHtml"
                         @error.capture="hideBrokenImage"></div>
+                    <LinkPreview v-if="linkPreview" :preview="linkPreview" large />
                 </article>
             </div>
         </div>
@@ -86,6 +88,8 @@ import { youtubeEmbedStore } from '@/functions/youtubeEmbedStore';
 import LiveBadge from '@/components/LiveBadge.vue';
 import VideoDuration from '@/components/VideoDuration.vue';
 import PostShareActions from '@/components/PostShareActions.vue';
+import LinkPreview from '@/components/LinkPreview.vue';
+import { isTweetLink, removePreviewedLink, tweetLinkPreview } from '@/functions/tweet';
 import { language } from '@/functions/languageStore';
 import { computed, ref, watch } from 'vue';
 
@@ -137,6 +141,14 @@ const youtubeEmbedUrl = computed(() => videoId.value ? youtubeEmbedStore.embedUr
 const embeddable = computed(() => videoId.value ? youtubeEmbedStore.isEmbeddable(videoId.value) : undefined);
 
 const fullContent = computed(() => postContentStore.get(props.post.id) ?? null);
+
+const isTweet = computed(() => isTweetLink(props.post.link));
+// Tweets: preview of the link in the text, which is removed from the shown text
+const linkPreview = computed(() => tweetLinkPreview(props.post));
+const contentHtml = computed(() => {
+    const html = fullContent.value || props.post.description;
+    return html && linkPreview.value ? removePreviewedLink(html) : html;
+});
 const contentLoading = computed(() => postContentStore.isLoading(props.post.id));
 // Log entries of the post, e.g. when its page couldn't be read
 const logCount = computed(() => postContentStore.logCount(props.post.id));
@@ -233,6 +245,10 @@ defineExpose({ scrollBy });
     color: #8b919c;
     font-size: 1.05rem;
     min-width: 0;
+}
+
+.post-modal-header.is-tweet .post-modal-meta {
+    margin-top: 0;
 }
 
 .feed-link {
@@ -347,6 +363,13 @@ defineExpose({ scrollBy });
     font-size: 1.35rem;
     line-height: 1.65;
     word-break: break-word;
+}
+
+/* Tweets read like on Twitter, in the interface font */
+.post-modal-content.tweet-content {
+    font-family: inherit;
+    font-size: 1.3rem;
+    line-height: 1.5;
 }
 
 .post-modal-content :deep(img),
