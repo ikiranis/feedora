@@ -24,15 +24,17 @@
         </div>
 
         <div class="card-content">
-            <!-- The title opens the post in the modal (Ctrl/Cmd/Shift-click opens the original link) -->
-            <a :href="post.link" target="_blank" class="post-title" @click="handleGridTitleClick"><LiveBadge :post="post" class="me-2" />{{ post.title }}</a>
+            <!-- The title opens the post in the modal (Ctrl/Cmd/Shift-click opens the original link); tweets have no real title -->
+            <a v-if="!isTweet" :href="post.link" target="_blank" class="post-title" @click="handleGridTitleClick"><LiveBadge :post="post" class="me-2" />{{ post.title }}</a>
             <div class="post-source">
                 <img v-if="siteIcon" :src="siteIcon" class="site-icon source-icon" alt="" loading="lazy" @error="iconFailed = true" />
                 <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
                     @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ post.feed?.title }}</span>
                 <span v-if="post.feed?.folderName" class="post-folder text-truncate">&middot; {{ post.feed.folderName }}</span>
             </div>
-            <p v-if="!youtubeVideo && excerpt" class="post-excerpt" :class="{ 'no-media': !thumbnailUrl }">{{ excerpt }}</p>
+            <!-- Without a title, the tweet text takes its place and opens the post in the modal -->
+            <p v-if="!youtubeVideo && excerpt" class="post-excerpt" :class="{ 'no-media': !thumbnailUrl, 'tweet-text': isTweet }"
+                @click="isTweet && emit('open', post.id)">{{ excerpt }}</p>
 
             <div class="card-footer-row">
                 <span class="post-time" :title="post.pubDate ? new Date(post.pubDate).toLocaleString() : ''">{{ shortDate }}</span>
@@ -230,6 +232,18 @@ const youtubeVideo = computed(() => {
         return videoId && /^[\w-]{11}$/.test(videoId) ? { id: videoId, isShort } : null;
     } catch {
         return null;
+    }
+});
+
+/**
+ * Whether the post links to Twitter/X; tweets get no title on the card, since their title only repeats the text.
+ */
+const isTweet = computed(() => {
+    try {
+        const host = new URL(props.post.link).hostname.replace(/^(www\.|mobile\.)/, '');
+        return host === 'twitter.com' || host === 'x.com';
+    } catch {
+        return false;
     }
 });
 
@@ -512,6 +526,10 @@ const handleCardClick = async () => {
     min-width: 0;
 }
 
+.post-source:first-child {
+    margin-top: 0;
+}
+
 .source-icon {
     width: 20px;
     height: 20px;
@@ -545,6 +563,18 @@ const handleCardClick = async () => {
 
 .post-excerpt.no-media {
     -webkit-line-clamp: 5;
+}
+
+.post-excerpt.tweet-text {
+    -webkit-line-clamp: 4;
+    margin-top: 0.75rem;
+    color: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.post-excerpt.tweet-text.no-media {
+    -webkit-line-clamp: 8;
 }
 
 .card-footer-row {
