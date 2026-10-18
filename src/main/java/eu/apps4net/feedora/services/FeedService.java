@@ -20,7 +20,13 @@ import org.w3c.dom.*;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -74,6 +80,13 @@ public class FeedService {
             Node node = folderNodes.item(i);
             if (node.getParentNode().getNodeName().equals("body")) {
                 Element folderElem = (Element) node;
+                // A feed directly under body has no folder
+                if ("rss".equals(folderElem.getAttribute("type"))) {
+                    feedRepository.save(new Feed(folderElem.getAttribute("title"), folderElem.getAttribute("xmlUrl"),
+                            folderElem.getAttribute("htmlUrl"), "rss", null, user));
+                    feedsAdded++;
+                    continue;
+                }
                 String folderNameAttr = folderElem.getAttribute("title");
                 String folderName = (folderNameAttr == null || folderNameAttr.isEmpty()) ? folderElem.getAttribute("text") : folderNameAttr;
                 final String finalFolderName = folderName;
@@ -107,6 +120,65 @@ public class FeedService {
             // Always release the lock
             operationLockService.unlockFeedOperation();
         }
+    }
+
+    /**
+     * Exports the feeds and folders of a user as an OPML document, in the structure that importOPML reads:
+     * folders as top-level outlines with their feeds inside, and feeds without a folder directly under body.
+     *
+     * @param user The user whose feeds are exported
+     * @return The OPML document as a string
+     * @throws Exception if the document can't be built
+     */
+    public String exportOPML(User user) throws Exception {
+        Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().newDocument();
+        Element opml = doc.createElement("opml");
+        opml.setAttribute("version", "1.0");
+        doc.appendChild(opml);
+
+        Element head = doc.createElement("head");
+        Element title = doc.createElement("title");
+        title.setTextContent("Feedora subscriptions");
+        head.appendChild(title);
+        opml.appendChild(head);
+
+        Element body = doc.createElement("body");
+        opml.appendChild(body);
+
+        // Group the feeds by folder, keeping empty folders so they survive a re-import
+        Map<UUID, Element> folderElements = new HashMap<>();
+        List<Folder> folders = new ArrayList<>(folderRepository.findAllByUser(user));
+        folders.sort(Comparator.comparing(Folder::getName, String.CASE_INSENSITIVE_ORDER));
+        for (Folder folder : folders) {
+            Element folderElem = doc.createElement("outline");
+            folderElem.setAttribute("text", folder.getName());
+            folderElem.setAttribute("title", folder.getName());
+            body.appendChild(folderElem);
+            folderElements.put(folder.getId(), folderElem);
+        }
+
+        List<Feed> feeds = new ArrayList<>(feedRepository.findByUser(user));
+        feeds.sort(Comparator.comparing(feed -> Objects.toString(feed.getTitle(), ""), String.CASE_INSENSITIVE_ORDER));
+        for (Feed feed : feeds) {
+            Element feedElem = doc.createElement("outline");
+            String feedTitle = Objects.toString(feed.getTitle(), "");
+            feedElem.setAttribute("type", "rss");
+            feedElem.setAttribute("text", feedTitle);
+            feedElem.setAttribute("title", feedTitle);
+            feedElem.setAttribute("xmlUrl", Objects.toString(feed.getXmlUrl(), ""));
+            feedElem.setAttribute("htmlUrl", Objects.toString(feed.getHtmlUrl(), ""));
+
+            Element parent = feed.getFolder() == null ? null : folderElements.get(feed.getFolder().getId());
+            (parent != null ? parent : body).appendChild(feedElem);
+        }
+
+        Transformer transformer = TransformerFactory.newInstance().newTransformer();
+        transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+        StringWriter writer = new StringWriter();
+        transformer.transform(new DOMSource(doc), new StreamResult(writer));
+        return writer.toString();
     }
 
     /**

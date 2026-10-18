@@ -31,6 +31,15 @@
                     >
                         {{ language.get('Import OPML') }}
                     </button>
+                    <button 
+                        @click="exportOPML" 
+                        :disabled="exporting || importing"
+                        class="btn btn-outline-secondary"
+                        style="white-space: nowrap;"
+                        :title="language.get('Download your feeds and folders as an OPML file')"
+                    >
+                        {{ language.get('Export OPML') }}
+                    </button>
                     <div class="input-group" style="width: 250px;">
                         <span class="input-group-text">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
@@ -184,7 +193,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue';
-import { getFeedsPaginated, importOPML as importOPMLApi, getFeedOperationStatus, deleteFeed as deleteFeedApi } from '@/api/feed';
+import { getFeedsPaginated, importOPML as importOPMLApi, exportOPML as exportOPMLApi, getFeedOperationStatus, deleteFeed as deleteFeedApi } from '@/api/feed';
 import { Feed } from '@/types';
 import { language } from '@/functions/languageStore';
 import Error from '@/components/error/Error.vue';
@@ -200,6 +209,7 @@ const fileInput = ref<HTMLInputElement | null>(null);
 const scrollableContainerRef = ref<HTMLElement | null>(null); // Ref for the scrollable container
 const loading = ref(false);
 const importing = ref(false);
+const exporting = ref(false);
 const page = ref(1);
 const pageSize = 15;
 const allLoaded = ref(false);
@@ -375,6 +385,28 @@ const importOPML = async () => {
         }
     } finally {
         importing.value = false;
+    }
+};
+
+/**
+ * Downloads the user's feeds and folders as an OPML file
+ */
+const exportOPML = async () => {
+    try {
+        exporting.value = true;
+        const blob = await exportOPMLApi();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `feedora-${new Date().toISOString().slice(0, 10)}.opml`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        URL.revokeObjectURL(url);
+    } catch (error: any) {
+        errorStore.set(true, language.get('Failed to export OPML') || 'Failed to export OPML.', error?.response?.status || 500);
+    } finally {
+        exporting.value = false;
     }
 };
 

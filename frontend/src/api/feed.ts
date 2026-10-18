@@ -65,6 +65,21 @@ export const importOPML = async (file: File) => {
 };
 
 /**
+ * Export the current user's feeds and folders as an OPML file
+ * @returns The OPML file as a Blob
+ */
+export const exportOPML = async (): Promise<Blob> => {
+    try {
+        const response = await axios.get(config.defaultServer() + '/api/feed/exportOPML', {
+            responseType: 'blob'
+        });
+        return response.data;
+    } catch (error: any) {
+        throw error;
+    }
+};
+
+/**
  * Check if a feed operation (parsing or OPML import) is currently running
  */
 export const getFeedOperationStatus = async () => {

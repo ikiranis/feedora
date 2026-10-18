@@ -10,6 +10,8 @@ import eu.apps4net.feedora.services.UserService;
 import eu.apps4net.feedora.services.OperationLockService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -76,6 +79,21 @@ public class FeedController {
             e.printStackTrace();
             return Language.getActionString("Error importing OPML").replace("{0}", e.getMessage());
         }
+    }
+
+    /**
+     * Exports the feeds and folders of the current user as an OPML file download.
+     *
+     * @return The OPML document as an attachment
+     * @throws Exception if the document can't be built
+     */
+    @GetMapping("/exportOPML")
+    public ResponseEntity<String> exportOPML() throws Exception {
+        String opml = feedService.exportOPML(userService.getCurrentUser());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"feedora.opml\"")
+                .contentType(new MediaType("text", "x-opml", StandardCharsets.UTF_8))
+                .body(opml);
     }
 
     private void parseImportedFeeds(User user) {

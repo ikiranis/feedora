@@ -27,6 +27,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -91,6 +92,32 @@ class FeedControllerTest extends ApiTestBase {
 
         mockMvc.perform(auth(multipart("/api/feed/importOPML").file(opmlFile("feeds.opml", "<opml><body>"))))
                 .andExpect(content().string(startsWith("Error importing OPML")));
+    }
+
+    @Test
+    void exportOpmlReturnsTheUsersFeedsGroupedByFolder() throws Exception {
+        Folder news = createFolder("News & Politics", user);
+        createFolder("Empty", user);
+        createFeed("BBC", "http://bbc.example/rss?a=1&b=2", news, user);
+        createFeed("Loose", "http://loose.example/rss", null, user);
+        createFeed("Theirs", "http://theirs.example/rss", null, createUser("other", "other@example.com", "secret123"));
+
+        String opml = mockMvc.perform(auth(get("/api/feed/exportOPML")))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", containsString("attachment")))
+                .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+
+        assertThat(opml).contains("<outline text=\"News &amp; Politics\"", "xmlUrl=\"http://bbc.example/rss?a=1&amp;b=2\"",
+                "<outline text=\"Empty\"", "xmlUrl=\"http://loose.example/rss\"");
+        assertThat(opml).doesNotContain("theirs.example");
+
+        // The exported file can be imported back without losing anything
+        mockMvc.perform(auth(multipart("/api/feed/importOPML").file(opmlFile("feeds.opml", opml))))
+                .andExpect(content().string("Successfully replaced existing feeds. Imported 2 new feeds."));
+        List<Feed> feeds = feedRepository.findByUser(user);
+        assertThat(feeds).extracting(Feed::getXmlUrl).containsExactlyInAnyOrder("http://bbc.example/rss?a=1&b=2", "http://loose.example/rss");
+        assertThat(feeds).extracting(Feed::getFolderName).containsExactlyInAnyOrder("News & Politics", null);
+        assertThat(folderRepository.findAllByUser(user)).extracting(Folder::getName).containsExactlyInAnyOrder("News & Politics", "Empty");
     }
 
     @Test

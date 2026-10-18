@@ -158,6 +158,21 @@
         <language code="el">Εισαγωγή OPML</language>
     </entry>
 
+    <entry id="Export OPML">
+        <language code="en">Export OPML</language>
+        <language code="el">Εξαγωγή OPML</language>
+    </entry>
+
+    <entry id="Download your feeds and folders as an OPML file">
+        <language code="en">Download your feeds and folders as an OPML file</language>
+        <language code="el">Λήψη των ροών και των φακέλων σας ως αρχείο OPML</language>
+    </entry>
+
+    <entry id="Failed to export OPML">
+        <language code="en">Failed to export OPML</language>
+        <language code="el">Αποτυχία εξαγωγής OPML</language>
+    </entry>
+
     <entry id="No users found">
         <language code="en">No users found</language>
         <language code="el">Δεν βρέθηκαν χρήστες</language>
