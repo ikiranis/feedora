@@ -53,7 +53,7 @@ const collapse = () => {
     <!-- Show main app when server is alive -->
     <div v-if="isAppAlive">
         <!-- Authenticated user layout with sidebar -->
-        <div v-if="authStore.isAuthenticated.value" class="row vh-100">
+        <div v-if="authStore.isAuthenticated.value" class="app-layout row vh-100">
             <sidebar class="sidebar d-flex flex-column col-12" :class="collapsed ? 'sidebar-collapsed' : 'col-lg-2'" :collapsed="collapsed"/>
 
             <div class="content col-12 px-2 px-lg-5" :class="collapsed ? 'content-expanded' : 'col-lg-10'">

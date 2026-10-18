@@ -204,6 +204,14 @@ h1 {
 
 // Below the lg breakpoint the sidebar is a top bar, and its menu opens below it with the hamburger button
 @media (max-width: 991.98px) {
+    // The sidebar and content wrap onto two flex lines, so keep them packed at the top
+    // instead of stretching the top bar's line to fill the viewport height
+    .app-layout {
+        height: auto !important;
+        min-height: 100vh;
+        align-content: flex-start;
+    }
+
     .sidebar {
         position: sticky;
         top: 0;
