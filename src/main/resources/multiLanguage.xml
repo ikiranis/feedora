@@ -894,6 +894,11 @@
         <language code="el">Παρακαλώ συνδεθείτε για να συνεχίσετε</language>
     </entry>
 
+    <entry id="Stay connected">
+        <language code="en">Stay connected</language>
+        <language code="el">Παραμείνετε συνδεδεμένοι</language>
+    </entry>
+
     <entry id="Signing In...">
         <language code="en">Signing In...</language>
         <language code="el">Σύνδεση...</language>

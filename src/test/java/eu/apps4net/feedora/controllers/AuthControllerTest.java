@@ -140,6 +140,26 @@ class AuthControllerTest extends ApiTestBase {
     }
 
     @Test
+    void loginWithRememberMeReturnsAMonthLongToken() throws Exception {
+        long day = 24L * 60 * 60 * 1000;
+        String response = mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"email\":\"tester@example.com\",\"password\":\"secret123\",\"rememberMe\":true}"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String rememberedToken = com.jayway.jsonpath.JsonPath.read(response, "$.token");
+
+        response = mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content(json(null, "tester@example.com", "secret123")))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        String regularToken = com.jayway.jsonpath.JsonPath.read(response, "$.token");
+
+        long now = System.currentTimeMillis();
+        assertThat(jwtUtil.extractExpiration(rememberedToken).getTime() - now).isGreaterThan(29 * day);
+        assertThat(jwtUtil.extractExpiration(regularToken).getTime() - now).isLessThanOrEqualTo(day);
+    }
+
+    @Test
     void loginRejectsInvalidCredentials() throws Exception {
         mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content(json(null, "tester@example.com", "wrong-password")))

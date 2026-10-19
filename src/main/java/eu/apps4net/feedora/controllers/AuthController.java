@@ -104,8 +104,8 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(Language.getString("Invalid email or password"));
             }
             
-            // Generate token
-            String token = jwtUtil.generateToken(user.getEmail(), user.getId());
+            // Generate token, long-lived when the user stays connected
+            String token = jwtUtil.generateToken(user.getEmail(), user.getId(), request.isRememberMe());
             
             // Return response
             AuthResponse response = new AuthResponse(token, user);

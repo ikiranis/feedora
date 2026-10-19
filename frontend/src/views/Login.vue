@@ -38,6 +38,16 @@
                         </div>
                     </div>
                     
+                    <div class="mb-3 form-check">
+                        <input 
+                            type="checkbox" 
+                            class="form-check-input" 
+                            id="rememberMe"
+                            v-model="rememberMe"
+                        />
+                        <label class="form-check-label" for="rememberMe">{{ language.get('Stay connected') }}</label>
+                    </div>
+                    
                     <div v-if="errors.general" class="alert alert-danger" role="alert">
                         {{ errors.general }}
                     </div>
@@ -86,6 +96,7 @@ defineEmits<{
 // Form data
 const email = ref('');
 const password = ref('');
+const rememberMe = ref(false);
 
 // Error handling
 const errors = ref<{
@@ -117,7 +128,8 @@ const handleLogin = async () => {
     try {
         await authStore.login({
             email: email.value,
-            password: password.value
+            password: password.value,
+            rememberMe: rememberMe.value
         });
         
         // Login successful - redirect to posts

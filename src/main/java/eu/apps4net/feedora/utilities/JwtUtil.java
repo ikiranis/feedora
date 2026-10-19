@@ -18,16 +18,28 @@ public class JwtUtil {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
     
+    // For users who chose to stay connected at login (default: 30 days)
+    @Value("${jwt.remember-me-expiration:2592000000}")
+    private long rememberMeExpiration;
+    
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
     
     public String generateToken(String email, UUID userId) {
+        return generateToken(email, userId, false);
+    }
+    
+    /**
+     * Generates a token that lasts for jwt.expiration, or for jwt.remember-me-expiration when the user stays connected
+     */
+    public String generateToken(String email, UUID userId, boolean rememberMe) {
+        long expiration = rememberMe ? rememberMeExpiration : jwtExpiration;
         return Jwts.builder()
                 .setSubject(email)
                 .claim("userId", userId.toString())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + jwtExpiration))
+                .setExpiration(new Date(System.currentTimeMillis() + expiration))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
@@ -47,8 +59,12 @@ public class JwtUtil {
         return (extractedEmail.equals(email) && !isTokenExpired(token));
     }
     
+    public Date extractExpiration(String token) {
+        return extractClaims(token).getExpiration();
+    }
+    
     private boolean isTokenExpired(String token) {
-        return extractClaims(token).getExpiration().before(new Date());
+        return extractExpiration(token).before(new Date());
     }
     
     private Claims extractClaims(String token) {

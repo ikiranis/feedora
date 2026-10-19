@@ -5,6 +5,8 @@ import type { Role } from "@/types";
 export interface LoginRequest {
     email: string;
     password: string;
+    // Keeps the user logged in for a month instead of a day
+    rememberMe?: boolean;
 }
 
 export interface RegisterRequest {

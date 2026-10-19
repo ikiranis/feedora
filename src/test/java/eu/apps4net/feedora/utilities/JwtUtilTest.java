@@ -19,6 +19,7 @@ class JwtUtilTest {
         JwtUtil util = new JwtUtil();
         ReflectionTestUtils.setField(util, "secretKey", secret);
         ReflectionTestUtils.setField(util, "jwtExpiration", expiration);
+        ReflectionTestUtils.setField(util, "rememberMeExpiration", 30L * 24 * 60 * 60 * 1000);
         return util;
     }
 
@@ -75,5 +76,18 @@ class JwtUtilTest {
 
         assertThat(jwtUtil.validateToken(token)).isFalse();
         assertThatThrownBy(() -> jwtUtil.extractEmail(token)).isInstanceOf(ExpiredJwtException.class);
+    }
+
+    @Test
+    void rememberMeTokensLastAMonth() {
+        long now = System.currentTimeMillis();
+        String shortToken = jwtUtil.generateToken("user@example.com", UUID.randomUUID(), false);
+        String longToken = jwtUtil.generateToken("user@example.com", UUID.randomUUID(), true);
+
+        assertThat(jwtUtil.extractExpiration(shortToken).getTime() - now).isLessThanOrEqualTo(60_000);
+        assertThat(jwtUtil.extractExpiration(longToken).getTime() - now)
+                .isGreaterThan(29L * 24 * 60 * 60 * 1000)
+                .isLessThanOrEqualTo(30L * 24 * 60 * 60 * 1000 + 1_000);
+        assertThat(jwtUtil.validateToken(longToken)).isTrue();
     }
 }
