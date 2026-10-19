@@ -1,7 +1,7 @@
 <template>
     <Teleport to="body">
         <div class="post-modal-backdrop" @click.self="emit('close')">
-            <div ref="bodyRef" class="post-modal" role="dialog" aria-modal="true" :aria-label="post.title"
+            <div ref="bodyRef" class="post-modal" :class="{ zoomed }" role="dialog" aria-modal="true" :aria-label="post.title"
                 @touchstart="onTouchStart" @touchend="onTouchEnd" @touchcancel="touchStart = null">
                 <button type="button" class="post-modal-close" :aria-label="language.get('Close') || 'Close'"
                     :title="language.get('Close') || 'Close'" @click="emit('close')">
@@ -88,6 +88,15 @@
                     <LinkPreview v-if="linkPreview" :preview="linkPreview" large />
                 </article>
             </div>
+            <!-- Shown for a moment after a swipe, before moving to the previous/next post -->
+            <Transition name="swipe-arrow">
+                <div v-if="swipeArrow" class="swipe-arrow" :class="`swipe-arrow-${swipeArrow}`" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" viewBox="0 0 16 16">
+                        <path v-if="swipeArrow === 'left'" fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0"/>
+                        <path v-else fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708"/>
+                    </svg>
+                </div>
+            </Transition>
         </div>
     </Teleport>
 </template>
@@ -103,7 +112,7 @@ import PostShareActions from '@/components/PostShareActions.vue';
 import LinkPreview from '@/components/LinkPreview.vue';
 import { isTweetLink, removePreviewedLink, tweetLinkPreview } from '@/functions/tweet';
 import { language } from '@/functions/languageStore';
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
     post: PostType;
@@ -183,6 +192,24 @@ const touchStart = ref<{ x: number, y: number } | null>(null);
 // Side the shown post slides in from after a swipe
 const swipeDirection = ref<'left' | 'right' | null>(null);
 
+// While zoomed in, horizontal panning must stay possible, so the pan-y touch-action is dropped
+const zoomed = ref(false);
+const updateZoomed = () => { zoomed.value = !!window.visualViewport && window.visualViewport.scale > 1.01; };
+onMounted(() => {
+    updateZoomed();
+    window.visualViewport?.addEventListener('resize', updateZoomed);
+});
+onBeforeUnmount(() => {
+    window.visualViewport?.removeEventListener('resize', updateZoomed);
+    clearTimeout(swipeArrowTimer);
+});
+
+// How long the arrow is shown after a swipe before moving to the previous/next post
+const SWIPE_ARROW_DURATION = 250;
+// Arrow pointing to the side of the post being moved to, null when hidden
+const swipeArrow = ref<'left' | 'right' | null>(null);
+let swipeArrowTimer: ReturnType<typeof setTimeout> | undefined;
+
 /**
  * Returns true when the element or one of its parents (inside the modal) scrolls horizontally,
  * e.g. a wide table or code block, where a horizontal swipe should scroll it instead.
@@ -209,8 +236,8 @@ const onTouchStart = (event: TouchEvent) => {
 const onTouchEnd = (event: TouchEvent) => {
     const start = touchStart.value;
     touchStart.value = null;
-    // Ignore swipes while the page is zoomed in, where they pan the page
-    if (!start || (window.visualViewport && window.visualViewport.scale > 1.01)) return;
+    // Ignore swipes while the page is zoomed in, where they pan the page, and while a previous swipe is still pending
+    if (!start || swipeArrow.value || (window.visualViewport && window.visualViewport.scale > 1.01)) return;
 
     const touch = event.changedTouches[0];
     const dx = touch.clientX - start.x;
@@ -218,9 +245,14 @@ const onTouchEnd = (event: TouchEvent) => {
     if (Math.abs(dx) < SWIPE_MIN_DISTANCE || Math.abs(dy) > Math.abs(dx) * SWIPE_MAX_SLOPE) return;
 
     // Swiping left brings the next post in from the right
-    swipeDirection.value = dx < 0 ? 'right' : 'left';
-    if (dx < 0) emit('next');
-    else emit('previous');
+    const side = dx < 0 ? 'right' : 'left';
+    swipeArrow.value = side;
+    swipeArrowTimer = setTimeout(() => {
+        swipeArrow.value = null;
+        swipeDirection.value = side;
+        if (side === 'right') emit('next');
+        else emit('previous');
+    }, SWIPE_ARROW_DURATION);
 };
 
 /**
@@ -248,6 +280,13 @@ defineExpose({ scrollBy });
     height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
+    overscroll-behavior: contain;
+    /* Horizontal finger moves are swipes between posts, so the browser must not pan the page sideways during them */
+    touch-action: pan-y pinch-zoom;
+}
+
+.post-modal.zoomed {
+    touch-action: auto;
 }
 
 /* The post shown after a swipe slides in from the side it was swiped from */
@@ -284,6 +323,53 @@ defineExpose({ scrollBy });
     background-color: rgba(127, 127, 127, 0.15);
     color: var(--text-color);
     transition: background-color 0.2s;
+}
+
+/* Full-height bar on the side of the post being moved to */
+.swipe-arrow {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    background-color: rgba(127, 127, 127, 0.12);
+    color: var(--text-color);
+    pointer-events: none;
+}
+
+.swipe-arrow-left {
+    left: 0;
+}
+
+.swipe-arrow-right {
+    right: 0;
+}
+
+.swipe-arrow-enter-active {
+    transition: opacity 0.12s ease-out, transform 0.12s ease-out;
+}
+
+.swipe-arrow-leave-active {
+    transition: opacity 0.1s ease-in;
+}
+
+.swipe-arrow-enter-from {
+    opacity: 0;
+}
+
+.swipe-arrow-left.swipe-arrow-enter-from {
+    transform: translateX(-100%);
+}
+
+.swipe-arrow-right.swipe-arrow-enter-from {
+    transform: translateX(100%);
+}
+
+.swipe-arrow-leave-to {
+    opacity: 0;
 }
 
 .post-modal-close:hover {
