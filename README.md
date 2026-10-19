@@ -2,7 +2,7 @@
 
 Feedora is a self-hosted, multi-user RSS reader. It follows your RSS/Atom feeds and YouTube channels, checks each feed as often as it actually posts, and gives you a fast, keyboard-friendly reading view with full article extraction, saved posts, favorites and a live newsfeed. It runs as a single Java application with an embedded database, so there is nothing else to install or manage.
 
-![28-05--2025_00-45](https://github.com/user-attachments/assets/2fd9f8f7-6266-4f0d-81cc-6983d307d637)
+<img width="2784" height="1680" alt="CleanShot 2026-10-19 at 19 32 01@2x" src="https://github.com/user-attachments/assets/9140eb92-ca5a-4bfe-a928-f64bd740ec58" />
 
 - [📄 Changelog](CHANGELOG.md)
 - [🚀 Installation](#-installation)
