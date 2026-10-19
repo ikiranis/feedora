@@ -2,6 +2,200 @@
 
 All notable changes to Feedora RSS Reader will be documented in this file.
 
+## [0.11.8] - 2026-10-19
+
+### Added
+- **Favorites** ⭐ (#23)
+  - Posts can be marked as favorites from the newsfeed, the posts view and the post modal
+  - Favorite counts added to the user statistics
+- **Mobile Experience** 📱 (#6)
+  - Responsive app layout for small screens
+  - Swipe navigation between posts in `PostModal`, plus pinch-to-zoom
+  - Improved mobile search
+- **"Remember me" on Login** 🔐
+  - Optional long-lived session (default 30 days, configurable with `jwt.remember-me-expiration`); regular logins still expire after `jwt.expiration`
+- **Very Busy Feeds:** feeds with more than 30 posts per hour are now checked every minute, with a new "Every minute" label
+
+### Changed
+- Restyled the new posts badge
+- `PostModal` title alignment and responsiveness improvements
+- Marking a whole folder as read hides it from the sidebar until it gets new unread posts (#24)
+- Folders are refreshed after every scan, so empty folders reappear when they get unread posts
+
+### Fixed
+- A failed background folder refresh no longer empties the sidebar
+- An older unread counts response can no longer overwrite a newer one
+
+---
+
+## [0.10.9] - 2026-10-18
+
+### Added
+- **Live Newsfeed** 📡 (#18)
+  - New live newsfeed view that refreshes automatically, with a configurable refresh interval setting
+- **OPML Export** 📤 (#22): export the user's feeds and folders as OPML
+- **Tweet Support** 🐦
+  - Better rendering of tweets in `PostElement`
+  - Link previews for links in tweets (new link fields on `Post`)
+  - Tweet photos are displayed
+- **Thumbnails:** thumbnail extraction for posts (new `thumbnail` field on `Post`)
+- **Mobile Sidebar** (#6): theme toggle and menu controls in the mobile sidebar
+
+### Changed
+- Feed operation status tracking and scan progress visibility improvements
+- Session management: expired sessions are handled more cleanly, with better authentication error messages
+
+---
+
+## [0.9.20] - 2026-10-17
+
+### Added
+- **YouTube API Key Support:** optional YouTube Data API key for more reliable live video checks
+- **Feedora Companion 1.2.0** 🧩
+  - New popup that finds the feeds of the current page and adds them to Feedora
+  - Session management in the extension, new icons and SVG logo
+- **Search** (#7): improved search handling in the posts view
+- **Mark as Unread** (#8): posts can be marked as unread again
+- **Orphan Feeds** (#10): feeds without a folder are shown in the posts view
+- **Hide YouTube Shorts per Folder:** Shorts can be hidden for selected folders, and are left out of their unread counts
+- **Keyboard Shortcuts Modal** (#13) ⌨️
+- **Feed Posts** (#15): show all posts of a single feed
+- **Open in Modal** (#16): posts open in `PostModal`
+- **Video Duration** (#17): YouTube video duration is displayed
+- **Copy Link** (#14): copy a post's link
+- **Scan Progress Bar** (#20) with feed operation status tracking
+- **Targeted Parsing:** scan only a folder or a single feed
+- **New Posts Count** (#21): counts unread posts added after the list was loaded
+
+### Changed
+- Sidebar collapsed state is persisted in localStorage (#12)
+- Marking as read records when the post was marked (#19)
+- Scrollbar styling and general styling updates
+- YouTube embed and error handling improvements
+
+---
+
+## [0.8.14] - 2026-10-16
+
+### Added
+- **YouTube Live Streams & Premieres** 🔴
+  - `LiveBadge` component showing the live status of videos
+  - `YouTubeLiveChecker` utility and `liveStatus` / `liveStartAt` fields on `Post`
+  - Periodic refresh of live video states
+- **Folder Management in Posts View:** folders are edited from the posts view with new folder modals, replacing the separate Folders page
+- **Feed Statistics Modal**, and a feed dropdown menu for editing, viewing statistics and unfollowing
+- **HTTP Failure Indicators** for feeds, with feed log counts
+- Router links for feed titles, and the selected feed title shown in the posts view
+- Posts link in the sidebar with current page indication
+- App version shown in the UI
+- **Feedora Companion 1.1.0:** updated Firefox version requirement and site permission handling
+
+### Changed
+- `ArticleExtractor` uses HTTP/2 with improved fetch logic
+- Batched inserts when saving posts
+- Sidebar collapse and language select styling
+- Backend URL handling in the frontend config
+- Security configuration permits frontend files in subfolders
+
+### Removed
+- Separate Folders page/component (replaced by folder modals in the posts view)
+
+---
+
+## [0.7.1] - 2026-10-15
+
+### Added
+- **User Roles & Registration Control** (#2) 👥
+  - `Role` enum (`ADMIN`, `USER`); the first registered user becomes admin
+  - `registrationEnabled` setting to turn off public registration
+  - Only admins can change roles
+  - `EnumCheckConstraintCleanup` drops stale enum constraints on startup
+- **Background Parsing for OPML Imports:** imported feeds are parsed in the background
+
+---
+
+## [0.6.3] - 2026-10-15
+
+### Added
+- **User Management:** create, edit and delete users with `UserModal`, plus per-user statistics
+- **Post Cleanup:** read posts are deleted daily after `feedora.posts.read-retention-days` (default 30); saved posts are always kept
+- Last parsed time displayed in the posts view
+- Posts per day shown for feeds; problematic feeds are sorted first
+- Broken images are handled gracefully in posts and the modal
+
+---
+
+## [0.4.0] - 2026-10-15
+
+### Added
+- **Feed Statistics** 📊
+  - `FeedStatistics` model tracking parsing statistics per feed
+  - Each feed is checked according to its own posting frequency
+  - New log types for statistics errors
+
+---
+
+## [0.3.0] - 2026-10-15
+
+### Added
+- **Unread / All Filter:** the posts API can include read posts, with a UI toggle
+- **Unit and API Tests** 🧪 for services, utilities and APIs (in-memory Derby, `ApiTestBase`, `TestHttpServer`)
+- Favicon and apple-touch-icon
+- New action buttons and close button on posts
+
+### Changed
+- Post titles open their link with modifier keys (Ctrl/Cmd-click)
+- Improved unread tracking and marking as read on scroll
+- Selecting the current filter reloads the posts
+- Better post selection scrolling in list mode
+- Improved layout and metadata in `PostElement` and `PostModal`
+- Feed parsing handles feeds shared by several users, with a feed existence check
+
+---
+
+## [0.2.0] - 2026-10-14
+
+### Added
+- **Logging System** 📝
+  - `LogService`, `LogEntry` and `LogController` for feed and post issues
+  - Logging for fetch, parse, save and content extraction errors
+  - Configurable log retention
+  - `LogsModal` to view, filter and delete log entries per feed and per post
+  - Translations for the log UI
+
+---
+
+## [0.1.0] - 2026-10-13
+
+### Added
+- **Reading Experience** 📖
+  - Keyboard navigation and selection highlighting for posts
+  - Expanded details section for the selected post, with media
+  - Site icons in post titles
+  - Full article content extraction, with preloading and caching
+  - Lead image support and content sanitization
+  - `PostModal` for full post content
+  - Mark all as read
+  - View modes saved in localStorage
+- **YouTube** ▶️
+  - Video embedding and playback in posts
+  - `YouTubeFeedResolver` turns YouTube channel/playlist URLs into RSS feed URLs
+- **Saved Posts:** save posts and manage the saved list
+- **Folder & Feed Filtering** with unread counts in the sidebar
+- Option to show/hide empty folders
+- **Feedora Companion** browser extension for opening posts in background tabs
+
+### Changed
+- Page size increased to 50, with better infinite scroll
+- Clicking a selected post toggles its selection
+- Updated `ArticleExtractor` user agent and logging configuration
+- Spring Boot updated to 3.4.13
+
+### Fixed
+- `.gitignore` covers macOS files
+
+---
+
 ## [0.0.3] - 2025-05-30
 
 ### Added
