@@ -379,7 +379,8 @@ defineExpose({ scrollBy });
 .post-modal-article {
     max-width: 860px;
     margin: 0 auto;
-    padding: 4rem 1.5rem 5rem;
+    /* The title starts on the same row as the close button */
+    padding: 1.25rem 1.5rem 5rem;
 }
 
 .post-modal-header {
@@ -394,6 +395,13 @@ defineExpose({ scrollBy });
     letter-spacing: -0.01em;
     color: var(--text-color);
     text-decoration: none;
+}
+
+/* Keeps the title clear of the close button when the article reaches the screen edge */
+@media (max-width: 1024px) {
+    .post-modal-title {
+        padding-right: 3.5rem;
+    }
 }
 
 .title-live-badge {
@@ -520,8 +528,9 @@ defineExpose({ scrollBy });
 }
 
 @media (max-width: 768px) {
+    /* Centers the first title line on the close button */
     .post-modal-article {
-        padding-top: 4.5rem;
+        padding-top: 1.6rem;
     }
 
     .post-modal-title {
