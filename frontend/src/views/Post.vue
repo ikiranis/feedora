@@ -517,15 +517,18 @@ const showDetails = computed<boolean>({
 // Title of the selected feed, shown above the posts list
 const selectedFeedTitle = computed(() => unreadCounts.value.feeds.find(f => f.id === selectedFeedId.value)?.title ?? null);
 
+// Selected folder whose posts were all marked as read, so it's hidden from the sidebar while it has no unread posts
+const markedReadFolderId = ref<string | null>(null);
+
 // Folders with unread posts, sorted by name. The selected folder (or the folder of the selected feed)
-// stays visible after its last post is read.
+// stays visible after its last post is read, unless they were all marked as read at once.
 const visibleFolders = computed(() => {
     const selectedFeedFolderId = unreadCounts.value.feeds.find(f => f.id === selectedFeedId.value)?.folderId;
     return folders.value
         .filter(folder => showEmptyFolders.value
             || editingFolders.value
             || (unreadCounts.value.folders[folder.id] || 0) > 0
-            || folder.id === selectedFolderId.value
+            || (folder.id === selectedFolderId.value && folder.id !== markedReadFolderId.value)
             || folder.id === selectedFeedFolderId)
         .sort((a, b) => a.name.localeCompare(b.name));
 });
@@ -576,14 +579,14 @@ const toggleFolder = (folderId: string) => {
 };
 
 /**
- * Fetches the user's folders for the sidebar.
+ * Fetches the user's folders for the sidebar. On failure the current folders are kept,
+ * so a failed background refresh (e.g. after a scan) doesn't empty the sidebar.
  */
 const fetchFolders = async () => {
     try {
         folders.value = await getFolders();
     } catch (e) {
         console.error('Error fetching folders:', e);
-        folders.value = [];
     }
 };
 
@@ -679,9 +682,12 @@ const removeFolder = async (folder: FolderType) => {
 /**
  * Fetches the unread post counts shown next to each folder in the sidebar.
  */
+let unreadCountsRequest = 0; // Increased by every fetch, so an older response doesn't overwrite a newer one
 const fetchUnreadCounts = async () => {
+    const request = ++unreadCountsRequest;
     try {
-        unreadCounts.value = await getUnreadCounts([...hiddenShortsFolders.value]);
+        const counts = await getUnreadCounts([...hiddenShortsFolders.value]);
+        if (request === unreadCountsRequest) unreadCounts.value = counts;
     } catch (e) {
         console.error('Error fetching unread counts:', e);
     }
@@ -692,6 +698,7 @@ const fetchUnreadCounts = async () => {
  * Selecting the current filter again also reloads it, to fetch the latest posts.
  */
 const applyFilter = (folderId: string | null, feedId: string | null, saved = false, favorites = false) => {
+    markedReadFolderId.value = null;
     selectedFolderId.value = folderId;
     selectedFeedId.value = feedId;
     showSaved.value = saved;
@@ -824,6 +831,8 @@ const handleMarkAllAsRead = async (olderThanDays: number | null) => {
         loading.value = true;
         await markAllAsRead(selectedFolderId.value, selectedFeedId.value, olderThanDays, listedAt.value);
         scrollableContainerRef.value?.scrollTo({ top: 0 });
+        // The selected folder is hidden from the sidebar while it has no unread posts, but stays shown in the list
+        markedReadFolderId.value = selectedFolderId.value;
         await handleRefreshPosts();
     } catch (e: any) {
         console.error('Failed to mark posts as read:', e);
@@ -1394,8 +1403,10 @@ watch(searchTerm, (_) => {
     }, 500); // 500ms debounce delay
 });
 
-// A scan (scheduled or manual) ended, so the counts, the new posts badge and the last parse time are refreshed
+// A scan (scheduled or manual) ended, so the folders, the counts, the new posts badge and the last parse time
+// are refreshed. Folders hidden as empty are shown again once the new counts give them unread posts.
 watch(scanStore.finishedCount, () => {
+    fetchFolders();
     fetchUnreadCounts();
     fetchNewPostsCount();
     fetchLastParsedAt();
