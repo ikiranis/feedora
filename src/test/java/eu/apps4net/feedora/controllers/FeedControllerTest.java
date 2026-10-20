@@ -360,29 +360,29 @@ class FeedControllerTest extends ApiTestBase {
     }
 
     @Test
-    void updateFeedSetsKeepsAndRemovesTheIconBackgroundColor() throws Exception {
+    void updateFeedSetsKeepsAndRemovesTheCardColor() throws Exception {
         Feed feed = createFeed("Feed", "http://site.example/rss", null, user);
 
         mockMvc.perform(auth(post("/api/feed/updateFeed")).contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"feedId\":\"" + feed.getId() + "\",\"iconBackgroundColor\":\"#FFAA00\"}"))
+                        .content("{\"feedId\":\"" + feed.getId() + "\",\"cardColor\":\"#FFAA00\"}"))
                 .andExpect(status().isOk());
-        assertThat(feedRepository.findById(feed.getId()).orElseThrow().getIconBackgroundColor()).isEqualTo("#ffaa00");
+        assertThat(feedRepository.findById(feed.getId()).orElseThrow().getCardColor()).isEqualTo("#ffaa00");
 
         // Omitted: the color is kept
         mockMvc.perform(auth(post("/api/feed/updateFeed")).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"feedId\":\"" + feed.getId() + "\",\"title\":\"Renamed\"}"))
                 .andExpect(status().isOk());
-        assertThat(feedRepository.findById(feed.getId()).orElseThrow().getIconBackgroundColor()).isEqualTo("#ffaa00");
+        assertThat(feedRepository.findById(feed.getId()).orElseThrow().getCardColor()).isEqualTo("#ffaa00");
 
         mockMvc.perform(auth(post("/api/feed/updateFeed")).contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"feedId\":\"" + feed.getId() + "\",\"iconBackgroundColor\":\"red\"}"))
+                        .content("{\"feedId\":\"" + feed.getId() + "\",\"cardColor\":\"red\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(containsString("Invalid color")));
 
         mockMvc.perform(auth(post("/api/feed/updateFeed")).contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"feedId\":\"" + feed.getId() + "\",\"iconBackgroundColor\":\"\"}"))
+                        .content("{\"feedId\":\"" + feed.getId() + "\",\"cardColor\":\"\"}"))
                 .andExpect(status().isOk());
-        assertThat(feedRepository.findById(feed.getId()).orElseThrow().getIconBackgroundColor()).isNull();
+        assertThat(feedRepository.findById(feed.getId()).orElseThrow().getCardColor()).isNull();
     }
 
     @Test

@@ -49,4 +49,13 @@ public interface FeedRepository extends JpaRepository<Feed, UUID> {
     @Modifying
     @Transactional
     void deleteByUser(User user);
+
+    // Feeds whose favicon color wasn't checked yet
+    List<Feed> findByFaviconColorIsNull(Pageable pageable);
+
+    // Only the favicon color, so a parse or an edit of the feed at the same time isn't overwritten
+    @Modifying
+    @Transactional
+    @Query("UPDATE Feed f SET f.faviconColor = :color WHERE f.id = :id")
+    void updateFaviconColor(@Param("id") UUID id, @Param("color") String color);
 }

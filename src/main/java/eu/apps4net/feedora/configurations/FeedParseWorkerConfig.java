@@ -2,6 +2,7 @@ package eu.apps4net.feedora.configurations;
 
 import eu.apps4net.feedora.models.FeedStatistics;
 import eu.apps4net.feedora.repositories.FeedRepository;
+import eu.apps4net.feedora.services.FeedService;
 import eu.apps4net.feedora.services.LogService;
 import eu.apps4net.feedora.services.PostService;
 import eu.apps4net.feedora.services.UserService;
@@ -26,6 +27,8 @@ public class FeedParseWorkerConfig {
     private LogService logService;
     @Autowired
     private FeedRepository feedRepository;
+    @Autowired
+    private FeedService feedService;
 
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
@@ -49,6 +52,13 @@ public class FeedParseWorkerConfig {
                         e.printStackTrace();
                     }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            // Card colors of the new feeds (and of the existing ones, the first time)
+            try {
+                feedService.updateFaviconColors(200);
             } catch (Exception e) {
                 e.printStackTrace();
             }

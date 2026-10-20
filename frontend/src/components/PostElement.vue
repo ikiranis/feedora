@@ -1,5 +1,6 @@
 <template>
-    <div v-if="showDetails" class="custom-card h-100" :class="{ 'unread-post': !post.read, 'read-post': post.read, 'selected-post': selected }" @click="handleCardClick">
+    <div v-if="showDetails" class="custom-card h-100" :class="{ 'unread-post': !post.read, 'read-post': post.read, 'selected-post': selected, 'feed-colored': feedColor }"
+        :style="feedColorStyle" @click="handleCardClick">
         <!-- Media: YouTube thumbnail, tweet video or first image of the post; clicking it opens the post in the modal -->
         <div v-if="thumbnailUrl || tweetVideo" class="card-media" :class="{ 'is-short': youtubeVideo?.isShort }"
             @click="emit('open', post.id)">
@@ -32,7 +33,7 @@
             <!-- The title opens the post in the modal (Ctrl/Cmd/Shift-click opens the original link); tweets have no real title -->
             <a v-if="!isTweet" :href="post.link" target="_blank" class="post-title" @click="handleGridTitleClick"><LiveBadge :post="post" class="me-2" />{{ post.title }}</a>
             <div class="post-source">
-                <img v-if="siteIcon" :src="siteIcon" class="site-icon source-icon" :style="iconStyle" alt="" loading="lazy" @error="iconFailed = true" />
+                <img v-if="siteIcon" :src="siteIcon" class="site-icon source-icon" alt="" loading="lazy" @error="iconFailed = true" />
                 <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
                     @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ tweetAuthor || post.feed?.title }}</span>
                 <span v-if="post.feed?.folderName" class="post-folder text-truncate">&middot; {{ post.feed.folderName }}</span>
@@ -90,7 +91,7 @@
             <button type="button" class="read-dot" :class="{ unread: !post.read }" @click.stop="emit('toggle-read', post.id)"
                 :title="post.read ? (language.get('Mark as unread') || 'Mark as unread') : (language.get('Mark as read') || 'Mark as read')"></button>
             <div class="list-source" :title="post.feed?.folderName ? `${post.feed?.title} — ${post.feed.folderName}` : post.feed?.title">
-                <img v-if="siteIcon" :src="siteIcon" class="site-icon list-source-icon" :style="iconStyle" alt="" loading="lazy" @error="iconFailed = true" />
+                <img v-if="siteIcon" :src="siteIcon" class="site-icon list-source-icon" alt="" loading="lazy" @error="iconFailed = true" />
                 <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
                     @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ post.feed?.title }}</span>
             </div>
@@ -134,7 +135,7 @@
                 <LiveBadge :post="post" class="title-live-badge" />
                 <a v-if="!isTweet" :href="post.link" target="_blank" class="details-title">{{ post.title }}</a>
                 <div class="details-meta">
-                    <img v-if="siteIcon" :src="siteIcon" class="details-icon" :style="iconStyle" alt="" @error="iconFailed = true" />
+                    <img v-if="siteIcon" :src="siteIcon" class="details-icon" alt="" @error="iconFailed = true" />
                     <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
                         @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ post.feed?.title }}</span>
                     <span v-if="post.author" class="text-truncate">&middot; {{ post.author }}</span>
@@ -217,6 +218,7 @@ import { markAsRead } from '@/api/post';
 import { postContentStore } from '@/functions/postContentStore';
 import { hideBrokenImage } from '@/functions/hideBrokenImage';
 import { youtubeEmbedStore } from '@/functions/youtubeEmbedStore';
+import { cardColorStore } from '@/functions/cardColorStore';
 import LiveBadge from '@/components/LiveBadge.vue';
 import VideoDuration from '@/components/VideoDuration.vue';
 import PostShareActions from '@/components/PostShareActions.vue';
@@ -250,10 +252,9 @@ const siteIcon = computed(() => {
     }
 });
 
-// Custom background color behind the favicon, set in the feed's settings
-const iconStyle = computed(() => props.post.feed?.iconBackgroundColor
-    ? { backgroundColor: props.post.feed.iconBackgroundColor, padding: '2px' }
-    : undefined);
+// Light background of the card (not of list rows) in the feed's color (its own or its favicon's), unless card colors are turned off
+const feedColor = computed(() => cardColorStore.colorOf(props.post.feed));
+const feedColorStyle = computed(() => feedColor.value ? { '--feed-color': feedColor.value } : undefined);
 
 const thumbnailFailed = ref(false);
 
@@ -480,6 +481,15 @@ const handleCardClick = async () => {
 [data-bs-theme="dark"] .custom-card {
     background-color: #16181d;
     border-color: #2a2e36;
+}
+
+/* Very light, transparent layer of the feed's color over the card's background */
+.feed-colored {
+    background-image: linear-gradient(color-mix(in srgb, var(--feed-color) 7%, transparent), color-mix(in srgb, var(--feed-color) 7%, transparent));
+}
+
+[data-bs-theme="dark"] .feed-colored {
+    background-image: linear-gradient(color-mix(in srgb, var(--feed-color) 10%, transparent), color-mix(in srgb, var(--feed-color) 10%, transparent));
 }
 
 .custom-card:hover {

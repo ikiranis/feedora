@@ -20,9 +20,14 @@ public class Feed {
     @Column(length = 1000)
     private String htmlUrl;
     private String type;
-    // Background color shown behind the favicon (#rrggbb), e.g. when the favicon blends with the theme; null for none
+    // Color chosen by the user for the light background of the feed's cards (#rrggbb), replacing faviconColor; null for none
     @Column(length = 7)
-    private String iconBackgroundColor;
+    private String cardColor;
+    // Main color of the favicon of the feed's website, or of the channel's avatar for YouTube channels (#rrggbb):
+    // null until it's checked, empty when it has no clear color.
+    // Column renamed from favicon_color, so the colors found with youtube.com's favicon for every channel are checked again.
+    @Column(name = "icon_color", length = 7)
+    private String faviconColor;
 
     @ManyToOne
     @JoinColumn(name = "folder_id")
@@ -68,8 +73,11 @@ public class Feed {
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
 
-    public String getIconBackgroundColor() { return iconBackgroundColor; }
-    public void setIconBackgroundColor(String iconBackgroundColor) { this.iconBackgroundColor = iconBackgroundColor; }
+    public String getCardColor() { return cardColor; }
+    public void setCardColor(String cardColor) { this.cardColor = cardColor; }
+
+    public String getFaviconColor() { return faviconColor; }
+    public void setFaviconColor(String faviconColor) { this.faviconColor = faviconColor; }
 
     public Folder getFolder() { return folder; }
     public void setFolder(Folder folder) { this.folder = folder; }

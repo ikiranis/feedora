@@ -33,25 +33,30 @@
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="editFeedIconColorInput" class="form-label">{{ language.get('Icon background color') }}</label>
+                            <label for="editFeedCardColorInput" class="form-label">{{ language.get('Card color') }}</label>
                             <div class="d-flex align-items-center gap-2">
                                 <input
                                     type="color"
                                     class="form-control form-control-color"
-                                    id="editFeedIconColorInput"
-                                    :value="iconBackgroundColor || '#ffffff'"
-                                    @input="iconBackgroundColor = ($event.target as HTMLInputElement).value"
+                                    id="editFeedCardColorInput"
+                                    :value="effectiveColor || '#ffffff'"
+                                    @input="cardColor = ($event.target as HTMLInputElement).value"
                                 />
-                                <!-- Preview of the favicon on the chosen background -->
-                                <img v-if="faviconUrl" :src="faviconUrl" class="icon-preview" alt=""
-                                    :style="{ backgroundColor: iconBackgroundColor || undefined }" />
-                                <span class="text-muted small">{{ iconBackgroundColor || language.get('None') }}</span>
-                                <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" :disabled="!iconBackgroundColor"
-                                    @click="iconBackgroundColor = ''">
-                                    {{ language.get('Remove color') }}
+                                <!-- Preview of a card of the feed with the color -->
+                                <div class="card-color-preview flex-grow-1" :style="effectiveColor ? { '--feed-color': effectiveColor } : undefined"
+                                    :class="{ 'has-color': effectiveColor }">
+                                    <img v-if="faviconUrl" :src="faviconUrl" class="preview-icon" alt="" />
+                                    <span class="text-truncate">{{ feedTitle }}</span>
+                                    <span class="ms-auto small text-muted text-nowrap">
+                                        {{ cardColor ? cardColor : effectiveColor ? language.get('From the favicon') : language.get('None') }}
+                                    </span>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap" :disabled="!cardColor"
+                                    @click="cardColor = ''">
+                                    {{ language.get('Use favicon color') }}
                                 </button>
                             </div>
-                            <div class="form-text">{{ language.get('Custom background behind the favicon, e.g. when it blends with the theme') }}</div>
+                            <div class="form-text">{{ language.get('Light background of the feed\'s cards. By default, the main color of its favicon.') }}</div>
                         </div>
                     </form>
                 </div>
@@ -99,12 +104,13 @@ const feedTitle = ref('');
 const feedFolder = ref('');
 const selectedFolderId = ref('');
 const folders = ref<FolderType[]>([]);
-// Background color behind the favicon (#rrggbb), empty for none
-const iconBackgroundColor = ref('');
+// Color of the feed's cards chosen by the user (#rrggbb), empty to use the favicon's color
+const cardColor = ref('');
+const effectiveColor = computed(() => cardColor.value || props.feed?.faviconColor || '');
 const loading = ref(false);
 let modalInstance: any = null;
 
-// Favicon of the feed's website, for the color preview
+// Favicon of the feed's website, for the card preview
 const faviconUrl = computed(() => {
     try {
         return props.feed?.htmlUrl ? `https://www.google.com/s2/favicons?domain=${new URL(props.feed.htmlUrl).hostname}&sz=32` : null;
@@ -118,7 +124,7 @@ watch(() => props.feed, (newFeed) => {
     if (newFeed) {
         feedTitle.value = newFeed.title || '';
         feedFolder.value = newFeed.folderName || '';
-        iconBackgroundColor.value = newFeed.iconBackgroundColor || '';
+        cardColor.value = newFeed.cardColor || '';
         
         // Set the selected folder ID based on folder name
         if (newFeed.folderName) {
@@ -131,7 +137,7 @@ watch(() => props.feed, (newFeed) => {
         feedTitle.value = '';
         feedFolder.value = '';
         selectedFolderId.value = '';
-        iconBackgroundColor.value = '';
+        cardColor.value = '';
     }
 }, { immediate: true });
 
@@ -278,7 +284,7 @@ const saveFeed = async () => {
         const result = await updateFeedApi(props.feed.id, {
             title: feedTitle.value.trim(),
             folderName: folderName,
-            iconBackgroundColor: iconBackgroundColor.value
+            cardColor: cardColor.value
         });
         
         hideModal();
@@ -298,10 +304,26 @@ const saveFeed = async () => {
 </script>
 
 <style scoped>
-.icon-preview {
-    width: 24px;
-    height: 24px;
-    padding: 3px;
-    border-radius: 4px;
+.card-color-preview {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    padding: 0.375rem 0.75rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.5rem;
+    background-color: var(--bs-body-bg);
+}
+
+/* Same tint as the post cards */
+.card-color-preview.has-color {
+    background-image: linear-gradient(color-mix(in srgb, var(--feed-color) 10%, transparent), color-mix(in srgb, var(--feed-color) 10%, transparent));
+}
+
+.preview-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    border-radius: 3px;
 }
 </style>

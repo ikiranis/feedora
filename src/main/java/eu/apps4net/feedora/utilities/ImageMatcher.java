@@ -99,7 +99,8 @@ public final class ImageMatcher {
         return sums;
     }
 
-    private static BufferedImage download(String url) throws Exception {
+    // Null if the image can't be downloaded (status other than 200) or read
+    static BufferedImage download(String url) throws Exception {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .timeout(TIMEOUT)
                 .header("User-Agent", "Mozilla/5.0 (compatible; Feedora)")

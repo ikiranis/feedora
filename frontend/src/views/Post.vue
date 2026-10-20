@@ -104,7 +104,7 @@
                         <button v-for="feed in visibleFeedsByFolder[folder.id] || []" :key="feed.id" type="button"
                             class="folder-item feed-item" :class="{ active: selectedFeedId === feed.id }"
                             @click="selectFeed(feed.id)" :title="feed.title">
-                            <img v-if="getFeedIcon(feed)" :src="getFeedIcon(feed)!" class="feed-icon flex-shrink-0" :style="feedIconStyle(feed)"
+                            <img v-if="getFeedIcon(feed)" :src="getFeedIcon(feed)!" class="feed-icon flex-shrink-0"
                                 alt="" loading="lazy" @error="failedFeedIcons.add(feed.id)" />
                             <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                 class="bi bi-rss flex-shrink-0" viewBox="0 0 16 16">
@@ -121,7 +121,7 @@
                 <button v-for="feed in visibleOrphanFeeds" :key="feed.id" type="button"
                     class="folder-item orphan-feed-item" :class="{ active: selectedFeedId === feed.id }"
                     @click="selectFeed(feed.id)" :title="feed.title">
-                    <img v-if="getFeedIcon(feed)" :src="getFeedIcon(feed)!" class="feed-icon flex-shrink-0" :style="feedIconStyle(feed)"
+                    <img v-if="getFeedIcon(feed)" :src="getFeedIcon(feed)!" class="feed-icon flex-shrink-0"
                         alt="" loading="lazy" @error="failedFeedIcons.add(feed.id)" />
                     <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-rss flex-shrink-0" viewBox="0 0 16 16">
@@ -236,6 +236,15 @@
                                     d="M14.5 3a.5.5 0 0 1 .5.5v9a.5.5 0 0 1-.5.5h-13a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h13zm-13-1A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 14.5 2h-13z" />
                                 <path
                                     d="M3 5.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zM3 8a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9A.5.5 0 0 1 3 8zm0 2.5a.5.5 0 0 1 .5-.5h6a.5.5 0 0 1 0 1h-6a.5.5 0 0 1-.5-.5z" />
+                            </svg>
+                        </button>
+                        <!-- Light background of the cards in their feed's color (cards mode only) -->
+                        <button v-if="showDetails" type="button" class="btn btn-sm btn-outline-secondary me-2" :class="{ active: cardColorStore.enabled.value }"
+                            @click="cardColorStore.toggle()" :aria-pressed="cardColorStore.enabled.value"
+                            :title="cardColorStore.enabled.value ? language.get('Hide feed colors') : language.get('Show feed colors')">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-palette" viewBox="0 0 16 16">
+                                <path d="M8 5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zm4 3a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM5.5 7a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm.5 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+                                <path d="M16 8c0 3.15-1.866 2.585-3.567 2.07C11.42 9.763 10.465 9.473 10 10c-.603.683-.475 1.819-.351 2.92C9.826 14.495 9.996 16 8 16a8 8 0 1 1 8-8zm-8 7c.611 0 .654-.171.655-.176.078-.146.124-.464.07-1.119-.014-.168-.037-.37-.061-.591-.052-.464-.112-1.005-.118-1.462-.01-.707.083-1.61.704-2.314.369-.417.845-.578 1.272-.618.404-.038.812.026 1.16.104.343.077.702.186 1.025.284l.028.008c.346.105.658.199.953.266.653.148.904.083.991.024C14.717 9.38 15 9.161 15 8a7 7 0 1 0-7 7z"/>
                             </svg>
                         </button>
                         <button v-if="!showKeptPosts && currentFolderId" type="button" class="btn btn-sm btn-outline-secondary me-2"
@@ -370,6 +379,7 @@ import { getPosts, parseFeeds, markAsRead, markAsUnread, markAllAsRead, getUnrea
 import { getFeedOperationStatus, getLastParsedAt, getFeeds, deleteFeed } from '@/api/feed';
 import { getFolders, deleteFolder } from '@/api/folder';
 import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType, Feed } from '@/types';
+import { cardColorStore } from '@/functions/cardColorStore';
 import { language } from '@/functions/languageStore';
 import { postContentStore } from '@/functions/postContentStore';
 import PostElement from '@/components/PostElement.vue';
@@ -550,12 +560,6 @@ const visibleOrphanFeeds = computed(() => {
         .filter(feed => feed.count > 0 || showEmptyFolders.value || feed.id === selectedFeedId.value)
         .sort((a, b) => a.title.localeCompare(b.title));
 });
-
-/**
- * Custom background color behind the favicon of a feed, set in the feed's settings.
- */
-const feedIconStyle = (feed: FeedUnreadCountType) =>
-    feed.iconBackgroundColor ? { backgroundColor: feed.iconBackgroundColor, padding: '2px' } : undefined;
 
 /**
  * Favicon URL of the feed's website, or null if it has none or it failed to load.

@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -60,6 +61,20 @@ class PostControllerTest extends ApiTestBase {
                 .andExpect(jsonPath("$[0].feed.title").value("BBC"))
                 .andExpect(jsonPath("$[0].user").doesNotExist())
                 .andExpect(jsonPath("$[0].content").doesNotExist());
+    }
+
+    @Test
+    void postsIncludeTheCardAndFaviconColorsOfTheirFeed() throws Exception {
+        createFeeds();
+        bbc.setCardColor("#ffaa00");
+        bbc.setFaviconColor("#bb1919");
+        feedRepository.save(bbc);
+        createPost("One", bbc, user, false, now);
+
+        mockMvc.perform(auth(get("/api/posts/getPosts").param("page", "1").param("pageSize", "10")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$..feed.cardColor", hasItem("#ffaa00")))
+                .andExpect(jsonPath("$..feed.faviconColor", hasItem("#bb1919")));
     }
 
     @Test

@@ -513,19 +513,34 @@
         <language code="el">Μη έγκυρο χρώμα</language>
     </entry>
 
-    <entry id="Icon background color">
-        <language code="en">Icon background color</language>
-        <language code="el">Χρώμα φόντου εικονιδίου</language>
+    <entry id="Card color">
+        <language code="en">Card color</language>
+        <language code="el">Χρώμα καρτών</language>
     </entry>
 
-    <entry id="Custom background behind the favicon, e.g. when it blends with the theme">
-        <language code="en">Custom background behind the favicon, e.g. when it blends with the theme</language>
-        <language code="el">Προσαρμοσμένο φόντο πίσω από το εικονίδιο, π.χ. όταν δεν ξεχωρίζει από το θέμα</language>
+    <entry id="Light background of the feed's cards. By default, the main color of its favicon.">
+        <language code="en">Light background of the feed's cards. By default, the main color of its favicon.</language>
+        <language code="el">Απαλό φόντο των καρτών της ροής. Από προεπιλογή, το κύριο χρώμα του εικονιδίου της.</language>
     </entry>
 
-    <entry id="Remove color">
-        <language code="en">Remove color</language>
-        <language code="el">Αφαίρεση χρώματος</language>
+    <entry id="Use favicon color">
+        <language code="en">Use favicon color</language>
+        <language code="el">Χρώμα εικονιδίου</language>
+    </entry>
+
+    <entry id="From the favicon">
+        <language code="en">From the favicon</language>
+        <language code="el">Από το εικονίδιο</language>
+    </entry>
+
+    <entry id="Show feed colors">
+        <language code="en">Show feed colors</language>
+        <language code="el">Εμφάνιση χρωμάτων ροών</language>
+    </entry>
+
+    <entry id="Hide feed colors">
+        <language code="en">Hide feed colors</language>
+        <language code="el">Απόκρυψη χρωμάτων ροών</language>
     </entry>
 
     <entry id="None">

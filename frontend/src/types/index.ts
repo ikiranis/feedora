@@ -34,8 +34,10 @@ export interface Feed {
     type: string;
     folderName?: string;
     folderId?: string | null;
-    // Background color behind the favicon (#rrggbb), null for none
-    iconBackgroundColor?: string | null;
+    // Color of the feed's cards chosen by the user (#rrggbb), null to use faviconColor
+    cardColor?: string | null;
+    // Main color of the favicon (#rrggbb): null until checked, empty when it has no clear color
+    faviconColor?: string | null;
     // Number of log entries of the feed itself, not counting those of its posts
     logCount?: number;
     // Null until the feed is checked for the first time
@@ -74,8 +76,6 @@ export interface FeedUnreadCountType {
     htmlUrl: string | null;
     folderId: string | null;
     count: number;
-    // Background color behind the favicon (#rrggbb), null for none
-    iconBackgroundColor?: string | null;
 }
 
 export interface UnreadCountsType {

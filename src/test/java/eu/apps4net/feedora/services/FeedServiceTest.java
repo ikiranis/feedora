@@ -46,6 +46,8 @@ class FeedServiceTest {
     private OperationLockService operationLockService;
     @Mock
     private LogService logService;
+    @Mock
+    private SettingService settingService;
     @InjectMocks
     private FeedService feedService;
 
@@ -55,6 +57,26 @@ class FeedServiceTest {
     void setUp() {
         user = new User("tester", "tester@example.com", "hash");
         user.setId(UUID.randomUUID());
+    }
+
+    @Test
+    void feedsWithoutAWebsiteGetNoFaviconColor() {
+        Feed feed = new Feed("No site", "not a url", "", "rss", null, user);
+        feed.setId(UUID.randomUUID());
+        when(feedRepository.findByFaviconColorIsNull(any(Pageable.class))).thenReturn(List.of(feed));
+
+        feedService.updateFaviconColors(50);
+
+        verify(feedRepository).updateFaviconColor(feed.getId(), "");
+    }
+
+    @Test
+    void faviconColorsAreSkippedWhenAllAreChecked() {
+        when(feedRepository.findByFaviconColorIsNull(any(Pageable.class))).thenReturn(List.of());
+
+        feedService.updateFaviconColors(50);
+
+        verify(feedRepository, never()).updateFaviconColor(any(), any());
     }
 
     @Test

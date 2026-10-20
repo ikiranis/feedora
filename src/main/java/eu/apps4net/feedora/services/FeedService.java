@@ -9,6 +9,8 @@ import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.repositories.FeedRepository;
 import eu.apps4net.feedora.repositories.FolderRepository;
 import eu.apps4net.feedora.repositories.PostRepository;
+import eu.apps4net.feedora.utilities.FaviconColorExtractor;
+import eu.apps4net.feedora.utilities.YouTubeChannelAvatar;
 import eu.apps4net.feedora.utilities.YouTubeFeedResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,9 @@ import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class FeedService {
@@ -43,6 +48,8 @@ public class FeedService {
     private OperationLockService operationLockService;
     @Autowired
     private LogService logService;
+    @Autowired
+    private SettingService settingService;
 
     // Last parse time of the users whose feeds are being scanned, as it was before the scan
     private final Map<UUID, Optional<LocalDateTime>> lastParsedBeforeScan = new ConcurrentHashMap<>();
@@ -451,13 +458,13 @@ public class FeedService {
      * @param feedId The UUID of the feed to update
      * @param title The new title for the feed
      * @param folderName The new folder name for the feed (can be null or empty for no folder)
-     * @param iconBackgroundColor The background color behind the favicon (#rrggbb), empty to remove it, or null to keep the current one
+     * @param cardColor The color of the feed's cards (#rrggbb), empty to use the favicon's color again, or null to keep the current one
      * @param user The user who owns the feed
      * @return Success message
      * @throws Exception if the feed is not found, doesn't belong to the user or the color is invalid
      */
     @Transactional
-    public String updateFeed(String feedId, String title, String folderName, String iconBackgroundColor, User user) throws Exception {
+    public String updateFeed(String feedId, String title, String folderName, String cardColor, User user) throws Exception {
         UUID uuid;
         try {
             uuid = UUID.fromString(feedId);
@@ -495,13 +502,13 @@ public class FeedService {
         }
         feed.setFolder(folder);
 
-        // Update the favicon background color
-        if (iconBackgroundColor != null) {
-            String color = iconBackgroundColor.trim();
+        // Update the card color
+        if (cardColor != null) {
+            String color = cardColor.trim();
             if (color.isEmpty()) {
-                feed.setIconBackgroundColor(null);
+                feed.setCardColor(null);
             } else if (color.matches("#[0-9a-fA-F]{6}")) {
-                feed.setIconBackgroundColor(color.toLowerCase());
+                feed.setCardColor(color.toLowerCase());
             } else {
                 throw new Exception(Language.getActionString("Invalid color"));
             }
@@ -509,5 +516,107 @@ public class FeedService {
 
         feedRepository.save(feed);
         return Language.getActionString("Feed updated successfully");
+    }
+
+    /**
+     * Finds the main color of the feeds not checked yet (of all users), used as the light background of their cards:
+     * the color of their website's favicon, or of the channel's avatar for YouTube channels (which all share
+     * youtube.com's favicon). A batch at a time, so the scheduled parser isn't held up; feeds whose image can't be
+     * downloaded (e.g. no network, or YouTube refusing its pages) are retried on the next run.
+     *
+     * @param limit Maximum number of feeds to check
+     */
+    public void updateFaviconColors(int limit) {
+        List<Feed> feeds = feedRepository.findByFaviconColorIsNull(PageRequest.of(0, limit));
+        if (feeds.isEmpty()) return;
+
+        // YouTube channel feeds by channel id; the rest use their website's favicon
+        Map<String, List<Feed>> channels = new LinkedHashMap<>();
+        Map<Feed, String> sites = new LinkedHashMap<>();
+        for (Feed feed : feeds) {
+            String channelId = YouTubeChannelAvatar.channelId(feed.getHtmlUrl(), feed.getXmlUrl());
+            if (channelId != null) {
+                channels.computeIfAbsent(channelId, id -> new ArrayList<>()).add(feed);
+            } else {
+                sites.put(feed, feed.getHtmlUrl() != null && !feed.getHtmlUrl().isBlank() ? feed.getHtmlUrl() : feed.getXmlUrl());
+            }
+        }
+
+        ExecutorService executor = Executors.newFixedThreadPool(8);
+        sites.forEach((feed, website) -> executor.submit(() ->
+                saveFaviconColor(List.of(feed), website, () -> website != null ? FaviconColorExtractor.mainColor(website) : "")));
+        for (Map.Entry<String, String> avatar : channelAvatars(channels.keySet()).entrySet()) {
+            String url = avatar.getValue();
+            executor.submit(() -> saveFaviconColor(channels.get(avatar.getKey()), url,
+                    () -> url.isEmpty() ? "" : FaviconColorExtractor.mainColorOfImage(url)));
+        }
+        executor.shutdown();
+        try {
+            executor.awaitTermination(2, TimeUnit.MINUTES);
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    // Channels whose avatar is read from their page per run without an API key; YouTube refuses fast page reads
+    private static final int MAX_CHANNEL_PAGES = 20;
+
+    /**
+     * Avatars of YouTube channels: with the YouTube Data API (50 channels per request) when an API key is set,
+     * otherwise from the channels' pages, a few per run and one at a time.
+     *
+     * @return Avatar URL by channel id, empty for channels without one (e.g. removed); channels that couldn't be
+     *         checked are missing, so they're retried later
+     */
+    private Map<String, String> channelAvatars(Collection<String> channelIds) {
+        Map<String, String> avatars = new LinkedHashMap<>();
+        List<String> ids = new ArrayList<>(channelIds);
+        String apiKey = settingService.getYoutubeApiKey();
+
+        if (apiKey != null) {
+            for (int i = 0; i < ids.size(); i += YouTubeChannelAvatar.API_MAX_IDS) {
+                List<String> batch = ids.subList(i, Math.min(i + YouTubeChannelAvatar.API_MAX_IDS, ids.size()));
+                try {
+                    Map<String, String> found = YouTubeChannelAvatar.avatarsWithApi(batch, apiKey);
+                    batch.forEach(id -> avatars.put(id, found.getOrDefault(id, "")));
+                } catch (Exception e) {
+                    System.out.println("[Feedora] YouTube channel avatars not found: " + e.getMessage());
+                }
+            }
+            return avatars;
+        }
+
+        for (String id : ids.subList(0, Math.min(ids.size(), MAX_CHANNEL_PAGES))) {
+            try {
+                String avatar = YouTubeChannelAvatar.avatarFromPage(id);
+                avatars.put(id, avatar != null ? avatar : "");
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            } catch (Exception e) {
+                // Most likely YouTube refusing the pages, so the rest wait for the next run
+                System.out.println("[Feedora] YouTube channel avatar not found: " + e.getMessage());
+                break;
+            }
+        }
+        return avatars;
+    }
+
+    private interface ColorSource {
+        String color() throws Exception;
+    }
+
+    // Saves the color of the feeds sharing an image; on a download failure they stay unchecked, to be retried
+    private void saveFaviconColor(List<Feed> feeds, String source, ColorSource colorSource) {
+        try {
+            String color = colorSource.color();
+            feeds.forEach(feed -> feedRepository.updateFaviconColor(feed.getId(), color));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception e) {
+            System.out.println("[Feedora] Color of " + source + " not found: " + e.getMessage());
+        }
     }
 }

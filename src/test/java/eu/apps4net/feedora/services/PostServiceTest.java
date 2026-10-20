@@ -407,9 +407,9 @@ class PostServiceTest {
         UUID feedB = UUID.randomUUID();
         UUID feedC = UUID.randomUUID();
         when(postRepository.countUnreadByFeed(eq(user), eq(false), any())).thenReturn(List.of(
-                new Object[]{feedA, "A", "http://a", folderId, 2L, "#ffffff"},
-                new Object[]{feedB, "B", "http://b", folderId, 3L, null},
-                new Object[]{feedC, "C", "http://c", null, 4L, null}));
+                new Object[]{feedA, "A", "http://a", folderId, 2L},
+                new Object[]{feedB, "B", "http://b", folderId, 3L},
+                new Object[]{feedC, "C", "http://c", null, 4L}));
         when(postRepository.countByUserAndSavedTrue(user)).thenReturn(5L);
         when(postRepository.countByUserAndFavoriteTrue(user)).thenReturn(2L);
 
@@ -421,7 +421,6 @@ class PostServiceTest {
         assertThat((Map<String, Long>) counts.get("folders")).containsExactly(Map.entry(folderId.toString(), 5L));
         List<Map<String, Object>> feeds = (List<Map<String, Object>>) counts.get("feeds");
         assertThat(feeds).hasSize(3);
-        assertThat(feeds.get(0)).containsEntry("iconBackgroundColor", "#ffffff");
         assertThat(feeds.get(2)).containsEntry("id", feedC.toString()).containsEntry("folderId", null).containsEntry("count", 4L);
     }
 
