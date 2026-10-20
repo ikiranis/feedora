@@ -15,6 +15,7 @@ import eu.apps4net.feedora.repositories.PostRepository;
 import eu.apps4net.feedora.configurations.Language;
 import eu.apps4net.feedora.exceptions.NotFoundException;
 import eu.apps4net.feedora.utilities.ArticleExtractor;
+import eu.apps4net.feedora.utilities.ImageMatcher;
 import eu.apps4net.feedora.utilities.LinkPreviewExtractor;
 import eu.apps4net.feedora.utilities.RssFetcher;
 import eu.apps4net.feedora.utilities.ThumbnailExtractor;
@@ -22,6 +23,7 @@ import eu.apps4net.feedora.utilities.TweetMediaExtractor;
 import eu.apps4net.feedora.utilities.YouTubeLiveChecker;
 import com.rometools.rome.feed.synd.SyndContent;
 import com.rometools.rome.feed.synd.SyndEntry;
+import org.jsoup.Jsoup;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -47,6 +49,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -91,6 +94,8 @@ public class PostService {
     // New tweets published within this many days get a preview of their link, read by up to this many threads per feed
     private static final int LINK_PREVIEW_MAX_AGE_DAYS = 7;
     private static final int LINK_PREVIEW_THREADS = 4;
+    // Photos of a tweet compared with its link preview's image (tweets have up to 4)
+    private static final int MAX_COMPARED_PHOTOS = 4;
 
     /**
      * Checks all the feeds of a user for new posts, and adds them as Posts in the database.
@@ -239,6 +244,7 @@ public class PostService {
                     List<String> liveCheckErrors = checkLiveStates(feed, user, postsToSave, youtubeApiKey);
                     addLinkPreviews(postsToSave);
                     addTweetMedia(postsToSave);
+                    matchLinkImagesToPhotos(postsToSave);
                     newPosts = savePosts(feed, postsToSave);
                     if (!liveCheckErrors.isEmpty()) {
                         logService.logFeed(feed, LogLevel.WARNING, LogType.YOUTUBE_LIVE_CHECK,
@@ -405,6 +411,59 @@ public class PostService {
         } finally {
             executor.shutdownNow();
         }
+    }
+
+    /**
+     * News accounts often attach their article's image to the tweet as a photo, so the photo and the link preview
+     * show the same picture from different URLs. For new tweets whose preview image is one of their photos, the photo
+     * becomes the preview image, so the app shows the picture once (in the preview when the tweet is opened).
+     *
+     * @param newPosts The feed's new posts, not saved yet, with their link previews and media
+     */
+    private void matchLinkImagesToPhotos(List<Post> newPosts) {
+        List<Post> tweets = newPosts.stream()
+                .filter(post -> post.getLinkImage() != null && !tweetPhotos(post).isEmpty())
+                .toList();
+        if (tweets.isEmpty()) return;
+
+        ExecutorService executor = Executors.newFixedThreadPool(Math.min(tweets.size(), LINK_PREVIEW_THREADS));
+        try {
+            List<Future<?>> tasks = new ArrayList<>();
+            for (Post post : tweets) {
+                tasks.add(executor.submit(() -> {
+                    List<String> photos = tweetPhotos(post);
+                    if (photos.contains(post.getLinkImage())) return;
+                    photos.stream()
+                            .filter(photo -> ImageMatcher.samePicture(photo, post.getLinkImage()))
+                            .findFirst()
+                            .ifPresent(post::setLinkImage);
+                }));
+            }
+            for (Future<?> task : tasks) {
+                task.get();
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } catch (Exception ignored) {
+            // A preview whose image couldn't be compared keeps it
+        } finally {
+            executor.shutdownNow();
+        }
+    }
+
+    /**
+     * Photos a tweet shows (its thumbnail and the photos in its content), at most MAX_COMPARED_PHOTOS.
+     */
+    private static List<String> tweetPhotos(Post post) {
+        Set<String> photos = new LinkedHashSet<>();
+        if (TweetMediaExtractor.isPhoto(post.getThumbnail())) photos.add(post.getThumbnail());
+        String html = contentOrDescription(post, post.getContent());
+        if (html != null) {
+            Jsoup.parseBodyFragment(html).select("img[src]").forEach(img -> {
+                if (TweetMediaExtractor.isPhoto(img.attr("src"))) photos.add(img.attr("src"));
+            });
+        }
+        return photos.stream().limit(MAX_COMPARED_PHOTOS).toList();
     }
 
     /**

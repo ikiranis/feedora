@@ -81,21 +81,57 @@ export const tweetLinkPreview = (post: PostType): LinkPreview | null => {
 };
 
 /**
+ * Removes an element, and its parent if that's left empty (e.g. the paragraph of a link card).
+ */
+const removeWithEmptyParent = (element: Element, body: HTMLElement) => {
+    const parent = element.parentElement;
+    element.remove();
+    if (parent && parent !== body && !parent.textContent?.trim() && !parent.querySelector('img, video, iframe')) parent.remove();
+};
+
+/**
+ * Image URL without its size/format variant, e.g. pbs.twimg.com/media/X.jpg and pbs.twimg.com/media/X?format=jpg&name=small.
+ */
+const imageKey = (url: string) => {
+    try {
+        const { host, pathname } = new URL(url);
+        return host + pathname.replace(/\.\w+$/, '');
+    } catch {
+        return url;
+    }
+};
+
+/**
+ * Whether two URLs are the same image, in any size or format.
+ */
+export const sameImage = (a: string, b: string) => imageKey(a) === imageKey(b);
+
+/**
  * Removes the link a preview shows from a tweet's HTML: Twitter's link card (with its paragraph, if left empty)
  * and the first link in the text, which the card repeats (e.g. "Title https://reut.rs/…" followed by the card).
  * Same rule as the backend (LinkPreviewExtractor.findLink).
+ * When the preview shows an image, the same image in the HTML (or Twitter's card image) is removed too.
  */
-export const removePreviewedLink = (html: string) => {
+export const removePreviewedLink = (html: string, previewImage?: string | null) => {
     const body = parse(html);
 
     const card = findCardAnchor(body);
-    if (card) {
-        const parent = card.parentElement;
-        card.remove();
-        if (parent && parent !== body && !parent.textContent?.trim() && !parent.querySelector('img, video, iframe')) parent.remove();
+    if (card) removeWithEmptyParent(card, body);
+
+    let imageRemoved = false;
+    if (previewImage) {
+        body.querySelectorAll<HTMLImageElement>('img[src]').forEach(img => {
+            const src = img.getAttribute('src')!;
+            if (isCardImage(src) || sameImage(src, previewImage)) {
+                // An image wrapped in its link goes with the link
+                const link = img.parentElement instanceof HTMLAnchorElement && !img.parentElement.textContent?.trim() ? img.parentElement : img;
+                removeWithEmptyParent(link, body);
+                imageRemoved = true;
+            }
+        });
     }
 
-    return removeTextLink(body) || card ? body.innerHTML : html;
+    return removeTextLink(body) || card || imageRemoved ? body.innerHTML : html;
 };
 
 /**

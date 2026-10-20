@@ -222,7 +222,7 @@ import VideoDuration from '@/components/VideoDuration.vue';
 import PostShareActions from '@/components/PostShareActions.vue';
 import CopyLinkButton from '@/components/CopyLinkButton.vue';
 import LinkPreview from '@/components/LinkPreview.vue';
-import { isCardImage, isTweetGif, isTweetLink, plainText, removePreviewedLink, tweetLinkPreview } from '@/functions/tweet';
+import { isCardImage, isTweetGif, isTweetLink, plainText, removePreviewedLink, sameImage, tweetLinkPreview } from '@/functions/tweet';
 import { isModalOpen, pauseVideo, playFirstVideo, playVideo } from '@/functions/videoPlayback';
 import { language } from '@/functions/languageStore';
 import { computed, nextTick, ref, watch } from 'vue';
@@ -342,7 +342,7 @@ const linkPreview = computed(() => tweetLinkPreview(props.post));
 
 // The card already shows the link's image when the tweet's thumbnail is Twitter's link card image
 const cardShowsLinkImage = computed(() =>
-    !!thumbnailUrl.value && (thumbnailUrl.value === linkPreview.value?.image || isCardImage(thumbnailUrl.value))
+    !!thumbnailUrl.value && (isCardImage(thumbnailUrl.value) || (!!linkPreview.value?.image && sameImage(thumbnailUrl.value, linkPreview.value.image)))
 );
 
 /**
@@ -380,7 +380,7 @@ const fullContent = computed(() => postContentStore.get(props.post.id) ?? null);
  */
 const detailsHtml = computed(() => {
     const html = fullContent.value || props.post.description;
-    return html && linkPreview.value ? removePreviewedLink(html) : html;
+    return html && linkPreview.value ? removePreviewedLink(html, linkPreview.value.image) : html;
 });const contentLoading = computed(() => postContentStore.isLoading(props.post.id));
 // Log entries of the post, e.g. when its page couldn't be read
 const logCount = computed(() => postContentStore.logCount(props.post.id));

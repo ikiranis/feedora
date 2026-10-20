@@ -172,7 +172,7 @@ const isTweet = computed(() => isTweetLink(props.post.link));
 const linkPreview = computed(() => tweetLinkPreview(props.post));
 const contentHtml = computed(() => {
     const html = fullContent.value || props.post.description;
-    return html && linkPreview.value ? removePreviewedLink(html) : html;
+    return html && linkPreview.value ? removePreviewedLink(html, linkPreview.value.image) : html;
 });
 const contentLoading = computed(() => postContentStore.isLoading(props.post.id));
 

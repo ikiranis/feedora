@@ -53,6 +53,13 @@ public final class TweetMediaExtractor {
     private TweetMediaExtractor() {}
 
     /**
+     * Whether an image is a photo attached to a tweet (not a video thumbnail or a link card image).
+     */
+    public static boolean isPhoto(String url) {
+        return url != null && url.startsWith("https://pbs.twimg.com/media/");
+    }
+
+    /**
      * Whether an image is the thumbnail of a tweet's video or GIF.
      */
     public static boolean isVideoThumbnail(String url) {
