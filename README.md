@@ -46,7 +46,7 @@ Feedora is a self-hosted, multi-user RSS reader. It follows your RSS/Atom feeds 
 - **Search** across post titles and descriptions.
 - **Saved posts** (read later) and **favorites**. Saved posts are never cleaned up.
 - **Copy link** and share actions on each post.
-- **Live newsfeed** page that refreshes on its own at a configurable interval.
+- **Live newsfeed** page that refreshes on its own at a configurable interval. New posts are shown one at a time, 5 seconds apart (2 seconds when more than 50 are waiting), and the next check waits until they have all been shown.
 
 ### ▶️ YouTube and Social Content
 - **Embedded YouTube playback** with video duration.

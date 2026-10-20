@@ -86,10 +86,11 @@ import { errorStore } from '@/components/error/errorStore';
 
 const INITIAL_POSTS = 30; // Latest posts shown when the page opens
 const MAX_POSTS = 200; // The oldest posts are dropped beyond this, so a page left open doesn't grow forever
-// New posts are shown one at a time, spread over the time until the next check: at most this far apart,
-// closer when many are waiting, so they're all shown before the next check brings more
-const MAX_REVEAL_INTERVAL_MS = 5000;
-const MIN_REVEAL_INTERVAL_MS = 300;
+// New posts are shown one at a time, each staying on top this long before the next one is shown
+const REVEAL_INTERVAL_SECONDS = 5;
+// Faster when more than this many posts are waiting, so they don't take too long to show
+const MANY_POSTS = 50;
+const FAST_REVEAL_INTERVAL_SECONDS = 2;
 const FRESH_MS = 4000; // How long a newly shown post stays highlighted
 const SCROLL_PAUSE_PX = 100; // Scrolled further down than this, new posts wait until the list is scrolled back to the top
 
@@ -118,6 +119,8 @@ const logsPost = ref<PostType | null>(null);
 const currentPostId = computed(() => scrolledDown.value || modalPostId.value ? null : posts.value[0]?.id ?? null);
 let tickTimer: number | null = null;
 let revealTimer: number | null = null;
+let revealIntervalSeconds = REVEAL_INTERVAL_SECONDS; // Set at each check, from the number of waiting posts
+let lastRevealAt = 0;
 let unmounted = false;
 
 /**
@@ -157,7 +160,8 @@ const checkForNewPosts = async () => {
         newPosts.forEach(p => seenPostIds.add(p.id));
         newPosts.sort((a, b) => publishedTime(a) - publishedTime(b));
         queue.value.push(...newPosts);
-        scheduleReveal(0);
+        revealIntervalSeconds = queue.value.length > MANY_POSTS ? FAST_REVEAL_INTERVAL_SECONDS : REVEAL_INTERVAL_SECONDS;
+        scheduleReveal(Math.max(0, lastRevealAt + revealIntervalSeconds * 1000 - Date.now()));
         listedAt = result.listedAt ?? listedAt;
         refreshSeconds.value = seconds;
         checkFailed.value = false;
@@ -167,7 +171,9 @@ const checkForNewPosts = async () => {
         checkFailed.value = true;
     } finally {
         checking.value = false;
-        secondsLeft.value = refreshSeconds.value;
+        // When the waiting posts take longer to show than the refresh interval, the next check waits until
+        // they're all shown, so they don't pile up. The check after that is back to the refresh interval.
+        secondsLeft.value = Math.max(refreshSeconds.value, queue.value.length * revealIntervalSeconds);
     }
 };
 
@@ -186,12 +192,6 @@ const tick = () => {
 };
 
 /**
- * Time until the next post is shown: the time left until the next check, shared by the waiting posts.
- */
-const revealDelay = () => Math.min(MAX_REVEAL_INTERVAL_MS,
-    Math.max(MIN_REVEAL_INTERVAL_MS, secondsLeft.value * 1000 / Math.max(1, queue.value.length)));
-
-/**
  * Shows the queued posts one at a time, until the queue is empty. Does nothing if they're already being shown.
  */
 const scheduleReveal = (delay: number) => {
@@ -203,7 +203,8 @@ const scheduleReveal = (delay: number) => {
             return;
         }
         await revealNextPost();
-        scheduleReveal(revealDelay());
+        lastRevealAt = Date.now();
+        scheduleReveal(revealIntervalSeconds * 1000);
     }, delay);
 };
 
