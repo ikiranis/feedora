@@ -16,8 +16,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Finds the video of a tweet. Feeds only give a tweet's video as its thumbnail image, so the video file is asked from
- * Twitter's syndication endpoint (the one its embedded tweets use), which answers without logging in.
+ * Finds the video of a tweet. Feeds give a tweet's video as its thumbnail image at best (some give nothing at all),
+ * so the video file is asked from Twitter's syndication endpoint (the one its embedded tweets use),
+ * which answers without logging in.
  */
 public final class TweetVideoExtractor {
 
@@ -37,6 +38,11 @@ public final class TweetVideoExtractor {
             .followRedirects(HttpClient.Redirect.NORMAL)
             .connectTimeout(TIMEOUT)
             .build();
+
+    /**
+     * A tweet's video: its MP4 URL and its thumbnail (null if Twitter gives none).
+     */
+    public record TweetVideo(String url, String thumbnail) {}
 
     private TweetVideoExtractor() {}
 
@@ -66,15 +72,27 @@ public final class TweetVideoExtractor {
     }
 
     /**
+     * Whether a tweet may have a video: it shows a video thumbnail, or it shows no image at all
+     * (some feeds give a video tweet only its text).
+     *
+     * @param thumbnail The tweet's card thumbnail
+     * @param html Its description or content HTML
+     */
+    public static boolean mayHaveVideo(String thumbnail, String html) {
+        return findThumbnail(thumbnail, List.of(), html) != null
+                || (thumbnail == null && (html == null || !html.contains("<img")));
+    }
+
+    /**
      * Asks Twitter for the MP4 file of a tweet's video (or GIF), the one shown by the given thumbnail if it has several
      * (also in the tweet it quotes).
      *
      * @param link The tweet's link, e.g. https://x.com/AP/status/123
-     * @param thumbnail The video's thumbnail, see findThumbnail
-     * @return The MP4 URL, or null if the tweet has no video (e.g. it was deleted)
+     * @param thumbnail The video's thumbnail if known, see findThumbnail
+     * @return The video, or null if the tweet has none (e.g. it was deleted)
      * @throws Exception if Twitter can't be reached or answers with an error
      */
-    public static String fetch(String link, String thumbnail) throws Exception {
+    public static TweetVideo fetch(String link, String thumbnail) throws Exception {
         Matcher id = STATUS_ID.matcher(link != null ? link : "");
         if (!id.find()) return null;
 
@@ -88,19 +106,26 @@ public final class TweetVideoExtractor {
     }
 
     /**
-     * MP4 URL of the video in a syndication answer, preferring the one with the given thumbnail.
+     * Video in a syndication answer, preferring the one with the given thumbnail.
      */
-    static String parseVideo(String json, String thumbnail) throws Exception {
+    static TweetVideo parseVideo(String json, String thumbnail) throws Exception {
         JsonNode tweet = MAPPER.readTree(json);
         JsonNode fallback = null;
         for (JsonNode node : new JsonNode[]{tweet, tweet.path("quoted_tweet")}) {
             for (JsonNode media : node.path("mediaDetails")) {
                 if (!media.has("video_info")) continue;
-                if (thumbnail != null && sameImage(media.path("media_url_https").asText(), thumbnail)) return bestVariant(media);
+                if (thumbnail != null && sameImage(media.path("media_url_https").asText(), thumbnail)) return video(media);
                 if (fallback == null) fallback = media;
             }
         }
-        return fallback != null ? bestVariant(fallback) : null;
+        return fallback != null ? video(fallback) : null;
+    }
+
+    private static TweetVideo video(JsonNode media) {
+        String url = bestVariant(media);
+        if (url == null) return null;
+        String thumbnail = media.path("media_url_https").asText("");
+        return new TweetVideo(url, thumbnail.startsWith("https://") && thumbnail.length() <= MAX_URL_LENGTH ? thumbnail : null);
     }
 
     /**

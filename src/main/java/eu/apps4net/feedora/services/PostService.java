@@ -366,8 +366,9 @@ public class PostService {
     }
 
     /**
-     * Adds the video (MP4 URL) of new tweets published within LINK_PREVIEW_MAX_AGE_DAYS that show a video thumbnail,
-     * before they're saved (see TweetVideoExtractor). Tweets whose video couldn't be found are checked again when opened.
+     * Adds the video (MP4 URL) of new tweets published within LINK_PREVIEW_MAX_AGE_DAYS that show a video thumbnail
+     * or no image at all, before they're saved (see TweetVideoExtractor). Tweets whose video couldn't be found are
+     * checked again when opened.
      *
      * @param newPosts The feed's new posts, not saved yet
      */
@@ -375,7 +376,7 @@ public class PostService {
         LocalDateTime oldest = LocalDateTime.now().minusDays(LINK_PREVIEW_MAX_AGE_DAYS);
         List<Post> videos = newPosts.stream()
                 .filter(post -> LinkPreviewExtractor.isTweet(post.getLink()) && !post.getPubDate().isBefore(oldest))
-                .filter(post -> videoThumbnail(post, post.getContent()) != null)
+                .filter(post -> TweetVideoExtractor.mayHaveVideo(post.getThumbnail(), contentOrDescription(post, post.getContent())))
                 .toList();
         if (videos.isEmpty()) return;
 
@@ -385,8 +386,7 @@ public class PostService {
             for (Post post : videos) {
                 tasks.add(executor.submit(() -> {
                     try {
-                        String video = TweetVideoExtractor.fetch(post.getLink(), videoThumbnail(post, post.getContent()));
-                        post.setVideo(video != null ? video : "");
+                        setVideo(post, TweetVideoExtractor.fetch(post.getLink(), videoThumbnail(post, post.getContent())));
                     } catch (Exception ignored) {
                         // Left unchecked, the tweet shows its thumbnail and is checked again when opened
                     }
@@ -405,10 +405,23 @@ public class PostService {
     }
 
     /**
-     * Thumbnail of a tweet's video, from its card thumbnail or its content HTML; null if the tweet has no video.
+     * Thumbnail of a tweet's video, from its card thumbnail or its content HTML; null if the tweet shows none.
      */
     private static String videoThumbnail(Post post, String html) {
-        return TweetVideoExtractor.findThumbnail(post.getThumbnail(), List.of(), html != null ? html : post.getDescription());
+        return TweetVideoExtractor.findThumbnail(post.getThumbnail(), List.of(), contentOrDescription(post, html));
+    }
+
+    private static String contentOrDescription(Post post, String html) {
+        return html != null ? html : post.getDescription();
+    }
+
+    /**
+     * Keeps a tweet's video (empty if it has none, so it isn't checked again). Tweets without a thumbnail get the
+     * video's, for their card.
+     */
+    private static void setVideo(Post post, TweetVideoExtractor.TweetVideo video) {
+        post.setVideo(video != null ? video.url() : "");
+        if (video != null && post.getThumbnail() == null) post.setThumbnail(video.thumbnail());
     }
 
     /**
@@ -420,20 +433,19 @@ public class PostService {
      * @return The content HTML, with the video if it has one
      */
     private String withTweetVideo(Post post, String html) {
-        String thumbnail = videoThumbnail(post, html);
-        if (thumbnail == null) return html;
-
         if (post.getVideo() == null) {
+            if (!TweetVideoExtractor.mayHaveVideo(post.getThumbnail(), contentOrDescription(post, html))) return html;
             try {
-                String video = TweetVideoExtractor.fetch(post.getLink(), thumbnail);
-                post.setVideo(video != null ? video : "");
+                setVideo(post, TweetVideoExtractor.fetch(post.getLink(), videoThumbnail(post, html)));
                 postRepository.save(post);
             } catch (Exception e) {
                 // Checked again the next time the tweet is opened
                 return html;
             }
         }
-        return post.getVideo().isEmpty() ? html : TweetVideoExtractor.withVideo(html, post.getVideo(), thumbnail);
+        if (post.getVideo().isEmpty()) return html;
+        String thumbnail = videoThumbnail(post, html);
+        return TweetVideoExtractor.withVideo(html, post.getVideo(), thumbnail != null ? thumbnail : post.getThumbnail());
     }
 
     /**

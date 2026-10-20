@@ -536,6 +536,8 @@ class PostServiceTest {
         Post post = post("tweet", user, null);
         post.setLink("https://x.com/AP/status/1");
         post.setDescription("<p>The tweet text</p>");
+        // Already checked for a video, which a tweet without images may have
+        post.setVideo("");
         post.setContent(ArticleExtractor.VERSION_MARKER + "<h2>Log in or sign up for X</h2><p>See what's happening and join the conversation</p>");
         when(postRepository.findById(post.getId())).thenReturn(Optional.of(post));
 

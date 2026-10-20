@@ -83,7 +83,7 @@
                         <span class="spinner-border spinner-border-sm" role="status"></span>
                         {{ language.get('Loading full article...') || 'Loading full article...' }}
                     </div>
-                    <div v-else-if="contentHtml" class="post-modal-content" :class="{ 'tweet-content': isTweet }" v-html="contentHtml"
+                    <div v-else-if="contentHtml" ref="contentRef" class="post-modal-content" :class="{ 'tweet-content': isTweet }" v-html="contentHtml"
                         @error.capture="hideBrokenImage"></div>
                     <LinkPreview v-if="linkPreview" :preview="linkPreview" large />
                 </article>
@@ -111,8 +111,9 @@ import VideoDuration from '@/components/VideoDuration.vue';
 import PostShareActions from '@/components/PostShareActions.vue';
 import LinkPreview from '@/components/LinkPreview.vue';
 import { isTweetLink, removePreviewedLink, tweetLinkPreview } from '@/functions/tweet';
+import { playFirstVideo } from '@/functions/videoPlayback';
 import { language } from '@/functions/languageStore';
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{
     post: PostType;
@@ -174,6 +175,14 @@ const contentHtml = computed(() => {
     return html && linkPreview.value ? removePreviewedLink(html) : html;
 });
 const contentLoading = computed(() => postContentStore.isLoading(props.post.id));
+
+// Tweets: their video plays when the post is opened, once its content is shown
+const contentRef = ref<HTMLElement | null>(null);
+watch([contentHtml, contentLoading], async () => {
+    if (!isTweet.value || contentLoading.value) return;
+    await nextTick();
+    playFirstVideo(contentRef.value);
+}, { immediate: true });
 // Log entries of the post, e.g. when its page couldn't be read
 const logCount = computed(() => postContentStore.logCount(props.post.id));
 

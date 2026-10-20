@@ -7,7 +7,7 @@
             <!-- Tweets: their video plays on the card (its controls don't open the modal); GIFs play muted in a loop, like on Twitter -->
             <video v-if="tweetVideo?.gif" :src="tweetVideo.url" :poster="thumbnailUrl ?? undefined" class="media-image"
                 autoplay loop muted playsinline preload="metadata" @error="videoFailed = true"></video>
-            <video v-else-if="tweetVideo" :src="tweetVideo.url" :poster="thumbnailUrl ?? undefined" class="media-image"
+            <video v-else-if="tweetVideo" ref="cardVideoRef" :src="tweetVideo.url" :poster="thumbnailUrl ?? undefined" class="media-image"
                 controls playsinline preload="metadata" @click.stop @error="videoFailed = true"></video>
             <img v-else :src="thumbnailUrl!" class="media-image" alt="" loading="lazy" @error="thumbnailFailed = true" />
             <span v-if="youtubeVideo" class="media-badge">
@@ -203,7 +203,7 @@
                 {{ language.get('Loading full article...') || 'Loading full article...' }}
             </div>
             <!-- While the full content loads, show only the spinner so the description isn't swapped out (no flicker) -->
-            <div v-else-if="detailsHtml" class="summary-description"
+            <div v-else-if="detailsHtml" ref="detailsRef" class="summary-description"
                 :class="{ 'post-content': fullContent }" v-html="detailsHtml"
                 @error.capture="hideBrokenImage"></div>
             <LinkPreview v-if="linkPreview" :preview="linkPreview" large />
@@ -223,8 +223,9 @@ import PostShareActions from '@/components/PostShareActions.vue';
 import CopyLinkButton from '@/components/CopyLinkButton.vue';
 import LinkPreview from '@/components/LinkPreview.vue';
 import { isCardImage, isTweetGif, isTweetLink, plainText, removePreviewedLink, tweetLinkPreview } from '@/functions/tweet';
+import { isModalOpen, pauseVideo, playFirstVideo, playVideo } from '@/functions/videoPlayback';
 import { language } from '@/functions/languageStore';
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 
 const props = defineProps<{
     post: PostType;
@@ -382,6 +383,24 @@ const detailsHtml = computed(() => {
 // Log entries of the post, e.g. when its page couldn't be read
 const logCount = computed(() => postContentStore.logCount(props.post.id));
 const isOpened = computed(() => !!props.selected && !props.showDetails && !youtubeVideo.value);
+
+const cardVideoRef = ref<HTMLVideoElement | null>(null);
+const detailsRef = ref<HTMLElement | null>(null);
+
+/**
+ * Tweet videos play when their card is selected (unless the post is opened in the modal, which plays its own copy)
+ * and pause when it's no longer selected; in list mode, the video of the opened post plays once its content is shown.
+ */
+watch([() => props.selected && props.showDetails, tweetVideo], async ([selected]) => {
+    await nextTick();
+    if (selected && !isModalOpen()) playVideo(cardVideoRef.value);
+    else pauseVideo(cardVideoRef.value);
+});
+watch([() => props.selected && !props.showDetails, detailsHtml, contentLoading], async ([opened, , loading]) => {
+    if (!opened || loading || !isTweet.value) return;
+    await nextTick();
+    playFirstVideo(detailsRef.value);
+});
 
 /**
  * Loads the full article content when the post is opened (expanded) in list mode, if it wasn't preloaded.

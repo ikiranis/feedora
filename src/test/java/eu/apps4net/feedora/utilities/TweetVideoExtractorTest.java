@@ -27,6 +27,17 @@ class TweetVideoExtractorTest {
     }
 
     @Test
+    void checksTweetsWithVideoThumbnailOrNoImage() {
+        // Some feeds give a video tweet only its text
+        assertThat(TweetVideoExtractor.mayHaveVideo(null, "<p>Text</p>")).isTrue();
+        assertThat(TweetVideoExtractor.mayHaveVideo(null, null)).isTrue();
+        assertThat(TweetVideoExtractor.mayHaveVideo(THUMB, "<p>Text</p>")).isTrue();
+        assertThat(TweetVideoExtractor.mayHaveVideo(null, "<p>Text</p><p><img src=\"" + THUMB + "\"></p>")).isTrue();
+        assertThat(TweetVideoExtractor.mayHaveVideo("https://pbs.twimg.com/media/a.jpg", "<p>Text</p>")).isFalse();
+        assertThat(TweetVideoExtractor.mayHaveVideo(null, "<p>Text</p><p><img src=\"https://pbs.twimg.com/media/a.jpg\"></p>")).isFalse();
+    }
+
+    @Test
     void picksLargestMp4UpToMaxBitrateOfVideoWithThumbnail() throws Exception {
         String json = """
                 {"mediaDetails": [
@@ -41,8 +52,9 @@ class TweetVideoExtractorTest {
                      {"content_type": "video/mp4", "bitrate": 10368000, "url": "https://video.twimg.com/1080.mp4"}]}}
                 ]}""";
 
-        assertThat(TweetVideoExtractor.parseVideo(json, THUMB + "?format=jpg")).isEqualTo("https://video.twimg.com/720.mp4");
-        assertThat(TweetVideoExtractor.parseVideo(json, null)).isEqualTo("https://video.twimg.com/other.mp4");
+        assertThat(TweetVideoExtractor.parseVideo(json, THUMB + "?format=jpg"))
+                .isEqualTo(new TweetVideoExtractor.TweetVideo("https://video.twimg.com/720.mp4", THUMB));
+        assertThat(TweetVideoExtractor.parseVideo(json, null).url()).isEqualTo("https://video.twimg.com/other.mp4");
     }
 
     @Test
@@ -52,7 +64,8 @@ class TweetVideoExtractorTest {
                   "media_url_https": "https://pbs.twimg.com/tweet_video_thumb/g.jpg",
                   "video_info": {"variants": [{"content_type": "video/mp4", "bitrate": 0, "url": "https://video.twimg.com/tweet_video/g.mp4"}]}}]}}""";
 
-        assertThat(TweetVideoExtractor.parseVideo(json, null)).isEqualTo("https://video.twimg.com/tweet_video/g.mp4");
+        assertThat(TweetVideoExtractor.parseVideo(json, null)).isEqualTo(new TweetVideoExtractor.TweetVideo(
+                "https://video.twimg.com/tweet_video/g.mp4", "https://pbs.twimg.com/tweet_video_thumb/g.jpg"));
         assertThat(TweetVideoExtractor.parseVideo("{\"mediaDetails\": []}", null)).isNull();
         assertThat(TweetVideoExtractor.isGif("https://video.twimg.com/tweet_video/g.mp4")).isTrue();
         assertThat(TweetVideoExtractor.isGif("https://video.twimg.com/amplify_video/1/vid/a.mp4")).isFalse();
