@@ -1309,6 +1309,11 @@
         <language code="el">Εμφάνιση των στατιστικών αυτής της ροής</language>
     </entry>
 
+    <entry id="Parse the posts of this feed">
+        <language code="en">Parse the posts of this feed</language>
+        <language code="el">Ανάλυση των άρθρων αυτής της ροής</language>
+    </entry>
+
     <entry id="Show the posts of this feed">
         <language code="en">Show the posts of this feed</language>
         <language code="el">Εμφάνιση των άρθρων αυτής της ροής</language>
