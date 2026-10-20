@@ -171,12 +171,13 @@ export const deleteFeed = async (feedId: string) => {
  * @param feedId - The ID of the feed to update
  * @param updateData - Object containing title and folderName
  */
-export const updateFeed = async (feedId: string, updateData: { title: string; folderName: string }) => {
+export const updateFeed = async (feedId: string, updateData: { title: string; folderName: string; iconBackgroundColor: string }) => {
     try {
         const response = await axios.post(config.defaultServer() + '/api/feed/updateFeed', {
             feedId,
             title: updateData.title,
-            folderName: updateData.folderName
+            folderName: updateData.folderName,
+            iconBackgroundColor: updateData.iconBackgroundColor
         }, {
             headers: { 'Content-Type': 'application/json' }
         });

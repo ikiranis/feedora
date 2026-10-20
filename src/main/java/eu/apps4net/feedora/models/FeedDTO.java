@@ -7,6 +7,8 @@ public class FeedDTO {
     public String htmlUrl;
     public String type;
     public String folderName;
+    // Background color behind the favicon (#rrggbb), null for none
+    public String iconBackgroundColor;
     // Number of log entries of the feed itself, not counting those of its posts
     public long logCount;
     // Null until the feed is checked for the first time
@@ -19,6 +21,7 @@ public class FeedDTO {
         dto.xmlUrl = feed.getXmlUrl();
         dto.htmlUrl = feed.getHtmlUrl();
         dto.type = feed.getType();
+        dto.iconBackgroundColor = feed.getIconBackgroundColor();
         dto.folderName = feed.getFolder() != null ? feed.getFolder().getName() : null;
         dto.statistics = feed.getStatistics();
         return dto;

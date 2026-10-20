@@ -508,6 +508,31 @@
         <language code="el">Μη έγκυρο ID ροής</language>
     </entry>
 
+    <entry id="Invalid color">
+        <language code="en">Invalid color</language>
+        <language code="el">Μη έγκυρο χρώμα</language>
+    </entry>
+
+    <entry id="Icon background color">
+        <language code="en">Icon background color</language>
+        <language code="el">Χρώμα φόντου εικονιδίου</language>
+    </entry>
+
+    <entry id="Custom background behind the favicon, e.g. when it blends with the theme">
+        <language code="en">Custom background behind the favicon, e.g. when it blends with the theme</language>
+        <language code="el">Προσαρμοσμένο φόντο πίσω από το εικονίδιο, π.χ. όταν δεν ξεχωρίζει από το θέμα</language>
+    </entry>
+
+    <entry id="Remove color">
+        <language code="en">Remove color</language>
+        <language code="el">Αφαίρεση χρώματος</language>
+    </entry>
+
+    <entry id="None">
+        <language code="en">None</language>
+        <language code="el">Κανένα</language>
+    </entry>
+
     <entry id="Feed not found">
         <language code="en">Feed not found</language>
         <language code="el">Η ροή δεν βρέθηκε</language>

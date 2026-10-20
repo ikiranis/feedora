@@ -18,7 +18,7 @@
                         <LiveBadge :post="post" class="title-live-badge" />
                         <a v-if="!isTweet" :href="post.link" target="_blank" class="post-modal-title">{{ post.title }}</a>
                         <div class="post-modal-meta">
-                            <img v-if="siteIcon" :src="siteIcon" class="post-modal-icon" alt="" @error="iconFailed = true" />
+                            <img v-if="siteIcon" :src="siteIcon" class="post-modal-icon" :style="iconStyle" alt="" @error="iconFailed = true" />
                             <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
                                 @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ post.feed?.title }}</span>
                             <span v-if="post.author" class="text-truncate">&middot; {{ post.author }}</span>
@@ -141,6 +141,11 @@ const siteIcon = computed(() => {
         return null;
     }
 });
+
+// Custom background color behind the favicon, set in the feed's settings
+const iconStyle = computed(() => props.post.feed?.iconBackgroundColor
+    ? { backgroundColor: props.post.feed.iconBackgroundColor, padding: '2px' }
+    : undefined);
 
 /**
  * YouTube video id if the post links to a video (watch, youtu.be, shorts, embed or live links).

@@ -451,12 +451,13 @@ public class FeedService {
      * @param feedId The UUID of the feed to update
      * @param title The new title for the feed
      * @param folderName The new folder name for the feed (can be null or empty for no folder)
+     * @param iconBackgroundColor The background color behind the favicon (#rrggbb), empty to remove it, or null to keep the current one
      * @param user The user who owns the feed
      * @return Success message
-     * @throws Exception if the feed is not found or doesn't belong to the user
+     * @throws Exception if the feed is not found, doesn't belong to the user or the color is invalid
      */
     @Transactional
-    public String updateFeed(String feedId, String title, String folderName, User user) throws Exception {
+    public String updateFeed(String feedId, String title, String folderName, String iconBackgroundColor, User user) throws Exception {
         UUID uuid;
         try {
             uuid = UUID.fromString(feedId);
@@ -493,6 +494,18 @@ public class FeedService {
             }
         }
         feed.setFolder(folder);
+
+        // Update the favicon background color
+        if (iconBackgroundColor != null) {
+            String color = iconBackgroundColor.trim();
+            if (color.isEmpty()) {
+                feed.setIconBackgroundColor(null);
+            } else if (color.matches("#[0-9a-fA-F]{6}")) {
+                feed.setIconBackgroundColor(color.toLowerCase());
+            } else {
+                throw new Exception(Language.getActionString("Invalid color"));
+            }
+        }
 
         feedRepository.save(feed);
         return Language.getActionString("Feed updated successfully");

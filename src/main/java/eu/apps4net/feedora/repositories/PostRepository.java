@@ -81,12 +81,12 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     // Posts that the cleanups may delete: neither saved nor favorite
     List<Post> findByUserAndSavedFalseAndFavoriteFalse(User user);
 
-    // Rows of [feed id, feed title, feed website, folder id (nullable), unread count] for every feed of the user,
+    // Rows of [feed id, feed title, feed website, folder id (nullable), unread count, favicon background color (nullable)] for every feed of the user,
     // including feeds without unread posts (count 0). The YouTube Shorts of the given folders aren't counted when hideShorts is true.
-    @Query("SELECT f.id, f.title, f.htmlUrl, fo.id, COUNT(p) FROM Feed f LEFT JOIN f.folder fo " +
+    @Query("SELECT f.id, f.title, f.htmlUrl, fo.id, COUNT(p), f.iconBackgroundColor FROM Feed f LEFT JOIN f.folder fo " +
            "LEFT JOIN f.posts p ON p.user = :user AND p.read = false AND (:hideShorts = false OR p.link IS NULL OR " +
            "p.link NOT LIKE '%youtube.com/shorts/%' OR fo IS NULL OR fo.id NOT IN :hideShortsFolderIds) " +
-           "WHERE f.user = :user GROUP BY f.id, f.title, f.htmlUrl, fo.id")
+           "WHERE f.user = :user GROUP BY f.id, f.title, f.htmlUrl, fo.id, f.iconBackgroundColor")
     List<Object[]> countUnreadByFeed(@Param("user") User user, @Param("hideShorts") boolean hideShorts,
                                       @Param("hideShortsFolderIds") List<UUID> hideShortsFolderIds);
 

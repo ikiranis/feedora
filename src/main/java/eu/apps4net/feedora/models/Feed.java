@@ -20,6 +20,9 @@ public class Feed {
     @Column(length = 1000)
     private String htmlUrl;
     private String type;
+    // Background color shown behind the favicon (#rrggbb), e.g. when the favicon blends with the theme; null for none
+    @Column(length = 7)
+    private String iconBackgroundColor;
 
     @ManyToOne
     @JoinColumn(name = "folder_id")
@@ -64,6 +67,9 @@ public class Feed {
 
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
+
+    public String getIconBackgroundColor() { return iconBackgroundColor; }
+    public void setIconBackgroundColor(String iconBackgroundColor) { this.iconBackgroundColor = iconBackgroundColor; }
 
     public Folder getFolder() { return folder; }
     public void setFolder(Folder folder) { this.folder = folder; }

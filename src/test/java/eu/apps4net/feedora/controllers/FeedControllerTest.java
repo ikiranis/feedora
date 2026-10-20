@@ -360,6 +360,32 @@ class FeedControllerTest extends ApiTestBase {
     }
 
     @Test
+    void updateFeedSetsKeepsAndRemovesTheIconBackgroundColor() throws Exception {
+        Feed feed = createFeed("Feed", "http://site.example/rss", null, user);
+
+        mockMvc.perform(auth(post("/api/feed/updateFeed")).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"feedId\":\"" + feed.getId() + "\",\"iconBackgroundColor\":\"#FFAA00\"}"))
+                .andExpect(status().isOk());
+        assertThat(feedRepository.findById(feed.getId()).orElseThrow().getIconBackgroundColor()).isEqualTo("#ffaa00");
+
+        // Omitted: the color is kept
+        mockMvc.perform(auth(post("/api/feed/updateFeed")).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"feedId\":\"" + feed.getId() + "\",\"title\":\"Renamed\"}"))
+                .andExpect(status().isOk());
+        assertThat(feedRepository.findById(feed.getId()).orElseThrow().getIconBackgroundColor()).isEqualTo("#ffaa00");
+
+        mockMvc.perform(auth(post("/api/feed/updateFeed")).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"feedId\":\"" + feed.getId() + "\",\"iconBackgroundColor\":\"red\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(containsString("Invalid color")));
+
+        mockMvc.perform(auth(post("/api/feed/updateFeed")).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"feedId\":\"" + feed.getId() + "\",\"iconBackgroundColor\":\"\"}"))
+                .andExpect(status().isOk());
+        assertThat(feedRepository.findById(feed.getId()).orElseThrow().getIconBackgroundColor()).isNull();
+    }
+
+    @Test
     void updateFeedRejectsForeignFeeds() throws Exception {
         Feed foreign = createFeed("Foreign", "http://f.example/rss", null, createUser("other", "other@example.com", "secret123"));
 

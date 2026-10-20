@@ -32,6 +32,27 @@
                                 </option>
                             </select>
                         </div>
+                        <div class="mb-3">
+                            <label for="editFeedIconColorInput" class="form-label">{{ language.get('Icon background color') }}</label>
+                            <div class="d-flex align-items-center gap-2">
+                                <input
+                                    type="color"
+                                    class="form-control form-control-color"
+                                    id="editFeedIconColorInput"
+                                    :value="iconBackgroundColor || '#ffffff'"
+                                    @input="iconBackgroundColor = ($event.target as HTMLInputElement).value"
+                                />
+                                <!-- Preview of the favicon on the chosen background -->
+                                <img v-if="faviconUrl" :src="faviconUrl" class="icon-preview" alt=""
+                                    :style="{ backgroundColor: iconBackgroundColor || undefined }" />
+                                <span class="text-muted small">{{ iconBackgroundColor || language.get('None') }}</span>
+                                <button type="button" class="btn btn-sm btn-outline-secondary ms-auto" :disabled="!iconBackgroundColor"
+                                    @click="iconBackgroundColor = ''">
+                                    {{ language.get('Remove color') }}
+                                </button>
+                            </div>
+                            <div class="form-text">{{ language.get('Custom background behind the favicon, e.g. when it blends with the theme') }}</div>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -49,7 +70,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { updateFeed as updateFeedApi } from '@/api/feed';
 import { getFolders } from '@/api/folder';
 import { Feed, FolderType } from '@/types';
@@ -78,14 +99,26 @@ const feedTitle = ref('');
 const feedFolder = ref('');
 const selectedFolderId = ref('');
 const folders = ref<FolderType[]>([]);
+// Background color behind the favicon (#rrggbb), empty for none
+const iconBackgroundColor = ref('');
 const loading = ref(false);
 let modalInstance: any = null;
+
+// Favicon of the feed's website, for the color preview
+const faviconUrl = computed(() => {
+    try {
+        return props.feed?.htmlUrl ? `https://www.google.com/s2/favicons?domain=${new URL(props.feed.htmlUrl).hostname}&sz=32` : null;
+    } catch {
+        return null;
+    }
+});
 
 // Watch for feed changes to populate form
 watch(() => props.feed, (newFeed) => {
     if (newFeed) {
         feedTitle.value = newFeed.title || '';
         feedFolder.value = newFeed.folderName || '';
+        iconBackgroundColor.value = newFeed.iconBackgroundColor || '';
         
         // Set the selected folder ID based on folder name
         if (newFeed.folderName) {
@@ -98,6 +131,7 @@ watch(() => props.feed, (newFeed) => {
         feedTitle.value = '';
         feedFolder.value = '';
         selectedFolderId.value = '';
+        iconBackgroundColor.value = '';
     }
 }, { immediate: true });
 
@@ -243,7 +277,8 @@ const saveFeed = async () => {
         
         const result = await updateFeedApi(props.feed.id, {
             title: feedTitle.value.trim(),
-            folderName: folderName
+            folderName: folderName,
+            iconBackgroundColor: iconBackgroundColor.value
         });
         
         hideModal();
@@ -261,3 +296,12 @@ const saveFeed = async () => {
     }
 };
 </script>
+
+<style scoped>
+.icon-preview {
+    width: 24px;
+    height: 24px;
+    padding: 3px;
+    border-radius: 4px;
+}
+</style>

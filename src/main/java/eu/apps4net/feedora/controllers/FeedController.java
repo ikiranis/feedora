@@ -226,14 +226,15 @@ public class FeedController {
     /**
      * Updates a single feed in the database.
      *
-     * @param updateRequest The feed update data containing feedId, title, and folderName
+     * @param updateRequest The feed update data containing feedId, title, folderName and iconBackgroundColor
      * @return Success message or error message
      */
     @PostMapping("/updateFeed")
     public ResponseEntity<String> updateFeed(@RequestBody UpdateFeedRequest updateRequest) {
         try {
             User currentUser = userService.getCurrentUser();
-            String result = feedService.updateFeed(updateRequest.feedId, updateRequest.title, updateRequest.folderName, currentUser);
+            String result = feedService.updateFeed(updateRequest.feedId, updateRequest.title, updateRequest.folderName,
+                    updateRequest.iconBackgroundColor, currentUser);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             String errorMessage = Language.getActionString("Error updating feed").replace("{0}", e.getMessage());
@@ -257,5 +258,7 @@ public class FeedController {
         public String feedId;
         public String title;
         public String folderName;
+        // #rrggbb, empty to remove it, null to keep the current one
+        public String iconBackgroundColor;
     }
 }

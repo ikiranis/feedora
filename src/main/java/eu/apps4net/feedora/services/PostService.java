@@ -837,7 +837,7 @@ public class PostService {
      * All the user's feeds are included (with count 0 if they have no unread posts), but only folders with unread posts.
      * @param user The user
      * @return Map with "total" (long), "saved" (long, number of saved posts read or unread), "favorites" (long, number of favorite posts),
-     *         "folders" (folder id → unread count) and "feeds" (list of {id, title, htmlUrl, folderId, count})
+     *         "folders" (folder id → unread count) and "feeds" (list of {id, title, htmlUrl, folderId, count, iconBackgroundColor})
      */
     public Map<String, Object> getUnreadCounts(User user) {
         return getUnreadCounts(user, null);
@@ -849,7 +849,7 @@ public class PostService {
      * @param user The user
      * @param hideShortsFolderIds Folders whose YouTube Shorts aren't counted (null or empty for none)
      * @return Map with "total" (long), "saved" (long, number of saved posts read or unread), "favorites" (long, number of favorite posts),
-     *         "folders" (folder id → unread count) and "feeds" (list of {id, title, htmlUrl, folderId, count})
+     *         "folders" (folder id → unread count) and "feeds" (list of {id, title, htmlUrl, folderId, count, iconBackgroundColor})
      */
     public Map<String, Object> getUnreadCounts(User user, List<UUID> hideShortsFolderIds) {
         long total = 0;
@@ -872,6 +872,7 @@ public class PostService {
             feed.put("htmlUrl", row[2]);
             feed.put("folderId", folderId);
             feed.put("count", count);
+            feed.put("iconBackgroundColor", row[5]);
             feedCounts.add(feed);
         }
 

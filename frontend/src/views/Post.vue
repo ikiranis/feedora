@@ -104,7 +104,7 @@
                         <button v-for="feed in visibleFeedsByFolder[folder.id] || []" :key="feed.id" type="button"
                             class="folder-item feed-item" :class="{ active: selectedFeedId === feed.id }"
                             @click="selectFeed(feed.id)" :title="feed.title">
-                            <img v-if="getFeedIcon(feed)" :src="getFeedIcon(feed)!" class="feed-icon flex-shrink-0"
+                            <img v-if="getFeedIcon(feed)" :src="getFeedIcon(feed)!" class="feed-icon flex-shrink-0" :style="feedIconStyle(feed)"
                                 alt="" loading="lazy" @error="failedFeedIcons.add(feed.id)" />
                             <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                                 class="bi bi-rss flex-shrink-0" viewBox="0 0 16 16">
@@ -121,7 +121,7 @@
                 <button v-for="feed in visibleOrphanFeeds" :key="feed.id" type="button"
                     class="folder-item orphan-feed-item" :class="{ active: selectedFeedId === feed.id }"
                     @click="selectFeed(feed.id)" :title="feed.title">
-                    <img v-if="getFeedIcon(feed)" :src="getFeedIcon(feed)!" class="feed-icon flex-shrink-0"
+                    <img v-if="getFeedIcon(feed)" :src="getFeedIcon(feed)!" class="feed-icon flex-shrink-0" :style="feedIconStyle(feed)"
                         alt="" loading="lazy" @error="failedFeedIcons.add(feed.id)" />
                     <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
                         class="bi bi-rss flex-shrink-0" viewBox="0 0 16 16">
@@ -550,6 +550,12 @@ const visibleOrphanFeeds = computed(() => {
         .filter(feed => feed.count > 0 || showEmptyFolders.value || feed.id === selectedFeedId.value)
         .sort((a, b) => a.title.localeCompare(b.title));
 });
+
+/**
+ * Custom background color behind the favicon of a feed, set in the feed's settings.
+ */
+const feedIconStyle = (feed: FeedUnreadCountType) =>
+    feed.iconBackgroundColor ? { backgroundColor: feed.iconBackgroundColor, padding: '2px' } : undefined;
 
 /**
  * Favicon URL of the feed's website, or null if it has none or it failed to load.

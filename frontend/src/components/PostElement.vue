@@ -32,7 +32,7 @@
             <!-- The title opens the post in the modal (Ctrl/Cmd/Shift-click opens the original link); tweets have no real title -->
             <a v-if="!isTweet" :href="post.link" target="_blank" class="post-title" @click="handleGridTitleClick"><LiveBadge :post="post" class="me-2" />{{ post.title }}</a>
             <div class="post-source">
-                <img v-if="siteIcon" :src="siteIcon" class="site-icon source-icon" alt="" loading="lazy" @error="iconFailed = true" />
+                <img v-if="siteIcon" :src="siteIcon" class="site-icon source-icon" :style="iconStyle" alt="" loading="lazy" @error="iconFailed = true" />
                 <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
                     @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ tweetAuthor || post.feed?.title }}</span>
                 <span v-if="post.feed?.folderName" class="post-folder text-truncate">&middot; {{ post.feed.folderName }}</span>
@@ -90,7 +90,7 @@
             <button type="button" class="read-dot" :class="{ unread: !post.read }" @click.stop="emit('toggle-read', post.id)"
                 :title="post.read ? (language.get('Mark as unread') || 'Mark as unread') : (language.get('Mark as read') || 'Mark as read')"></button>
             <div class="list-source" :title="post.feed?.folderName ? `${post.feed?.title} — ${post.feed.folderName}` : post.feed?.title">
-                <img v-if="siteIcon" :src="siteIcon" class="site-icon list-source-icon" alt="" loading="lazy" @error="iconFailed = true" />
+                <img v-if="siteIcon" :src="siteIcon" class="site-icon list-source-icon" :style="iconStyle" alt="" loading="lazy" @error="iconFailed = true" />
                 <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
                     @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ post.feed?.title }}</span>
             </div>
@@ -134,7 +134,7 @@
                 <LiveBadge :post="post" class="title-live-badge" />
                 <a v-if="!isTweet" :href="post.link" target="_blank" class="details-title">{{ post.title }}</a>
                 <div class="details-meta">
-                    <img v-if="siteIcon" :src="siteIcon" class="details-icon" alt="" @error="iconFailed = true" />
+                    <img v-if="siteIcon" :src="siteIcon" class="details-icon" :style="iconStyle" alt="" @error="iconFailed = true" />
                     <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
                         @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ post.feed?.title }}</span>
                     <span v-if="post.author" class="text-truncate">&middot; {{ post.author }}</span>
@@ -249,6 +249,11 @@ const siteIcon = computed(() => {
         return null;
     }
 });
+
+// Custom background color behind the favicon, set in the feed's settings
+const iconStyle = computed(() => props.post.feed?.iconBackgroundColor
+    ? { backgroundColor: props.post.feed.iconBackgroundColor, padding: '2px' }
+    : undefined);
 
 const thumbnailFailed = ref(false);
 
