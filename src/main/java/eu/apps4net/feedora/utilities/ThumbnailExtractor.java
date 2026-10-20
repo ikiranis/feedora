@@ -77,6 +77,33 @@ public final class ThumbnailExtractor {
         return new ArrayList<>(images);
     }
 
+    /**
+     * Returns the first MP4 video attached to a feed entry as a Media RSS media:content (also inside media:group),
+     * e.g. a tweet's video given by the feed.
+     *
+     * @param entry The feed entry
+     * @return Absolute https video URL, or null if the entry has none
+     */
+    public static String attachedVideo(SyndEntry entry) {
+        return mediaContentVideo(entry.getForeignMarkup(), entry.getLink());
+    }
+
+    private static String mediaContentVideo(List<Element> elements, String baseUri) {
+        if (elements == null) return null;
+        for (Element element : elements) {
+            if (!MEDIA_RSS_NAMESPACE.equals(element.getNamespaceURI())) continue;
+            String video = null;
+            if (element.getName().equals("group")) {
+                video = mediaContentVideo(element.getChildren(), baseUri);
+            } else if (element.getName().equals("content")
+                    && ("video/mp4".equals(element.getAttributeValue("type")) || "video".equals(element.getAttributeValue("medium")))) {
+                video = absolute(element.getAttributeValue("url"), baseUri);
+            }
+            if (video != null && video.startsWith("https://")) return video;
+        }
+        return null;
+    }
+
     private static void addMediaContentImages(List<Element> elements, String baseUri, Set<String> images) {
         if (elements == null) return;
         for (Element element : elements) {

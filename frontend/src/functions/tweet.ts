@@ -118,7 +118,7 @@ const removeTextLink = (node: Node): boolean => {
 };
 
 /**
- * Whether a video is a tweet's GIF, which Twitter plays muted in a loop (see TweetVideoExtractor.isGif).
+ * Whether a video is a tweet's GIF, which Twitter plays muted in a loop (see TweetMediaExtractor.isGif).
  */
 export const isTweetGif = (video: string) => video.startsWith('https://video.twimg.com/tweet_video/');
 

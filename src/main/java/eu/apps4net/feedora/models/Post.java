@@ -43,8 +43,8 @@ public class Post {
     @Column(length = 2048)
     private String linkImage;
 
-    // Tweets: MP4 of the tweet's video or GIF (feeds only give its thumbnail), found when parsed or first opened.
-    // Empty if Twitter said the tweet has none, null if it has no video thumbnail or wasn't checked (see TweetVideoExtractor).
+    // Tweets: MP4 of the tweet's video or GIF (feeds give its thumbnail at best), found when parsed or first opened, along
+    // with photos the feed didn't give. Empty if Twitter said the tweet has none, null if it wasn't checked (see TweetMediaExtractor).
     @Column(length = 2048)
     private String video;
 

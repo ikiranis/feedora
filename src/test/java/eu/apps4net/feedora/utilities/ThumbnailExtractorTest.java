@@ -78,4 +78,15 @@ class ThumbnailExtractorTest {
         assertThat(ThumbnailExtractor.attachedImages(entry))
                 .containsExactly("http://example.com/a.jpg", "http://example.com/b.jpg", "http://example.com/c.png");
     }
+
+    @Test
+    void attachedVideoIsTheFirstHttpsMp4MediaContent() throws Exception {
+        SyndEntry entry = parseItem("<description>Text</description>"
+                + "<media:content medium=\"image\" url=\"https://pbs.twimg.com/p.jpg\"/>"
+                + "<media:content medium=\"video\" url=\"http://example.com/insecure.mp4\"/>"
+                + "<media:group><media:content type=\"video/mp4\" medium=\"video\" url=\"https://video.twimg.com/v.mp4\"/></media:group>");
+
+        assertThat(ThumbnailExtractor.attachedVideo(entry)).isEqualTo("https://video.twimg.com/v.mp4");
+        assertThat(ThumbnailExtractor.attachedVideo(parseItem("<description>Text</description>"))).isNull();
+    }
 }

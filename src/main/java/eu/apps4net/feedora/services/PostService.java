@@ -18,7 +18,7 @@ import eu.apps4net.feedora.utilities.ArticleExtractor;
 import eu.apps4net.feedora.utilities.LinkPreviewExtractor;
 import eu.apps4net.feedora.utilities.RssFetcher;
 import eu.apps4net.feedora.utilities.ThumbnailExtractor;
-import eu.apps4net.feedora.utilities.TweetVideoExtractor;
+import eu.apps4net.feedora.utilities.TweetMediaExtractor;
 import eu.apps4net.feedora.utilities.YouTubeLiveChecker;
 import com.rometools.rome.feed.synd.SyndContent;
 import com.rometools.rome.feed.synd.SyndEntry;
@@ -223,6 +223,8 @@ public class PostService {
                             if (LinkPreviewExtractor.isTweet(entry.getLink())) {
                                 String tweet = LinkPreviewExtractor.tweetContent(post.getDescription(), ThumbnailExtractor.attachedImages(entry), entry.getLink());
                                 post.setContent(tweet != null ? LinkPreviewExtractor.TWEET_CONTENT_MARKER + tweet : null);
+                                // Feeds that give the tweet's video spare looking it up (see addTweetMedia)
+                                post.setVideo(ThumbnailExtractor.attachedVideo(entry));
                             } else {
                                 post.setContent(getEntryContent(entry));
                             }
@@ -236,7 +238,7 @@ public class PostService {
                     }
                     List<String> liveCheckErrors = checkLiveStates(feed, user, postsToSave, youtubeApiKey);
                     addLinkPreviews(postsToSave);
-                    addTweetVideos(postsToSave);
+                    addTweetMedia(postsToSave);
                     newPosts = savePosts(feed, postsToSave);
                     if (!liveCheckErrors.isEmpty()) {
                         logService.logFeed(feed, LogLevel.WARNING, LogType.YOUTUBE_LIVE_CHECK,
@@ -366,29 +368,30 @@ public class PostService {
     }
 
     /**
-     * Adds the video (MP4 URL) of new tweets published within LINK_PREVIEW_MAX_AGE_DAYS that show a video thumbnail
-     * or no image at all, before they're saved (see TweetVideoExtractor). Tweets whose video couldn't be found are
-     * checked again when opened.
+     * Adds the media the feed didn't give to new tweets published within LINK_PREVIEW_MAX_AGE_DAYS, before they're saved:
+     * the video (MP4 URL) of tweets that show a video thumbnail, and the photos and video of tweets that show no image
+     * at all (see TweetMediaExtractor). Tweets whose media couldn't be found are checked again when opened.
      *
      * @param newPosts The feed's new posts, not saved yet
      */
-    private void addTweetVideos(List<Post> newPosts) {
+    private void addTweetMedia(List<Post> newPosts) {
         LocalDateTime oldest = LocalDateTime.now().minusDays(LINK_PREVIEW_MAX_AGE_DAYS);
-        List<Post> videos = newPosts.stream()
+        List<Post> tweets = newPosts.stream()
                 .filter(post -> LinkPreviewExtractor.isTweet(post.getLink()) && !post.getPubDate().isBefore(oldest))
-                .filter(post -> TweetVideoExtractor.mayHaveVideo(post.getThumbnail(), contentOrDescription(post, post.getContent())))
+                .filter(post -> post.getVideo() == null)
+                .filter(post -> TweetMediaExtractor.mayHaveMissingMedia(post.getThumbnail(), contentOrDescription(post, post.getContent())))
                 .toList();
-        if (videos.isEmpty()) return;
+        if (tweets.isEmpty()) return;
 
-        ExecutorService executor = Executors.newFixedThreadPool(Math.min(videos.size(), LINK_PREVIEW_THREADS));
+        ExecutorService executor = Executors.newFixedThreadPool(Math.min(tweets.size(), LINK_PREVIEW_THREADS));
         try {
             List<Future<?>> tasks = new ArrayList<>();
-            for (Post post : videos) {
+            for (Post post : tweets) {
                 tasks.add(executor.submit(() -> {
                     try {
-                        setVideo(post, TweetVideoExtractor.fetch(post.getLink(), videoThumbnail(post, post.getContent())));
+                        setMedia(post, TweetMediaExtractor.fetch(post.getLink(), videoThumbnail(post, post.getContent())));
                     } catch (Exception ignored) {
-                        // Left unchecked, the tweet shows its thumbnail and is checked again when opened
+                        // Left unchecked, the tweet shows what the feed gave and is checked again when opened
                     }
                 }));
             }
@@ -408,7 +411,7 @@ public class PostService {
      * Thumbnail of a tweet's video, from its card thumbnail or its content HTML; null if the tweet shows none.
      */
     private static String videoThumbnail(Post post, String html) {
-        return TweetVideoExtractor.findThumbnail(post.getThumbnail(), List.of(), contentOrDescription(post, html));
+        return TweetMediaExtractor.findThumbnail(post.getThumbnail(), List.of(), contentOrDescription(post, html));
     }
 
     private static String contentOrDescription(Post post, String html) {
@@ -416,27 +419,44 @@ public class PostService {
     }
 
     /**
-     * Keeps a tweet's video (empty if it has none, so it isn't checked again). Tweets without a thumbnail get the
-     * video's, for their card.
+     * Keeps a tweet's media found by TweetMediaExtractor. The video is kept even if empty (the tweet has none),
+     * so the tweet isn't checked again. Tweets that show no image get the photos in their content, and the first
+     * photo (or the video's thumbnail) as their card thumbnail.
+     *
+     * @return Whether the photos were added to the tweet's content
      */
-    private static void setVideo(Post post, TweetVideoExtractor.TweetVideo video) {
+    private static boolean setMedia(Post post, TweetMediaExtractor.TweetMedia media) {
+        TweetMediaExtractor.TweetVideo video = media != null ? media.video() : null;
         post.setVideo(video != null ? video.url() : "");
+
+        String html = contentOrDescription(post, post.getContent());
+        boolean showsImage = post.getThumbnail() != null || (html != null && html.contains("<img"));
+        boolean photosAdded = media != null && !media.photos().isEmpty() && !showsImage;
+        if (photosAdded) {
+            String content = LinkPreviewExtractor.tweetContent(post.getDescription(), media.photos(), post.getLink());
+            post.setContent(content != null ? LinkPreviewExtractor.TWEET_CONTENT_MARKER + content : null);
+            post.setThumbnail(media.photos().get(0));
+        }
         if (video != null && post.getThumbnail() == null) post.setThumbnail(video.thumbnail());
+        return photosAdded;
     }
 
     /**
-     * Content of a tweet with its video in place of the video's thumbnail. Tweets added before videos were found,
-     * or whose video couldn't be found when parsed, are checked now; it's kept, so they're only checked once.
+     * Content of a tweet with the media the feed didn't give: its video in place of the video's thumbnail, and its
+     * photos if it showed none. Tweets added before media were looked up, or whose media couldn't be found when parsed,
+     * are checked now; the result is kept, so they're only checked once.
      *
      * @param post The tweet
      * @param html Its content HTML (text and photos)
-     * @return The content HTML, with the video if it has one
+     * @return The content HTML, with the media found
      */
-    private String withTweetVideo(Post post, String html) {
+    private String withTweetMedia(Post post, String html) {
         if (post.getVideo() == null) {
-            if (!TweetVideoExtractor.mayHaveVideo(post.getThumbnail(), contentOrDescription(post, html))) return html;
+            if (!TweetMediaExtractor.mayHaveMissingMedia(post.getThumbnail(), contentOrDescription(post, html))) return html;
             try {
-                setVideo(post, TweetVideoExtractor.fetch(post.getLink(), videoThumbnail(post, html)));
+                if (setMedia(post, TweetMediaExtractor.fetch(post.getLink(), videoThumbnail(post, html)))) {
+                    html = post.getContent() != null ? post.getContent().substring(LinkPreviewExtractor.TWEET_CONTENT_MARKER.length()) : html;
+                }
                 postRepository.save(post);
             } catch (Exception e) {
                 // Checked again the next time the tweet is opened
@@ -445,7 +465,7 @@ public class PostService {
         }
         if (post.getVideo().isEmpty()) return html;
         String thumbnail = videoThumbnail(post, html);
-        return TweetVideoExtractor.withVideo(html, post.getVideo(), thumbnail != null ? thumbnail : post.getThumbnail());
+        return TweetMediaExtractor.withVideo(html, post.getVideo(), thumbnail != null ? thumbnail : post.getThumbnail());
     }
 
     /**
@@ -580,7 +600,7 @@ public class PostService {
      * Falls back to the description if nothing better can be found.
      * Tweets get their text and photos stored when parsed (their page only shows a login wall to anyone not logged in to X);
      * for tweets added before, their description and thumbnail (their first photo), since stored content may be that login wall.
-     * A tweet's video replaces its thumbnail (see withTweetVideo).
+     * Tweets get the media their feed didn't give, e.g. their video in place of its thumbnail (see withTweetMedia).
      * @param postId The UUID of the post
      * @param user The user who owns the post
      * @return Sanitized content HTML, or null if the post has no content at all
@@ -594,10 +614,10 @@ public class PostService {
         if (LinkPreviewExtractor.isTweet(post.getLink())) {
             String stored = post.getContent();
             if (stored != null && stored.startsWith(LinkPreviewExtractor.TWEET_CONTENT_MARKER)) {
-                return withTweetVideo(post, stored.substring(LinkPreviewExtractor.TWEET_CONTENT_MARKER.length()));
+                return withTweetMedia(post, stored.substring(LinkPreviewExtractor.TWEET_CONTENT_MARKER.length()));
             }
             List<String> images = post.getThumbnail() != null ? List.of(post.getThumbnail()) : List.of();
-            return withTweetVideo(post, LinkPreviewExtractor.tweetContent(post.getDescription(), images, post.getLink()));
+            return withTweetMedia(post, LinkPreviewExtractor.tweetContent(post.getDescription(), images, post.getLink()));
         }
 
         String description = ArticleExtractor.sanitize(post.getDescription(), post.getLink());

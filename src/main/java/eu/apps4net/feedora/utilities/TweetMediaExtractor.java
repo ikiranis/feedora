@@ -11,16 +11,17 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Finds the video of a tweet. Feeds give a tweet's video as its thumbnail image at best (some give nothing at all),
- * so the video file is asked from Twitter's syndication endpoint (the one its embedded tweets use),
+ * Finds the photos and video of a tweet. Feeds give a tweet's video as its thumbnail image at best, and some give
+ * a tweet only its text, so they're asked from Twitter's syndication endpoint (the one its embedded tweets use),
  * which answers without logging in.
  */
-public final class TweetVideoExtractor {
+public final class TweetMediaExtractor {
 
     // Thumbnails of videos (amplify_video_thumb, ext_tw_video_thumb) and GIFs (tweet_video_thumb)
     private static final Pattern VIDEO_THUMBNAIL = Pattern.compile("^https://pbs\\.twimg\\.com/(amplify_video_thumb|ext_tw_video_thumb|tweet_video_thumb)/");
@@ -44,7 +45,12 @@ public final class TweetVideoExtractor {
      */
     public record TweetVideo(String url, String thumbnail) {}
 
-    private TweetVideoExtractor() {}
+    /**
+     * A tweet's media: its video (null if none) and its photos (empty if none).
+     */
+    public record TweetMedia(TweetVideo video, List<String> photos) {}
+
+    private TweetMediaExtractor() {}
 
     /**
      * Whether an image is the thumbnail of a tweet's video or GIF.
@@ -72,27 +78,27 @@ public final class TweetVideoExtractor {
     }
 
     /**
-     * Whether a tweet may have a video: it shows a video thumbnail, or it shows no image at all
-     * (some feeds give a video tweet only its text).
+     * Whether a tweet may have media the feed didn't give: it shows a video thumbnail (the video itself is missing),
+     * or it shows no image at all (some feeds give a tweet only its text).
      *
      * @param thumbnail The tweet's card thumbnail
      * @param html Its description or content HTML
      */
-    public static boolean mayHaveVideo(String thumbnail, String html) {
+    public static boolean mayHaveMissingMedia(String thumbnail, String html) {
         return findThumbnail(thumbnail, List.of(), html) != null
                 || (thumbnail == null && (html == null || !html.contains("<img")));
     }
 
     /**
-     * Asks Twitter for the MP4 file of a tweet's video (or GIF), the one shown by the given thumbnail if it has several
-     * (also in the tweet it quotes).
+     * Asks Twitter for a tweet's photos and the MP4 file of its video (or GIF), the one shown by the given thumbnail
+     * if it has several. A tweet without media of its own gets those of the tweet it quotes.
      *
      * @param link The tweet's link, e.g. https://x.com/AP/status/123
      * @param thumbnail The video's thumbnail if known, see findThumbnail
-     * @return The video, or null if the tweet has none (e.g. it was deleted)
+     * @return The media, or null if Twitter doesn't know the tweet (e.g. it was deleted)
      * @throws Exception if Twitter can't be reached or answers with an error
      */
-    public static TweetVideo fetch(String link, String thumbnail) throws Exception {
+    public static TweetMedia fetch(String link, String thumbnail) throws Exception {
         Matcher id = STATUS_ID.matcher(link != null ? link : "");
         if (!id.find()) return null;
 
@@ -102,14 +108,32 @@ public final class TweetVideoExtractor {
         // Deleted, protected or unknown tweets
         if (response.statusCode() == 404) return null;
         if (response.statusCode() != 200) throw new Exception("Twitter syndication: HTTP " + response.statusCode());
-        return parseVideo(response.body(), thumbnail);
+        return parseMedia(response.body(), thumbnail);
+    }
+
+    /**
+     * Photos and video in a syndication answer.
+     */
+    static TweetMedia parseMedia(String json, String thumbnail) throws Exception {
+        JsonNode tweet = MAPPER.readTree(json);
+        List<String> photos = photos(tweet);
+        if (photos.isEmpty()) photos = photos(tweet.path("quoted_tweet"));
+        return new TweetMedia(parseVideo(tweet, thumbnail), photos);
+    }
+
+    private static List<String> photos(JsonNode tweet) {
+        List<String> photos = new ArrayList<>();
+        for (JsonNode media : tweet.path("mediaDetails")) {
+            String url = media.path("media_url_https").asText("");
+            if ("photo".equals(media.path("type").asText()) && url.startsWith("https://") && url.length() <= MAX_URL_LENGTH) photos.add(url);
+        }
+        return photos;
     }
 
     /**
      * Video in a syndication answer, preferring the one with the given thumbnail.
      */
-    static TweetVideo parseVideo(String json, String thumbnail) throws Exception {
-        JsonNode tweet = MAPPER.readTree(json);
+    private static TweetVideo parseVideo(JsonNode tweet, String thumbnail) {
         JsonNode fallback = null;
         for (JsonNode node : new JsonNode[]{tweet, tweet.path("quoted_tweet")}) {
             for (JsonNode media : node.path("mediaDetails")) {
