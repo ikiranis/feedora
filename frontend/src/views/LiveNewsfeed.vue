@@ -42,7 +42,7 @@
             <div class="live-column">
                 <TransitionGroup :name="animate ? 'live-post' : ''" tag="div" class="d-flex flex-column gap-4">
                     <div v-for="post in posts" :key="post.id" class="live-item" :class="{ fresh: freshPostIds.has(post.id) }">
-                        <PostElement :post="post" :show-details="true"
+                        <PostElement :post="post" :show-details="true" :autoplay="post.id === currentPostId"
                             @post-read="handlePostRead" @toggle-read="toggleRead" @toggle-saved="toggleSaved" @toggle-favorite="toggleFavorite"
                             @show-logs="logsPost = $event" @show-feed="showFeed" @open="modalPostId = $event" />
                     </div>
@@ -114,6 +114,8 @@ const scrollableContainerRef = ref<HTMLElement | null>(null);
 const modalPostId = ref<string | null>(null);
 const modalPost = computed(() => posts.value.find(p => p.id === modalPostId.value) ?? null);
 const logsPost = ref<PostType | null>(null);
+// The newest post, whose tweet video plays while the top of the list is shown and no post is opened in the modal
+const currentPostId = computed(() => scrolledDown.value || modalPostId.value ? null : posts.value[0]?.id ?? null);
 let tickTimer: number | null = null;
 let revealTimer: number | null = null;
 let unmounted = false;

@@ -231,6 +231,8 @@ const props = defineProps<{
     post: PostType;
     showDetails: boolean;
     selected?: boolean;
+    // Plays the tweet video of the card without selecting it, e.g. the newest post of the live newsfeed
+    autoplay?: boolean;
 }>();
 
 const iconFailed = ref(false);
@@ -388,14 +390,14 @@ const cardVideoRef = ref<HTMLVideoElement | null>(null);
 const detailsRef = ref<HTMLElement | null>(null);
 
 /**
- * Tweet videos play when their card is selected (unless the post is opened in the modal, which plays its own copy)
- * and pause when it's no longer selected; in list mode, the video of the opened post plays once its content is shown.
+ * Tweet videos play when their card is selected or set to autoplay (unless the post is opened in the modal, which plays
+ * its own copy) and pause when it no longer is; in list mode, the video of the opened post plays once its content is shown.
  */
-watch([() => props.selected && props.showDetails, tweetVideo], async ([selected]) => {
+watch([() => (props.selected || props.autoplay) && props.showDetails, tweetVideo], async ([selected]) => {
     await nextTick();
     if (selected && !isModalOpen()) playVideo(cardVideoRef.value);
     else pauseVideo(cardVideoRef.value);
-});
+}, { immediate: true });
 watch([() => props.selected && !props.showDetails, detailsHtml, contentLoading], async ([opened, , loading]) => {
     if (!opened || loading || !isTweet.value) return;
     await nextTick();
