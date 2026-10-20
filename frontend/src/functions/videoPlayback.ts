@@ -1,6 +1,7 @@
 /**
  * Autoplay of tweet videos when their post is selected or opened. One video plays at a time: starting one pauses
- * the others (GIFs, which play muted in a loop without controls, are left alone).
+ * the others (GIFs, which play in a loop without controls, are left alone). Videos start muted; the user can unmute
+ * them from their controls.
  */
 
 const isPlayer = (video: HTMLVideoElement) => video.controls && !video.loop;
@@ -19,6 +20,13 @@ export const playVideo = (video: HTMLVideoElement | null | undefined) => {
         video.muted = true;
         video.play().catch(() => {});
     });
+};
+
+/**
+ * Mutes the videos inside an element; content of tweets parsed before videos started muted lacks the attribute.
+ */
+export const muteVideos = (container: HTMLElement | null | undefined) => {
+    container?.querySelectorAll('video').forEach(video => video.muted = true);
 };
 
 /**

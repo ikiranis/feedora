@@ -4,11 +4,11 @@
         <div v-if="thumbnailUrl || tweetVideo" class="card-media" :class="{ 'is-short': youtubeVideo?.isShort }"
             @click="emit('open', post.id)">
             <img v-if="youtubeVideo?.isShort" :src="thumbnailUrl!" class="media-backdrop" alt="" aria-hidden="true" />
-            <!-- Tweets: their video plays on the card (its controls don't open the modal); GIFs play muted in a loop, like on Twitter -->
+            <!-- Tweets: their video plays muted on the card (its controls don't open the modal); GIFs play in a loop, like on Twitter -->
             <video v-if="tweetVideo?.gif" :src="tweetVideo.url" :poster="thumbnailUrl ?? undefined" class="media-image"
                 autoplay loop muted playsinline preload="metadata" @error="videoFailed = true"></video>
             <video v-else-if="tweetVideo" ref="cardVideoRef" :src="tweetVideo.url" :poster="thumbnailUrl ?? undefined" class="media-image"
-                controls playsinline preload="metadata" @click.stop @error="videoFailed = true"></video>
+                controls muted playsinline preload="metadata" @click.stop @error="videoFailed = true"></video>
             <img v-else :src="thumbnailUrl!" class="media-image" alt="" loading="lazy" @error="thumbnailFailed = true" />
             <span v-if="youtubeVideo" class="media-badge">
                 <svg v-if="youtubeVideo.isShort" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">

@@ -111,7 +111,7 @@ import VideoDuration from '@/components/VideoDuration.vue';
 import PostShareActions from '@/components/PostShareActions.vue';
 import LinkPreview from '@/components/LinkPreview.vue';
 import { isTweetLink, removePreviewedLink, tweetLinkPreview } from '@/functions/tweet';
-import { playFirstVideo } from '@/functions/videoPlayback';
+import { muteVideos, playFirstVideo } from '@/functions/videoPlayback';
 import { language } from '@/functions/languageStore';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
@@ -176,11 +176,12 @@ const contentHtml = computed(() => {
 });
 const contentLoading = computed(() => postContentStore.isLoading(props.post.id));
 
-// Tweets: their video plays when the post is opened, once its content is shown
+// Tweets: their video plays muted when the post is opened, once its content is shown
 const contentRef = ref<HTMLElement | null>(null);
 watch([contentHtml, contentLoading], async () => {
     if (!isTweet.value || contentLoading.value) return;
     await nextTick();
+    muteVideos(contentRef.value);
     playFirstVideo(contentRef.value);
 }, { immediate: true });
 // Log entries of the post, e.g. when its page couldn't be read

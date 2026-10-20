@@ -191,7 +191,7 @@ public final class TweetMediaExtractor {
 
     /**
      * Puts a tweet's video in its content HTML, in place of its thumbnail (or after the text if the content doesn't
-     * show the thumbnail). GIFs play muted in a loop, like on Twitter.
+     * show the thumbnail). Videos start muted; GIFs play in a loop, like on Twitter.
      *
      * @param html The tweet's content HTML, may be null
      * @param video The MP4 URL
@@ -202,9 +202,9 @@ public final class TweetMediaExtractor {
         Document doc = Jsoup.parseBodyFragment(html != null ? html : "");
         doc.outputSettings().prettyPrint(false);
 
-        Element element = doc.createElement("video").attr("src", video).attr("playsinline", "").attr("preload", "metadata");
+        Element element = doc.createElement("video").attr("src", video).attr("playsinline", "").attr("preload", "metadata").attr("muted", "");
         if (thumbnail != null) element.attr("poster", thumbnail);
-        if (isGif(video)) element.attr("autoplay", "").attr("loop", "").attr("muted", "");
+        if (isGif(video)) element.attr("autoplay", "").attr("loop", "");
         else element.attr("controls", "");
 
         Element shown = thumbnail == null ? null : doc.select("img[src]").stream()
