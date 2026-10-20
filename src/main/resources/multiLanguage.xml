@@ -1784,9 +1784,9 @@
         <language code="el">Συνέχεια της ζωντανής ροής ειδήσεων</language>
     </entry>
 
-    <entry id="No posts yet. New posts will show up here.">
-        <language code="en">No posts yet. New posts will show up here.</language>
-        <language code="el">Δεν υπάρχουν ακόμα δημοσιεύσεις. Οι νέες δημοσιεύσεις θα εμφανίζονται εδώ.</language>
+    <entry id="No unread posts. New posts will show up here.">
+        <language code="en">No unread posts. New posts will show up here.</language>
+        <language code="el">Δεν υπάρχουν μη αναγνωσμένες δημοσιεύσεις. Οι νέες δημοσιεύσεις θα εμφανίζονται εδώ.</language>
     </entry>
 
     <entry id="Failed to load posts">

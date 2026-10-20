@@ -41,7 +41,7 @@
                 </TransitionGroup>
 
                 <div v-if="!loading && posts.length === 0" class="text-center text-muted mt-5">
-                    {{ language.get('No posts yet. New posts will show up here.') || 'No posts yet. New posts will show up here.' }}
+                    {{ language.get('No unread posts. New posts will show up here.') || 'No unread posts. New posts will show up here.' }}
                 </div>
                 <div v-if="loading" class="text-center mt-5">
                     <div class="spinner-border text-primary" role="status">
@@ -106,14 +106,14 @@ let revealTimer: number | null = null;
 let unmounted = false;
 
 /**
- * Loads the refresh interval and the latest posts, read or unread.
+ * Loads the refresh interval and the latest unread posts.
  */
 const loadInitialPosts = async () => {
     loading.value = true;
     try {
         refreshSeconds.value = await getLiveRefreshSeconds().catch(() => refreshSeconds.value);
         secondsLeft.value = refreshSeconds.value;
-        const result = await getPosts(1, INITIAL_POSTS, undefined, null, null, false, true);
+        const result = await getPosts(1, INITIAL_POSTS, undefined, null, null, false, false);
         posts.value = result.posts;
         posts.value.forEach(p => seenPostIds.add(p.id));
         listedAt = result.listedAt;
@@ -126,7 +126,8 @@ const loadInitialPosts = async () => {
 };
 
 /**
- * Queues the posts added since the last check, oldest published first so the newest ends up on top.
+ * Queues the unread posts added since the last check, oldest published first so the newest ends up on top.
+ * Posts read while the page is open stay shown, so the list doesn't change under the reader.
  * The refresh interval is read again too, so a changed setting applies without reloading the page.
  */
 const checkForNewPosts = async () => {
@@ -137,7 +138,7 @@ const checkForNewPosts = async () => {
             getLivePosts(listedAt),
             getLiveRefreshSeconds().catch(() => refreshSeconds.value),
         ]);
-        const newPosts = result.posts.filter(p => !seenPostIds.has(p.id));
+        const newPosts = result.posts.filter(p => !p.read && !seenPostIds.has(p.id));
         newPosts.forEach(p => seenPostIds.add(p.id));
         newPosts.sort((a, b) => publishedTime(a) - publishedTime(b));
         queue.value.push(...newPosts);
