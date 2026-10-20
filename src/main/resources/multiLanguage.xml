@@ -1774,6 +1774,11 @@
         <language code="el">Συνέχεια</language>
     </entry>
 
+    <entry id="Back to top and resume new posts">
+        <language code="en">Back to top and resume new posts</language>
+        <language code="el">Επιστροφή στην αρχή και συνέχιση των νέων δημοσιεύσεων</language>
+    </entry>
+
     <entry id="Pause the live newsfeed">
         <language code="en">Pause the live newsfeed</language>
         <language code="el">Παύση της ζωντανής ροής ειδήσεων</language>

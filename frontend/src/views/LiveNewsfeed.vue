@@ -2,7 +2,7 @@
     <div class="container py-3">
         <div class="live-column live-toolbar d-flex align-items-center flex-wrap gap-3">
             <h4 class="m-0 d-flex align-items-center gap-2">
-                <span class="live-indicator" :class="{ paused }"></span>
+                <span class="live-indicator" :class="{ paused: paused || scrolledDown }"></span>
                 {{ language.get('Live Newsfeed') || 'Live Newsfeed' }}
             </h4>
 
@@ -29,7 +29,15 @@
         </div>
     </div>
 
-    <div class="scrollable-live-view" ref="scrollableContainerRef">
+    <div class="live-view-wrapper">
+    <button v-if="scrolledDown" type="button" class="btn btn-primary btn-sm shadow back-to-top d-flex align-items-center gap-1" @click="scrollToTop"
+        :title="language.get('Back to top and resume new posts') || 'Back to top and resume new posts'">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+            <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5"/>
+        </svg>
+        <span v-if="queue.length > 0" class="badge rounded-pill text-bg-light">{{ queue.length }}</span>
+    </button>
+    <div class="scrollable-live-view" ref="scrollableContainerRef" @scroll="handleScroll">
         <div class="container pt-1 pb-4">
             <div class="live-column">
                 <TransitionGroup :name="animate ? 'live-post' : ''" tag="div" class="d-flex flex-column gap-4">
@@ -50,6 +58,8 @@
                 </div>
             </div>
         </div>
+    </div>
+
     </div>
 
     <PostModal v-if="modalPost" :post="modalPost"
@@ -81,6 +91,7 @@ const MAX_POSTS = 200; // The oldest posts are dropped beyond this, so a page le
 const MAX_REVEAL_INTERVAL_MS = 5000;
 const MIN_REVEAL_INTERVAL_MS = 300;
 const FRESH_MS = 4000; // How long a newly shown post stays highlighted
+const SCROLL_PAUSE_PX = 100; // Scrolled further down than this, new posts wait until the list is scrolled back to the top
 
 const router = useRouter();
 const posts = ref<PostType[]>([]); // Shown posts, newest first
@@ -94,6 +105,8 @@ let listedAt: string | null = null;
 const refreshSeconds = ref(60); // From the settings
 const secondsLeft = ref(60); // Until the next check
 const paused = ref(false);
+// Scrolled down to read a post: new posts are still checked for, but only shown once back at the top
+const scrolledDown = ref(false);
 const loading = ref(false);
 const checking = ref(false);
 const checkFailed = ref(false);
@@ -183,7 +196,7 @@ const scheduleReveal = (delay: number) => {
     if (revealTimer || unmounted || queue.value.length === 0) return;
     revealTimer = window.setTimeout(async () => {
         revealTimer = null;
-        if (paused.value) {
+        if (paused.value || scrolledDown.value) {
             scheduleReveal(1000);
             return;
         }
@@ -220,6 +233,17 @@ const revealNextPost = async () => {
         await nextTick();
         container.scrollTop += container.scrollHeight - previousHeight;
     }
+};
+
+const handleScroll = () => {
+    scrolledDown.value = (scrollableContainerRef.value?.scrollTop ?? 0) > SCROLL_PAUSE_PX;
+};
+
+/**
+ * Scrolls back to the top, where the waiting posts are shown again.
+ */
+const scrollToTop = () => {
+    scrollableContainerRef.value?.scrollTo({ top: 0, behavior: 'smooth' });
 };
 
 const handlePostRead = (postId: string) => {
@@ -300,6 +324,17 @@ onUnmounted(() => {
 .live-column {
     max-width: 760px;
     margin: 0 auto;
+}
+
+.live-view-wrapper {
+    position: relative;
+}
+
+.back-to-top {
+    position: absolute;
+    top: 0.75rem;
+    right: 1.5rem;
+    z-index: 10;
 }
 
 .scrollable-live-view {
