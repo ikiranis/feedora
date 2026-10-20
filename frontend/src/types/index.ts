@@ -119,6 +119,8 @@ export interface PostType {
     linkUrl: string | null;
     linkTitle: string | null;
     linkImage: string | null;
+    // Tweets: MP4 of the tweet's video or GIF, shown instead of its thumbnail; empty or null if none (or not found yet)
+    video: string | null;
     pubDate: string | null;
     author: string | null;
     read: boolean;

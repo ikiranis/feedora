@@ -61,7 +61,7 @@
                     </header>
 
                     <div v-if="youtubeEmbedUrl && embeddable" class="ratio ratio-16x9 mb-4">
-                        <iframe :src="youtubeEmbedUrl" :title="post.title" allowfullscreen
+                        <iframe :src="youtubeEmbedUrl" :title="post.title" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
                             @load="youtubeEmbedStore.watchPlayer($event.target as HTMLIFrameElement, videoId!)"
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
                     </div>

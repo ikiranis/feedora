@@ -1,10 +1,15 @@
 <template>
     <div v-if="showDetails" class="custom-card h-100" :class="{ 'unread-post': !post.read, 'read-post': post.read, 'selected-post': selected }" @click="handleCardClick">
-        <!-- Media: YouTube thumbnail or first image of the post; clicking it opens the post in the modal -->
-        <div v-if="thumbnailUrl" class="card-media" :class="{ 'is-short': youtubeVideo?.isShort }"
+        <!-- Media: YouTube thumbnail, tweet video or first image of the post; clicking it opens the post in the modal -->
+        <div v-if="thumbnailUrl || tweetVideo" class="card-media" :class="{ 'is-short': youtubeVideo?.isShort }"
             @click="emit('open', post.id)">
-            <img v-if="youtubeVideo?.isShort" :src="thumbnailUrl" class="media-backdrop" alt="" aria-hidden="true" />
-            <img :src="thumbnailUrl" class="media-image" alt="" loading="lazy" @error="thumbnailFailed = true" />
+            <img v-if="youtubeVideo?.isShort" :src="thumbnailUrl!" class="media-backdrop" alt="" aria-hidden="true" />
+            <!-- Tweets: their video plays on the card (its controls don't open the modal); GIFs play muted in a loop, like on Twitter -->
+            <video v-if="tweetVideo?.gif" :src="tweetVideo.url" :poster="thumbnailUrl ?? undefined" class="media-image"
+                autoplay loop muted playsinline preload="metadata" @error="videoFailed = true"></video>
+            <video v-else-if="tweetVideo" :src="tweetVideo.url" :poster="thumbnailUrl ?? undefined" class="media-image"
+                controls playsinline preload="metadata" @click.stop @error="videoFailed = true"></video>
+            <img v-else :src="thumbnailUrl!" class="media-image" alt="" loading="lazy" @error="thumbnailFailed = true" />
             <span v-if="youtubeVideo" class="media-badge">
                 <svg v-if="youtubeVideo.isShort" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.77 10.32l-1.2-.5L18 9.06a3.74 3.74 0 0 0-3.5-6.62L6 6.94a3.74 3.74 0 0 0 .23 6.74l1.2.49L6 14.93a3.75 3.75 0 0 0 3.5 6.63l8.5-4.5a3.74 3.74 0 0 0-.23-6.74zM10 14.65V9.35L15 12z"/>
@@ -33,7 +38,7 @@
                 <span v-if="post.feed?.folderName" class="post-folder text-truncate">&middot; {{ post.feed.folderName }}</span>
             </div>
             <!-- Without a title, the tweet text takes its place and opens the post in the modal -->
-            <p v-if="!youtubeVideo && cardExcerpt" class="post-excerpt" :class="{ 'no-media': !thumbnailUrl, 'tweet-text': isTweet }"
+            <p v-if="!youtubeVideo && cardExcerpt" class="post-excerpt" :class="{ 'no-media': !thumbnailUrl && !tweetVideo, 'tweet-text': isTweet }"
                 @click="isTweet && emit('open', post.id)">{{ cardExcerpt }}</p>
             <!-- Tweets: preview of the link in the text -->
             <LinkPreview v-if="linkPreview" :preview="linkPreview" :hide-image="cardShowsLinkImage" />
@@ -176,7 +181,7 @@
                 </div>
             </header>
             <div v-if="youtubeEmbedUrl && embeddable" class="ratio ratio-16x9 video-embed video-embed-summary">
-                <iframe :src="youtubeEmbedUrl" :title="post.title" allowfullscreen
+                <iframe :src="youtubeEmbedUrl" :title="post.title" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"
                     @load="youtubeEmbedStore.watchPlayer($event.target as HTMLIFrameElement, youtubeVideo!.id)"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
             </div>
@@ -217,7 +222,7 @@ import VideoDuration from '@/components/VideoDuration.vue';
 import PostShareActions from '@/components/PostShareActions.vue';
 import CopyLinkButton from '@/components/CopyLinkButton.vue';
 import LinkPreview from '@/components/LinkPreview.vue';
-import { isCardImage, isTweetLink, plainText, removePreviewedLink, tweetLinkPreview } from '@/functions/tweet';
+import { isCardImage, isTweetGif, isTweetLink, plainText, removePreviewedLink, tweetLinkPreview } from '@/functions/tweet';
 import { language } from '@/functions/languageStore';
 import { computed, ref, watch } from 'vue';
 
@@ -309,6 +314,15 @@ const thumbnailUrl = computed(() => {
     return src && /^https?:\/\//.test(src) ? src : null;
 });
 
+const videoFailed = ref(false);
+
+/**
+ * Tweets: their video or GIF, found by the backend (feeds only give its thumbnail); null if none or it can't be played.
+ */
+const tweetVideo = computed(() =>
+    isTweet.value && props.post.video && !videoFailed.value ? { url: props.post.video, gif: isTweetGif(props.post.video) } : null
+);
+
 /**
  * Plain-text excerpt of the description; line breaks and paragraphs become spaces, so words don't run together.
  */
@@ -352,6 +366,7 @@ const shortDate = computed(() => {
 watch(() => props.post.id, () => {
     iconFailed.value = false;
     thumbnailFailed.value = false;
+    videoFailed.value = false;
 });
 
 // Full article HTML from the shared cache (preloaded by the posts list), shown when the post is opened in list mode
@@ -470,6 +485,11 @@ const handleCardClick = async () => {
     height: 100%;
     object-fit: cover;
     display: block;
+}
+
+/* Tweet videos are shown whole (e.g. vertical videos), they aren't cropped like thumbnails */
+video.media-image {
+    object-fit: contain;
 }
 
 /* Shorts: vertical frame centered over a blurred copy of itself */

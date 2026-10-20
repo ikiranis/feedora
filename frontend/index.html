@@ -6,6 +6,9 @@
     <link rel="icon" type="image/svg+xml" href="/feedora.svg?v=8" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Images and videos of posts are loaded from their sites, many of which (e.g. Twitter's videos) refuse requests
+         from other sites; without a referrer they're loaded like when opened directly. YouTube players set their own. -->
+    <meta name="referrer" content="no-referrer" />
     <title>feedora</title>
   </head>
   <body>

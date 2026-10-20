@@ -81,8 +81,9 @@ export const tweetLinkPreview = (post: PostType): LinkPreview | null => {
 };
 
 /**
- * Removes the link a preview shows from a tweet's HTML: Twitter's link card (with its paragraph, if left empty),
- * otherwise the first link in the text. Same rule as the backend (LinkPreviewExtractor.findLink).
+ * Removes the link a preview shows from a tweet's HTML: Twitter's link card (with its paragraph, if left empty)
+ * and the first link in the text, which the card repeats (e.g. "Title https://reut.rs/…" followed by the card).
+ * Same rule as the backend (LinkPreviewExtractor.findLink).
  */
 export const removePreviewedLink = (html: string) => {
     const body = parse(html);
@@ -92,10 +93,9 @@ export const removePreviewedLink = (html: string) => {
         const parent = card.parentElement;
         card.remove();
         if (parent && parent !== body && !parent.textContent?.trim() && !parent.querySelector('img, video, iframe')) parent.remove();
-        return body.innerHTML;
     }
 
-    return removeTextLink(body) ? body.innerHTML : html;
+    return removeTextLink(body) || card ? body.innerHTML : html;
 };
 
 /**
@@ -109,8 +109,18 @@ const removeTextLink = (node: Node): boolean => {
         if (link) node.textContent = node.textContent!.replace(link, '');
         return !!link;
     }
+    // Links written as anchors (<a href="…">https://…</a>) go with their anchor
+    if (node instanceof HTMLAnchorElement && findTextLink(node.textContent || '') === node.textContent?.trim()) {
+        node.remove();
+        return true;
+    }
     return Array.from(node.childNodes).some(removeTextLink);
 };
+
+/**
+ * Whether a video is a tweet's GIF, which Twitter plays muted in a loop (see TweetVideoExtractor.isGif).
+ */
+export const isTweetGif = (video: string) => video.startsWith('https://video.twimg.com/tweet_video/');
 
 /**
  * Plain text of HTML; line breaks and paragraphs become spaces, so words don't run together.

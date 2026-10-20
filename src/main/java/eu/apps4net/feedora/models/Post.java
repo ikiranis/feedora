@@ -43,6 +43,11 @@ public class Post {
     @Column(length = 2048)
     private String linkImage;
 
+    // Tweets: MP4 of the tweet's video or GIF (feeds only give its thumbnail), found when parsed or first opened.
+    // Empty if Twitter said the tweet has none, null if it has no video thumbnail or wasn't checked (see TweetVideoExtractor).
+    @Column(length = 2048)
+    private String video;
+
     private LocalDateTime pubDate;
     private String author;
 
@@ -123,6 +128,9 @@ public class Post {
 
     public String getLinkImage() { return linkImage; }
     public void setLinkImage(String linkImage) { this.linkImage = linkImage; }
+
+    public String getVideo() { return video; }
+    public void setVideo(String video) { this.video = video; }
 
     public LocalDateTime getPubDate() { return pubDate; }
     public void setPubDate(LocalDateTime pubDate) { this.pubDate = pubDate; }
