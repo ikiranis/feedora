@@ -517,18 +517,14 @@ const showDetails = computed<boolean>({
 // Title of the selected feed, shown above the posts list
 const selectedFeedTitle = computed(() => unreadCounts.value.feeds.find(f => f.id === selectedFeedId.value)?.title ?? null);
 
-// Selected folder whose posts were all marked as read, so it's hidden from the sidebar while it has no unread posts
-const markedReadFolderId = ref<string | null>(null);
-
-// Folders with unread posts, sorted by name. The selected folder (or the folder of the selected feed)
-// stays visible after its last post is read, unless they were all marked as read at once.
+// Folders with unread posts, sorted by name. A folder is hidden once its last post is read,
+// whether one by one or all at once, but the folder of the selected feed stays visible.
 const visibleFolders = computed(() => {
     const selectedFeedFolderId = unreadCounts.value.feeds.find(f => f.id === selectedFeedId.value)?.folderId;
     return folders.value
         .filter(folder => showEmptyFolders.value
             || editingFolders.value
             || (unreadCounts.value.folders[folder.id] || 0) > 0
-            || (folder.id === selectedFolderId.value && folder.id !== markedReadFolderId.value)
             || folder.id === selectedFeedFolderId)
         .sort((a, b) => a.name.localeCompare(b.name));
 });
@@ -698,7 +694,6 @@ const fetchUnreadCounts = async () => {
  * Selecting the current filter again also reloads it, to fetch the latest posts.
  */
 const applyFilter = (folderId: string | null, feedId: string | null, saved = false, favorites = false) => {
-    markedReadFolderId.value = null;
     selectedFolderId.value = folderId;
     selectedFeedId.value = feedId;
     showSaved.value = saved;
@@ -831,8 +826,6 @@ const handleMarkAllAsRead = async (olderThanDays: number | null) => {
         loading.value = true;
         await markAllAsRead(selectedFolderId.value, selectedFeedId.value, olderThanDays, listedAt.value);
         scrollableContainerRef.value?.scrollTo({ top: 0 });
-        // The selected folder is hidden from the sidebar while it has no unread posts, but stays shown in the list
-        markedReadFolderId.value = selectedFolderId.value;
         await handleRefreshPosts();
     } catch (e: any) {
         console.error('Failed to mark posts as read:', e);
