@@ -26,6 +26,8 @@ public class FeedStatistics {
     public static final int MAX_CONSECUTIVE_ERRORS = 3;
     // Only the posts of the last days count for the frequency
     public static final int FREQUENCY_WINDOW_DAYS = 7;
+    // Only the posts of the last hours count for the posts per hour
+    public static final int HOURLY_WINDOW_HOURS = 3;
 
     @Id
     @GeneratedValue
@@ -95,7 +97,7 @@ public class FeedStatistics {
         pubDates.stream().max(LocalDateTime::compareTo).ifPresent(newest -> lastPostPubDate = newest);
 
         postsPerDay = estimatePostsPerDay(pubDates, checkedAt);
-        postsPerHour = postsPerDay / 24;
+        postsPerHour = estimatePostsPerHour(pubDates, checkedAt);
 
         scheduleNextCheck(checkedAt);
     }
@@ -171,6 +173,33 @@ public class FeedStatistics {
         // At least an hour, so a single fresh post doesn't look like a flood
         double hours = Math.max(1, Duration.between(oldest, now).toMinutes() / 60.0);
         return recent.size() / hours * 24;
+    }
+
+    /**
+     * Estimates the posts per hour of a feed, from the posts published in the last hours.
+     * The rate is measured over the whole window, unless the feed's oldest post is newer than it
+     * (feeds keep only their latest posts), in which case it's measured from that post until now.
+     *
+     * @param pubDates Publication dates of the posts in the feed
+     * @param now The current time
+     * @return The estimated posts per hour, 0 if nothing was published lately
+     */
+    public static double estimatePostsPerHour(List<LocalDateTime> pubDates, LocalDateTime now) {
+        LocalDateTime windowStart = now.minusHours(HOURLY_WINDOW_HOURS);
+        // Posts dated in the future count as published now
+        List<LocalDateTime> dates = pubDates.stream()
+                .map(date -> date.isAfter(now) ? now : date)
+                .toList();
+        long recentCount = dates.stream().filter(date -> date.isAfter(windowStart)).count();
+        if (recentCount == 0) {
+            return 0;
+        }
+
+        LocalDateTime oldest = dates.stream().min(LocalDateTime::compareTo).get();
+        LocalDateTime spanStart = oldest.isAfter(windowStart) ? oldest : windowStart;
+        // At least an hour, so a single fresh post doesn't look like a flood
+        double hours = Math.max(1, Duration.between(spanStart, now).toMinutes() / 60.0);
+        return recentCount / hours;
     }
 
     public UUID getId() { return id; }

@@ -3,6 +3,7 @@ package eu.apps4net.feedora.models;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -36,6 +37,25 @@ class FeedStatisticsTest {
     }
 
     @Test
+    void estimatesPostsPerHourFromTheLastThreeHours() {
+        // 6 posts in the last 3 hours, many more earlier in the day
+        List<LocalDateTime> dates = new ArrayList<>(postsEvery(30, 6));
+        dates.addAll(postsEvery(1, 100).stream().map(d -> d.minusHours(5)).toList());
+
+        assertThat(FeedStatistics.estimatePostsPerHour(dates, now)).isCloseTo(2, within(0.001));
+    }
+
+    @Test
+    void estimatesPostsPerHourFromTheOldestPostWhenTheFeedIsShorterThanTheWindow() {
+        // The feed keeps only its last 30 posts, one every minute
+        assertThat(FeedStatistics.estimatePostsPerHour(postsEvery(1, 30), now)).isCloseTo(30, within(0.001));
+        // A single fresh post counts over the minimum span of an hour
+        assertThat(FeedStatistics.estimatePostsPerHour(List.of(now.plusDays(1)), now)).isCloseTo(1, within(0.001));
+        assertThat(FeedStatistics.estimatePostsPerHour(List.of(now.minusHours(4)), now)).isZero();
+        assertThat(FeedStatistics.estimatePostsPerHour(List.of(), now)).isZero();
+    }
+
+    @Test
     void feedsWithMoreThanThirtyPostsPerHourAreCheckedEveryMinute() {
         FeedStatistics stats = new FeedStatistics();
 
@@ -66,7 +86,6 @@ class FeedStatisticsTest {
         stats.recordSuccess(now, 100, postsEvery(20, 10), 10, 3);
 
         assertThat(stats.getPostsPerHour()).isGreaterThan(1);
-        assertThat(stats.getPostsPerDay()).isCloseTo(stats.getPostsPerHour() * 24, within(0.001));
         assertThat(stats.getCheckIntervalMinutes()).isEqualTo(FeedStatistics.FREQUENT_INTERVAL_MINUTES);
         assertThat(stats.getNextCheckAt()).isEqualTo(now.plusMinutes(10));
     }
