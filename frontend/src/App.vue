@@ -7,6 +7,7 @@ import ScanProgressBar from "@/components/ScanProgressBar.vue";
 import Page404 from "@/components/error/Page404.vue";
 import { themeStore } from "./functions/themeStore.ts";
 import { authStore } from "./functions/authStore.ts";
+import { mobileChromeStore } from "./functions/mobileChromeStore.ts";
 
 const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed'
 const collapsed = ref(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) !== 'false') // Collapsed by default, persisted in localStorage
@@ -54,7 +55,7 @@ const collapse = () => {
     <div v-if="isAppAlive">
         <!-- Authenticated user layout with sidebar -->
         <div v-if="authStore.isAuthenticated.value" class="app-layout row vh-100">
-            <sidebar class="sidebar d-flex flex-column col-12" :class="collapsed ? 'sidebar-collapsed' : 'col-lg-2'" :collapsed="collapsed"/>
+            <sidebar class="sidebar d-flex flex-column col-12" :class="[collapsed ? 'sidebar-collapsed' : 'col-lg-2', { 'sidebar-hidden': mobileChromeStore.hidden.value }]" :collapsed="collapsed"/>
 
             <div class="content col-12 px-2 px-lg-5" :class="collapsed ? 'content-expanded' : 'col-lg-10'">
                 <div class="d-none d-lg-block d-flex">

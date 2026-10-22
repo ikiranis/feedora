@@ -144,7 +144,7 @@
         </aside>
 
         <div class="flex-grow-1 posts-main">
-            <div class="container pt-2 pb-0">
+            <div class="container pt-2 pb-0" :class="{ 'd-none': mobileChromeStore.hidden.value }">
                 <div class="row justify-content-end mb-1 align-items-center">
                     <div v-if="selectedFeedTitle" class="col feed-title-col">
                         <div class="dropdown d-flex align-items-center">
@@ -311,7 +311,7 @@
                 </div>
             </div>
             
-            <div class="scrollable-post-view" ref="scrollableContainerRef">
+            <div class="scrollable-post-view" :class="{ 'chrome-hidden': mobileChromeStore.hidden.value }" ref="scrollableContainerRef">
                 <!-- Posts of the current view added by a parse since the list was loaded -->
                 <div v-if="newPostsCount > 0" class="new-posts-badge-wrapper">
                     <button type="button" class="btn btn-sm btn-primary rounded-pill shadow-sm new-posts-badge d-flex align-items-center gap-1"
@@ -345,6 +345,14 @@
                     </div>
 
                     <!-- Fixed bottom-right loading spinner, not shown while parsing since the scan progress bar shows it -->
+                    <!-- Back to top on small screens, which also shows the top bar and toolbar again -->
+                    <button v-if="showScrollTopButton" type="button" class="btn btn-primary rounded-circle shadow scroll-top-button d-lg-none"
+                        @click="scrollToTop" :title="language.get('Back to top') || 'Back to top'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-up" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5"/>
+                        </svg>
+                    </button>
+
                     <div v-if="loading && !scanStore.active.value" class="loading-spinner-fixed">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">Loading...</span>
@@ -394,6 +402,7 @@ import EditFolderModal from '@/components/folder/EditFolderModal.vue';
 import Error from '@/components/error/Error.vue'; // Changed from ErrorDisplay
 import { errorStore } from '@/components/error/errorStore'; // Import errorStore
 import { scanStore } from '@/functions/scanStore';
+import { mobileChromeStore } from '@/functions/mobileChromeStore';
 import { confirmDialog } from '@/functions/javaDialogs';
 import { Dropdown, Modal } from 'bootstrap';
 
@@ -413,6 +422,10 @@ const scrollableContainerRef = ref<HTMLElement | null>(null); // Ref for the scr
 const intersectionObserver = ref<IntersectionObserver | null>(null);
 const observedPosts = ref<Set<string>>(new Set()); // Unread posts currently visible in the scrollable container
 const lastScrollTop = ref(0); // Scroll position at the previous scroll event, to detect scrolling down
+// Below the lg breakpoint the top bar and toolbar hide while scrolling down and show again while scrolling up
+const mobileQuery = window.matchMedia('(max-width: 991.98px)');
+let chromeLastScrollTop = 0; // Scroll position at the last top bar and toolbar check
+const showScrollTopButton = ref(false);
 const searchTerm = ref('');
 const searchTimeout = ref<number | null>(null);
 const mobileSearchOpen = ref(false); // The search input is shown on small screens, where only its button is in the toolbar
@@ -1127,6 +1140,62 @@ const markScrolledPastPosts = () => {
 };
 
 /**
+ * Hides or shows the top bar and toolbar, keeping the posts at the same place on the screen
+ * by moving the scroll position by as much as the container moved.
+ */
+const setMobileChromeHidden = async (hidden: boolean) => {
+    const container = scrollableContainerRef.value;
+    if (!container || mobileChromeStore.hidden.value === hidden) return;
+
+    const oldTop = container.getBoundingClientRect().top;
+    mobileChromeStore.hidden.value = hidden;
+    await nextTick();
+    container.scrollTop += container.getBoundingClientRect().top - oldTop;
+    chromeLastScrollTop = container.scrollTop;
+};
+
+/**
+ * On small screens, hides the top bar and toolbar when scrolling down and shows them when scrolling up.
+ * They hide only when the posts are scrolled further than their height, so the scroll position stays above
+ * the top and scrolling up can show them again.
+ */
+const updateMobileChrome = () => {
+    const container = scrollableContainerRef.value;
+    if (!container || !mobileQuery.matches) return;
+
+    const scrollTop = container.scrollTop;
+    showScrollTopButton.value = scrollTop > container.clientHeight;
+
+    const delta = scrollTop - chromeLastScrollTop;
+    if (Math.abs(delta) < 10) return; // Ignore small movements, so the bars don't flicker
+    chromeLastScrollTop = scrollTop;
+
+    if (delta > 0 && scrollTop > container.getBoundingClientRect().top) {
+        setMobileChromeHidden(true);
+    } else if (delta < 0) {
+        setMobileChromeHidden(false);
+    }
+};
+
+/**
+ * Shows the top bar and toolbar and scrolls the posts back to the top
+ */
+const scrollToTop = async () => {
+    await setMobileChromeHidden(false);
+    scrollableContainerRef.value?.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+/**
+ * Shows the top bar and toolbar again when the screen gets wide enough for the sidebar
+ */
+const handleMobileQueryChange = (event: MediaQueryListEvent) => {
+    if (!event.matches) {
+        mobileChromeStore.hidden.value = false;
+        showScrollTopButton.value = false;
+    }
+};
+
+/**
  * Handles the scroll event on the scrollable container.
  * When the user scrolls near the bottom, it loads more posts if available.
  */
@@ -1436,7 +1505,9 @@ onMounted(() => {
     if (scrollableContainerRef.value) {
         scrollableContainerRef.value.addEventListener('scroll', handleScroll);
         scrollableContainerRef.value.addEventListener('scroll', markScrolledPastPosts);
+        scrollableContainerRef.value.addEventListener('scroll', updateMobileChrome);
     }
+    mobileQuery.addEventListener('change', handleMobileQueryChange);
     // Setup intersection observer for marking posts as read when scrolled past
     nextTick(() => {
         setupIntersectionObserver();
@@ -1450,7 +1521,11 @@ onUnmounted(() => {
     if (scrollableContainerRef.value) {
         scrollableContainerRef.value.removeEventListener('scroll', handleScroll);
         scrollableContainerRef.value.removeEventListener('scroll', markScrolledPastPosts);
+        scrollableContainerRef.value.removeEventListener('scroll', updateMobileChrome);
     }
+    mobileQuery.removeEventListener('change', handleMobileQueryChange);
+    // The top bar is shared with the other pages
+    mobileChromeStore.hidden.value = false;
     window.removeEventListener('keydown', handleKeydown);
     if (lastParsedTimer) {
         clearInterval(lastParsedTimer);
@@ -1479,6 +1554,30 @@ onUnmounted(() => {
     .scrollable-post-view {
         height: calc(100dvh - 130px);
     }
+
+    /* The top bar and toolbar are hidden while scrolling down */
+    .scrollable-post-view.chrome-hidden {
+        height: 100dvh;
+    }
+
+    /* Above the back to top button */
+    .posts-main .loading-spinner-fixed {
+        bottom: 80px;
+    }
+}
+
+/* Back to top button on small screens */
+.scroll-top-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
 }
 
 /* New posts badge, floating over the top of the posts list while it scrolls */

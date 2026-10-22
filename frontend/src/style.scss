@@ -232,6 +232,11 @@ h1 {
         &.menu-open .sidebar-menu.mt-auto {
             margin-top: 12px !important;
         }
+
+        // Hidden by the posts page while scrolling down
+        &.sidebar-hidden {
+            display: none !important;
+        }
     }
 }
 
