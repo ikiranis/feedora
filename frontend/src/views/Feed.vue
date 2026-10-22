@@ -1,8 +1,8 @@
 <template>
     <div class="container py-3">
         <div class="row justify-content-center">
-            <div class="col-auto">
-                <div class="d-flex align-items-center gap-3">
+            <div class="col-12 col-xl-auto">
+                <div class="feed-toolbar d-flex flex-wrap justify-content-center align-items-center gap-2 gap-md-3">
                     <button 
                         class="btn btn-primary"
                         data-bs-toggle="modal" 
@@ -17,8 +17,7 @@
                         type="file" 
                         accept=".opml,.xml" 
                         @change="handleFileSelect"
-                        class="form-control"
-                        style="width: 300px;"
+                        class="form-control opml-file-input"
                         :disabled="importing"
                         :title="language.get('Select an OPML file to import feeds')"
                     />
@@ -40,7 +39,7 @@
                     >
                         {{ language.get('Export OPML') }}
                     </button>
-                    <div class="input-group" style="width: 250px;">
+                    <div class="input-group feed-search">
                         <span class="input-group-text">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
                                 <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
@@ -62,7 +61,7 @@
     <div class="scrollable-feed-view" ref="scrollableContainerRef">
         <div class="container py-4">
             <div v-if="feeds.length > 0" class="table-responsive">
-                <table class="table table-bordered table-hover align-middle">
+                <table class="table table-bordered table-hover align-middle feeds-table">
                     <thead class="table-light custom-table-header">
                         <tr>
                             <th>{{ language.get('Title') }}</th>
@@ -74,7 +73,7 @@
                     </thead>
                     <tbody>
                         <tr v-for="feed in feeds" :key="feed.id">
-                            <td>
+                            <td class="feed-title-cell">
                                 <router-link
                                     :to="{ name: 'Posts', query: { feed: feed.id } }"
                                     class="text-decoration-none"
@@ -90,14 +89,14 @@
                                     {{ language.get('HTTP, not working') }}
                                 </span>
                             </td>
-                            <td>
+                            <td :data-label="language.get('XML URL')">
                                 <a :href="feed.xmlUrl" target="_blank" class="text-decoration-none" :title="feed.xmlUrl">
                                     {{ feed.xmlUrl.length > 30 ? feed.xmlUrl.substring(0, 30) + '...' : feed.xmlUrl }}
                                 </a>
                             </td>
-                            <td>{{ feed.folderName }}</td>
-                            <td class="text-end">{{ formatPostsPerDay(feed) }}</td>
-                            <td>
+                            <td :data-label="language.get('Folder')">{{ feed.folderName }}</td>
+                            <td class="text-end" :data-label="language.get('Posts per day')">{{ formatPostsPerDay(feed) }}</td>
+                            <td class="feed-actions-cell">
                                 <button
                                     class="btn btn-primary btn-sm me-2"
                                     @click="parseFeed(feed)"
@@ -613,6 +612,81 @@ onUnmounted(() => {
 }
 
 /* Custom table header for dark mode */
+.opml-file-input {
+    width: 300px;
+}
+
+.feed-search {
+    width: 250px;
+}
+
+/* On phones the toolbar controls take the full width and the table rows become stacked cards */
+@media (max-width: 767.98px) {
+    .opml-file-input,
+    .feed-search {
+        width: 100%;
+    }
+
+    .feed-toolbar > .btn {
+        flex: 1 1 auto;
+    }
+
+    .feeds-table thead {
+        display: none;
+    }
+
+    .feeds-table,
+    .feeds-table tbody,
+    .feeds-table tr,
+    .feeds-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .feeds-table tr {
+        margin-bottom: 1rem;
+        border: var(--bs-border-width) solid var(--bs-border-color);
+        border-radius: var(--bs-border-radius);
+        overflow: hidden;
+    }
+
+    .feeds-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        border: 0;
+        text-align: right !important;
+        overflow-wrap: anywhere;
+    }
+
+    .feeds-table td[data-label]::before {
+        content: attr(data-label);
+        font-weight: 600;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .feeds-table td.feed-title-cell {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+        text-align: left !important;
+        font-weight: 600;
+        border-bottom: var(--bs-border-width) solid var(--bs-border-color);
+    }
+
+    .feeds-table td.feed-actions-cell {
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .feeds-table td.feed-actions-cell .btn {
+        margin: 0 !important;
+    }
+}
+
 [data-bs-theme="dark"] .custom-table-header {
     background-color: #343a40 !important;
     color: #ffffff !important;
