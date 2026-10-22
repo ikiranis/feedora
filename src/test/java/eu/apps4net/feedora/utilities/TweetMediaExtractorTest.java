@@ -92,7 +92,7 @@ class TweetMediaExtractorTest {
                 "https://video.twimg.com/v.mp4", THUMB);
 
         assertThat(html).isEqualTo("<p>Text</p><p><video src=\"https://video.twimg.com/v.mp4\" playsinline=\"\" preload=\"metadata\" muted poster=\""
-                + THUMB + "\" controls=\"\"></video></p>");
+                + THUMB + "\"></video></p>");
     }
 
     @Test
@@ -103,6 +103,6 @@ class TweetMediaExtractorTest {
         assertThat(html).isEqualTo("<p>Text</p><video src=\"https://video.twimg.com/tweet_video/g.mp4\" playsinline=\"\" preload=\"metadata\" muted poster=\""
                 + THUMB + "\" autoplay=\"\" loop=\"\"></video>");
         assertThat(TweetMediaExtractor.withVideo("<p>Text</p>", "https://video.twimg.com/v.mp4", null))
-                .isEqualTo("<p>Text</p><video src=\"https://video.twimg.com/v.mp4\" playsinline=\"\" preload=\"metadata\" muted controls=\"\"></video>");
+                .isEqualTo("<p>Text</p><video src=\"https://video.twimg.com/v.mp4\" playsinline=\"\" preload=\"metadata\" muted></video>");
     }
 }

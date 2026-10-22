@@ -5,6 +5,7 @@ import * as bootstrap from "bootstrap"
 import './style.scss'
 import { themeStore } from './functions/themeStore'
 import { authStore } from './functions/authStore'
+import { initVideoControls } from './functions/videoPlayback'
 import config from './functions/config'
 import axios from 'axios'
 
@@ -16,6 +17,9 @@ document.documentElement.dataset.feedoraServer = config.defaultServer()
 
 // Initialize theme before creating the app
 themeStore.initializeTheme()
+
+// Tweet video players show their controls only on hover or click
+initVideoControls()
 
 // When the token expires while the app is open, the API answers 401: drop the session and show the login page
 axios.interceptors.response.use(undefined, (error) => {
