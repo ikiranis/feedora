@@ -144,6 +144,36 @@ class ArticleExtractorTest {
     }
 
     @Test
+    void extractFromUrlAddsTheLeadVideoOutsideTheArticleBodyInsteadOfTheLeadImage() throws Exception {
+        // Like 902.gr: the video is in its own block above the text, which Readability leaves out
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/article", 200, "text/html", "<html><head><title>T</title>"
+                    + "<meta property=\"og:image\" content=\"http://example.com/lead.jpg\"></head><body class=\"no-sidebars\">"
+                    + "<article><div class=\"master-media\"><iframe src=\"https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0\"></iframe></div>"
+                    + "<div class=\"body\"><h1>Title</h1>" + PARAGRAPH.repeat(6) + "</div></article></body></html>");
+
+            String content = ArticleExtractor.extractFromUrl(server.url("/article"));
+
+            assertThat(content).startsWith("<div class=\"embedded-video\"><iframe src=\"https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ\"")
+                    .doesNotContain("lead.jpg");
+        }
+    }
+
+    @Test
+    void extractFromUrlIgnoresVideosOfTheSidebar() throws Exception {
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/article", 200, "text/html", "<html><head><title>T</title>"
+                    + "<meta property=\"og:image\" content=\"http://example.com/lead.jpg\"></head><body>"
+                    + "<article><h1>Title</h1>" + PARAGRAPH.repeat(6) + "</article>"
+                    + "<div class=\"region-sidebar\"><iframe src=\"https://www.youtube.com/embed/dQw4w9WgXcQ\"></iframe></div></body></html>");
+
+            String content = ArticleExtractor.extractFromUrl(server.url("/article"));
+
+            assertThat(content).doesNotContain("<iframe").contains("lead.jpg");
+        }
+    }
+
+    @Test
     void extractFromUrlFailsWhenThePageCantBeDownloaded() throws Exception {
         try (TestHttpServer server = new TestHttpServer()) {
             assertThatThrownBy(() -> ArticleExtractor.extractFromUrl(server.url("/missing"))).isInstanceOf(Exception.class);

@@ -37,7 +37,7 @@ public class ArticleExtractor {
 
     // Prefix of stored content made by the current extraction logic. Bump it when extraction improves,
     // so content stored by older versions is extracted again the next time it's opened.
-    public static final String VERSION_MARKER = "<!--feedora-content-v3-->";
+    public static final String VERSION_MARKER = "<!--feedora-content-v4-->";
 
     // Allowed markup in post content: text formatting, lists, tables, links and images
     private static final Safelist SAFELIST = Safelist.relaxed()
@@ -47,6 +47,8 @@ public class ArticleExtractor {
     // Embedded YouTube players (src, or the lazy-loading data-src) and the video id in their URL
     private static final Pattern YOUTUBE_EMBED = Pattern.compile("^(?:https?:)?//(?:www\\.)?youtube(?:-nocookie)?\\.com/embed/([\\w-]{11})(?:[?#/].*)?$");
     private static final String YOUTUBE_EMBED_URL = "https://www.youtube-nocookie.com/embed/";
+    // Parts of a page (by class or id) whose videos aren't the article's, e.g. a sidebar's
+    private static final Pattern NOT_ARTICLE = Pattern.compile("(?i)sidebar|widget|footer|related|comment|promo|banner|advert");
 
     /**
      * Downloads a web page and extracts its main article content, like the browsers' reader view.
@@ -60,12 +62,16 @@ public class ArticleExtractor {
 
         fixLazyImages(page);
         String leadImage = findLeadImage(page);
+        String leadVideo = findLeadVideo(page);
 
         Article article = new Readability4J(page.location(), page.outerHtml()).parse();
         String content = sanitize(article.getContent(), page.location());
 
-        // The main photo is often outside the article body (e.g. in the page header), so add it if the content has none
-        if (content != null && leadImage != null && !content.contains("<img")) {
+        // The main video and photo are often outside the article body (e.g. above it), so add them if the content has none.
+        // The photo is usually the video's thumbnail, so it's only added without a video.
+        if (content != null && leadVideo != null && !content.contains("<iframe")) {
+            content = youtubePlayer(leadVideo) + content;
+        } else if (content != null && leadImage != null && !content.contains("<img")) {
             content = "<figure><img src=\"" + Entities.escape(leadImage) + "\" alt=\"\"></figure>" + content;
         }
         return content;
@@ -142,6 +148,30 @@ public class ArticleExtractor {
     }
 
     /**
+     * Main YouTube video of the page: its first YouTube player outside the navigation, sidebars, footer, related posts etc.
+     *
+     * @return The video id, or null if the page has none
+     */
+    static String findLeadVideo(Document page) {
+        for (Element iframe : page.select("iframe")) {
+            String videoId = youtubeVideoId(iframe.attr("src"));
+            if (videoId == null) videoId = youtubeVideoId(iframe.attr("data-src"));
+            if (videoId != null && isInArticle(iframe)) return videoId;
+        }
+        return null;
+    }
+
+    private static boolean isInArticle(Element element) {
+        for (Element parent : element.parents()) {
+            // The body's classes describe the whole page (e.g. Drupal's "no-sidebars")
+            if (parent.nameIs("body")) break;
+            if (parent.nameIs("nav") || parent.nameIs("aside") || parent.nameIs("footer")) return false;
+            if (NOT_ARTICLE.matcher(parent.className() + " " + parent.id()).find()) return false;
+        }
+        return true;
+    }
+
+    /**
      * Sanitizes HTML for display: removes scripts, styles and unknown markup, makes links and images absolute
      * and turns plain text with line breaks into paragraphs.
      *
@@ -200,15 +230,18 @@ public class ArticleExtractor {
             String videoId = youtubeVideoId(link.attr("href"));
             if (videoId == null || link.childNodeSize() > 0) continue;
 
-            Element player = new Element("div").addClass("embedded-video");
-            player.appendElement("iframe")
-                    .attr("src", YOUTUBE_EMBED_URL + videoId)
-                    .attr("title", "YouTube video")
-                    .attr("allow", "accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture")
-                    .attr("referrerpolicy", "strict-origin-when-cross-origin")
-                    .attr("allowfullscreen", true);
-            link.replaceWith(player);
+            link.before(youtubePlayer(videoId));
+            link.remove();
         }
+    }
+
+    /**
+     * HTML of a YouTube player, made from the video id only.
+     */
+    private static String youtubePlayer(String videoId) {
+        return "<div class=\"embedded-video\"><iframe src=\"" + YOUTUBE_EMBED_URL + videoId + "\" title=\"YouTube video\""
+                + " allow=\"accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture\""
+                + " referrerpolicy=\"strict-origin-when-cross-origin\" allowfullscreen></iframe></div>";
     }
 
     /**
