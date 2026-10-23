@@ -37,12 +37,16 @@ public class ArticleExtractor {
 
     // Prefix of stored content made by the current extraction logic. Bump it when extraction improves,
     // so content stored by older versions is extracted again the next time it's opened.
-    public static final String VERSION_MARKER = "<!--feedora-content-v2-->";
+    public static final String VERSION_MARKER = "<!--feedora-content-v3-->";
 
     // Allowed markup in post content: text formatting, lists, tables, links and images
     private static final Safelist SAFELIST = Safelist.relaxed()
             .addTags("figure", "figcaption", "hr")
             .addAttributes("a", "target", "rel");
+
+    // Embedded YouTube players (src, or the lazy-loading data-src) and the video id in their URL
+    private static final Pattern YOUTUBE_EMBED = Pattern.compile("^(?:https?:)?//(?:www\\.)?youtube(?:-nocookie)?\\.com/embed/([\\w-]{11})(?:[?#/].*)?$");
+    private static final String YOUTUBE_EMBED_URL = "https://www.youtube-nocookie.com/embed/";
 
     /**
      * Downloads a web page and extracts its main article content, like the browsers' reader view.
@@ -158,12 +162,61 @@ public class ArticleExtractor {
         }
 
         Document.OutputSettings settings = new Document.OutputSettings().prettyPrint(false);
-        String clean = Jsoup.clean(html, baseUri != null ? baseUri : "", SAFELIST, settings);
+        String clean = Jsoup.clean(markYoutubeEmbeds(html, settings), baseUri != null ? baseUri : "", SAFELIST, settings);
         Document doc = Jsoup.parseBodyFragment(clean);
+        doc.outputSettings(settings);
+        restoreYoutubeEmbeds(doc);
         doc.select("a[href]").attr("target", "_blank").attr("rel", "noopener noreferrer");
 
-        boolean empty = doc.body().text().isBlank() && doc.select("img").isEmpty();
+        boolean empty = doc.body().text().isBlank() && doc.select("img, iframe").isEmpty();
         return empty ? null : doc.body().html();
+    }
+
+    /**
+     * Replaces the embedded YouTube players with empty links to the video's embed URL, which the safelist keeps
+     * (it removes all iframes), so restoreYoutubeEmbeds can put the players back after cleaning.
+     */
+    private static String markYoutubeEmbeds(String html, Document.OutputSettings settings) {
+        if (!html.contains("<iframe")) return html;
+
+        Document doc = Jsoup.parseBodyFragment(html);
+        boolean found = false;
+        for (Element iframe : doc.select("iframe")) {
+            String videoId = youtubeVideoId(iframe.attr("src"));
+            if (videoId == null) videoId = youtubeVideoId(iframe.attr("data-src"));
+            if (videoId == null) continue;
+            iframe.replaceWith(new Element("a").attr("href", YOUTUBE_EMBED_URL + videoId));
+            found = true;
+        }
+        return found ? doc.outputSettings(settings).body().html() : html;
+    }
+
+    /**
+     * Turns the links left by markYoutubeEmbeds back into players. They're made from the video id only,
+     * so nothing else of the original iframe is kept.
+     */
+    private static void restoreYoutubeEmbeds(Document doc) {
+        for (Element link : doc.select("a[href^=" + YOUTUBE_EMBED_URL + "]")) {
+            String videoId = youtubeVideoId(link.attr("href"));
+            if (videoId == null || link.childNodeSize() > 0) continue;
+
+            Element player = new Element("div").addClass("embedded-video");
+            player.appendElement("iframe")
+                    .attr("src", YOUTUBE_EMBED_URL + videoId)
+                    .attr("title", "YouTube video")
+                    .attr("allow", "accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture")
+                    .attr("referrerpolicy", "strict-origin-when-cross-origin")
+                    .attr("allowfullscreen", true);
+            link.replaceWith(player);
+        }
+    }
+
+    /**
+     * Video id of a YouTube embed URL, or null if it's not one.
+     */
+    private static String youtubeVideoId(String url) {
+        Matcher matcher = YOUTUBE_EMBED.matcher(url.trim());
+        return matcher.matches() ? matcher.group(1) : null;
     }
 
     /**

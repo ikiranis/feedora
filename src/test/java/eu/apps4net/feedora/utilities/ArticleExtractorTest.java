@@ -106,6 +106,44 @@ class ArticleExtractorTest {
     }
 
     @Test
+    void sanitizeKeepsYoutubePlayersMadeFromTheVideoIdOnly() {
+        String html = ArticleExtractor.sanitize("<p>Text</p>"
+                + "<iframe src=\"https://www.youtube.com/embed/dQw4w9WgXcQ?si=abc\" onload=\"evil()\" width=\"560\"></iframe>"
+                + "<iframe data-src=\"//www.youtube-nocookie.com/embed/aBcDeFgHiJk\"></iframe>"
+                + "<iframe src=\"https://evil.example/embed/dQw4w9WgXcQ\"></iframe>", "http://example.com/");
+
+        assertThat(html).contains("<div class=\"embedded-video\"><iframe src=\"https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ\"")
+                .contains("src=\"https://www.youtube-nocookie.com/embed/aBcDeFgHiJk\"")
+                .doesNotContain("evil")
+                .doesNotContain("si=abc")
+                .doesNotContain("width");
+        assertThat(html.split("<iframe", -1)).hasSize(3);
+    }
+
+    @Test
+    void sanitizeKeepsVideoOnlyContentAndLinksToEmbedUrls() {
+        assertThat(ArticleExtractor.sanitize("<iframe src=\"https://www.youtube.com/embed/dQw4w9WgXcQ\"></iframe>", null))
+                .contains("<iframe");
+        // A link with text stays a link
+        assertThat(ArticleExtractor.sanitize("<a href=\"https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ\">Video</a>", null))
+                .doesNotContain("<iframe");
+    }
+
+    @Test
+    void extractFromUrlKeepsEmbeddedYoutubeVideos() throws Exception {
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/article", 200, "text/html", "<html><head><title>T</title></head><body><article><h1>Title</h1>"
+                    + PARAGRAPH.repeat(3)
+                    + "<p><iframe src=\"https://www.youtube.com/embed/dQw4w9WgXcQ\" allowfullscreen></iframe></p>"
+                    + PARAGRAPH.repeat(3) + "</article></body></html>");
+
+            String content = ArticleExtractor.extractFromUrl(server.url("/article"));
+
+            assertThat(content).contains("<iframe src=\"https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ\"");
+        }
+    }
+
+    @Test
     void extractFromUrlFailsWhenThePageCantBeDownloaded() throws Exception {
         try (TestHttpServer server = new TestHttpServer()) {
             assertThatThrownBy(() -> ArticleExtractor.extractFromUrl(server.url("/missing"))).isInstanceOf(Exception.class);

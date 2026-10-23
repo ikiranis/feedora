@@ -1052,6 +1052,21 @@ video.media-image {
     margin: 1rem 0;
 }
 
+/* YouTube videos embedded in the content (see ArticleExtractor.restoreYoutubeEmbeds): full width, 16:9 */
+.summary-description :deep(.embedded-video) {
+    aspect-ratio: 16 / 9;
+    margin: 1rem 0;
+}
+
+.summary-description :deep(.embedded-video iframe) {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+    margin: 0;
+    border: 0;
+    border-radius: 0.5rem;
+}
+
 .content-loading {
     display: flex;
     align-items: center;

@@ -582,6 +582,21 @@ defineExpose({ scrollBy });
     margin: 1rem 0;
 }
 
+/* YouTube videos embedded in the content (see ArticleExtractor.restoreYoutubeEmbeds): full width, 16:9 */
+.post-modal-content :deep(.embedded-video) {
+    aspect-ratio: 16 / 9;
+    margin: 1rem 0;
+}
+
+.post-modal-content :deep(.embedded-video iframe) {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+    margin: 0;
+    border: 0;
+    border-radius: 0.5rem;
+}
+
 .post-modal-content :deep(p) {
     margin: 0 0 1em;
 }
