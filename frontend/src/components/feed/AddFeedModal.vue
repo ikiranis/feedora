@@ -1,99 +1,103 @@
 <template>
-    <div class="modal fade" id="addFeedModal" tabindex="-1" aria-labelledby="addFeedModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addFeedModalLabel">{{ language.get('Add Feed') }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form @submit.prevent="handleAddFeed">
-                        <div class="mb-3">
-                            <label for="feedUrl" class="form-label">{{ language.get('Feed URL') }}</label>
-                            <input 
-                                type="url" 
-                                class="form-control" 
-                                id="feedUrl"
-                                v-model="feedUrl"
-                                :placeholder="language.get('Enter the RSS feed or website URL')"
-                                @blur="fetchFeedTitle"
-                                required
-                            />
-                        </div>
-
-                        <div v-if="discoveredFeeds.length > 1" class="mb-3">
-                            <label for="discoveredFeed" class="form-label">{{ language.get('Feeds found on this page') }}</label>
-                            <select
-                                class="form-select"
-                                id="discoveredFeed"
-                                v-model="feedUrl"
-                                @change="fetchFeedTitle"
-                                :disabled="fetchingTitle"
-                            >
-                                <option v-for="feed in discoveredFeeds" :key="feed.url" :value="feed.url">
-                                    {{ feed.title ? `${feed.title} (${feed.url})` : feed.url }}
-                                </option>
-                            </select>
-                        </div>
-                        
-                        <div class="mb-3">
-                            <label for="feedTitle" class="form-label">{{ language.get('Feed Title') }}</label>
-                            <input 
-                                type="text" 
-                                class="form-control" 
-                                id="feedTitle"
-                                v-model="feedTitle"
-                                :placeholder="language.get('Auto-detected title')"
-                                readonly
-                            />
-                            <div v-if="fetchingTitle" class="form-text text-muted">
-                                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
-                                {{ language.get('Fetching feed title...') }}
+    <Teleport to="body">
+        <div class="modal fade" id="addFeedModal" tabindex="-1" aria-labelledby="addFeedModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addFeedModalLabel">{{ language.get('Add Feed') }}</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form @submit.prevent="handleAddFeed">
+                            <div class="mb-3">
+                                <label for="feedUrl" class="form-label">{{ language.get('Feed URL') }}</label>
+                                <input 
+                                    type="url" 
+                                    class="form-control" 
+                                    id="feedUrl"
+                                    ref="feedUrlInput"
+                                    v-model="feedUrl"
+                                    :placeholder="language.get('Enter the RSS feed or website URL')"
+                                    @blur="fetchFeedTitle"
+                                    required
+                                />
                             </div>
-                        </div>
 
-                        <div class="mb-3">
-                            <label for="feedFolder" class="form-label">{{ language.get('Select Folder') }}</label>
-                            <select 
-                                class="form-select" 
-                                id="feedFolder"
-                                v-model="selectedFolderId"
-                                required
-                            >
-                                <option value="">{{ language.get('Choose a folder for this feed') }}</option>
-                                <option value="default">{{ language.get('Default') }}</option>
-                                <option v-for="folder in folders" :key="folder.id" :value="folder.id">
-                                    {{ folder.name }}
-                                </option>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        {{ language.get('Close') }}
-                    </button>
-                    <button 
-                        type="button" 
-                        class="btn btn-primary" 
-                        @click="handleAddFeed"
-                        :disabled="!feedUrl || !selectedFolderId || adding"
-                    >
-                        <div v-if="adding" class="spinner-border spinner-border-sm me-2" role="status"></div>
-                        {{ language.get('Add') }}
-                    </button>
+                            <div v-if="discoveredFeeds.length > 1" class="mb-3">
+                                <label for="discoveredFeed" class="form-label">{{ language.get('Feeds found on this page') }}</label>
+                                <select
+                                    class="form-select"
+                                    id="discoveredFeed"
+                                    v-model="feedUrl"
+                                    @change="fetchFeedTitle"
+                                    :disabled="fetchingTitle"
+                                >
+                                    <option v-for="feed in discoveredFeeds" :key="feed.url" :value="feed.url">
+                                        {{ feed.title ? `${feed.title} (${feed.url})` : feed.url }}
+                                    </option>
+                                </select>
+                            </div>
+                        
+                            <div class="mb-3">
+                                <label for="feedTitle" class="form-label">{{ language.get('Feed Title') }}</label>
+                                <input 
+                                    type="text" 
+                                    class="form-control" 
+                                    id="feedTitle"
+                                    v-model="feedTitle"
+                                    :placeholder="language.get('Auto-detected title')"
+                                    readonly
+                                />
+                                <div v-if="fetchingTitle" class="form-text text-muted">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                                    {{ language.get('Fetching feed title...') }}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="feedFolder" class="form-label">{{ language.get('Select Folder') }}</label>
+                                <select 
+                                    class="form-select" 
+                                    id="feedFolder"
+                                    v-model="selectedFolderId"
+                                    required
+                                >
+                                    <option value="">{{ language.get('Choose a folder for this feed') }}</option>
+                                    <option value="default">{{ language.get('Default') }}</option>
+                                    <option v-for="folder in folders" :key="folder.id" :value="folder.id">
+                                        {{ folder.name }}
+                                    </option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            {{ language.get('Close') }}
+                        </button>
+                        <button 
+                            type="button" 
+                            class="btn btn-primary" 
+                            @click="handleAddFeed"
+                            :disabled="!feedUrl || !selectedFolderId || adding"
+                        >
+                            <div v-if="adding" class="spinner-border spinner-border-sm me-2" role="status"></div>
+                            {{ language.get('Add') }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </Teleport>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { language } from '@/functions/languageStore';
 import { getFolders } from '@/api/folder';
 import { addFeed, fetchFeedInfo } from '@/api/feed';
 import { errorStore } from '@/components/error/errorStore';
+import { addFeedStore } from '@/functions/addFeedStore';
 import type { DiscoveredFeed, FolderType } from '@/types';
 
 const feedUrl = ref('');
@@ -102,12 +106,9 @@ const selectedFolderId = ref('');
 const folders = ref<FolderType[]>([]);
 const adding = ref(false);
 const fetchingTitle = ref(false);
+const feedUrlInput = ref<HTMLInputElement | null>(null);
 // Feeds found when the URL is a web page instead of a feed, to choose from
 const discoveredFeeds = ref<DiscoveredFeed[]>([]);
-
-const emit = defineEmits<{
-    'feed-added': []
-}>();
 
 /**
  * Helper function to properly close the modal
@@ -153,15 +154,44 @@ const closeModal = () => {
 };
 
 /**
- * Fetches the list of folders when the component is mounted
+ * Fetches the list of folders
  */
-onMounted(async () => {
+const loadFolders = async () => {
     try {
         folders.value = await getFolders();
     } catch (error) {
         console.error('Failed to fetch folders:', error);
         folders.value = [];
     }
+};
+
+/**
+ * The modal stays mounted on every page, so the folders are reloaded each time it opens (they may have changed)
+ */
+const handleShow = () => {
+    addFeedStore.isOpen.value = true;
+    loadFolders();
+};
+
+const handleShown = () => feedUrlInput.value?.focus();
+
+const handleHidden = () => {
+    addFeedStore.isOpen.value = false;
+};
+
+onMounted(() => {
+    const modal = document.getElementById('addFeedModal');
+    modal?.addEventListener('show.bs.modal', handleShow);
+    modal?.addEventListener('shown.bs.modal', handleShown);
+    modal?.addEventListener('hidden.bs.modal', handleHidden);
+});
+
+onUnmounted(() => {
+    const modal = document.getElementById('addFeedModal');
+    modal?.removeEventListener('show.bs.modal', handleShow);
+    modal?.removeEventListener('shown.bs.modal', handleShown);
+    modal?.removeEventListener('hidden.bs.modal', handleHidden);
+    addFeedStore.isOpen.value = false;
 });
 
 /**
@@ -223,8 +253,8 @@ const handleAddFeed = async () => {
         selectedFolderId.value = '';
         discoveredFeeds.value = [];
         
-        // Emit event to parent to refresh feeds
-        emit('feed-added');
+        // Let the open page refresh its feeds
+        addFeedStore.addedCount.value++;
         
         // Close modal
         closeModal();

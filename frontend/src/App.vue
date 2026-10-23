@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import {language} from "./functions/languageStore.ts";
-import {onMounted, ref} from "vue";
+import {onMounted, onUnmounted, ref} from "vue";
 import {checkAppAlive} from "@/api/general.ts";
 import Sidebar from "@/components/Sidebar.vue";
 import ScanProgressBar from "@/components/ScanProgressBar.vue";
+import AddFeedModal from "@/components/feed/AddFeedModal.vue";
 import Page404 from "@/components/error/Page404.vue";
 import { themeStore } from "./functions/themeStore.ts";
 import { authStore } from "./functions/authStore.ts";
 import { mobileChromeStore } from "./functions/mobileChromeStore.ts";
+import { addFeedStore } from "./functions/addFeedStore.ts";
 
 const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed'
 const collapsed = ref(localStorage.getItem(SIDEBAR_COLLAPSED_KEY) !== 'false') // Collapsed by default, persisted in localStorage
@@ -19,7 +21,30 @@ onMounted(() => {
 
     // Run the update every 10 seconds
     setInterval(updateAppStatus, 60000);
+
+    window.addEventListener('keydown', handleKeydown);
 })
+
+onUnmounted(() => {
+    window.removeEventListener('keydown', handleKeydown);
+})
+
+/**
+ * A opens the add feed modal on every page, unless the user is typing or another modal is open.
+ * The physical key is checked too, so it works with non-Latin keyboard layouts (e.g. Greek).
+ */
+const handleKeydown = (event: KeyboardEvent) => {
+    if (!authStore.isAuthenticated.value) return;
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.key.toLowerCase() !== 'a' && event.code !== 'KeyA') return;
+
+    const target = event.target as HTMLElement | null;
+    if (target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
+    if (document.querySelector('.modal.show, .post-modal-backdrop')) return;
+
+    event.preventDefault();
+    addFeedStore.open();
+}
 
 /**
  * Check if the app is alive
@@ -92,6 +117,9 @@ const collapse = () => {
 
             <!-- Shown on every page while the feeds are scanned -->
             <ScanProgressBar/>
+
+            <!-- Opens from the Feeds page, or with A on every page -->
+            <AddFeedModal/>
         </div>
         
         <!-- Unauthenticated user layout - full screen router view -->

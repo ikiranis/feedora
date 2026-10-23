@@ -61,6 +61,7 @@ const shortcuts: { keys: string[], description: string }[] = [
     { keys: ['S'], description: 'Add the selected post to the favorites / remove it' },
     { keys: ['C'], description: 'Copy the link of the selected post to the clipboard' },
     { keys: ['W'], description: 'Show / hide the article of the link preview inside the selected post' },
+    { keys: ['A'], description: 'Add a feed (on every page)' },
     { keys: ['H'], description: 'Show / hide the keyboard shortcuts' },
 ];
 

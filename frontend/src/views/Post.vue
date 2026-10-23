@@ -404,6 +404,7 @@ import EditFolderModal from '@/components/folder/EditFolderModal.vue';
 import Error from '@/components/error/Error.vue'; // Changed from ErrorDisplay
 import { errorStore } from '@/components/error/errorStore'; // Import errorStore
 import { scanStore } from '@/functions/scanStore';
+import { addFeedStore } from '@/functions/addFeedStore';
 import { mobileChromeStore } from '@/functions/mobileChromeStore';
 import { confirmDialog } from '@/functions/javaDialogs';
 import { Dropdown, Modal } from 'bootstrap';
@@ -1322,8 +1323,8 @@ const getShortcutKey = (event: KeyboardEvent): string => {
  * H shows the help modal with all the keyboard shortcuts.
  */
 const handleKeydown = (event: KeyboardEvent) => {
-    // The logs modal handles its own keys (Esc closes it)
-    if (logsPost.value) return;
+    // The logs and add feed modals handle their own keys (Esc closes them)
+    if (logsPost.value || addFeedStore.isOpen.value) return;
     const target = event.target as HTMLElement | null;
     if (target && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))) return;
     if (event.altKey || event.ctrlKey || event.metaKey) return;

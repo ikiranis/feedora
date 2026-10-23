@@ -172,9 +172,6 @@
         </div>
     </div>
 
-    <!-- Add Feed Modal -->
-    <AddFeedModal @feed-added="handleFeedAdded" />
-
     <!-- Edit Feed Modal -->
     <EditFeedModal 
         :feed="editingFeed" 
@@ -208,13 +205,13 @@ import { getFeedsPaginated, importOPML as importOPMLApi, exportOPML as exportOPM
 import { Feed } from '@/types';
 import { language } from '@/functions/languageStore';
 import Error from '@/components/error/Error.vue';
-import AddFeedModal from '@/components/feed/AddFeedModal.vue';
 import EditFeedModal from '@/components/feed/EditFeedModal.vue';
 import LogsModal from '@/components/log/LogsModal.vue';
 import FeedStatisticsModal from '@/components/feed/FeedStatisticsModal.vue';
 import { errorStore } from '@/components/error/errorStore';
 import { parseFeeds } from '@/api/post';
 import { scanStore } from '@/functions/scanStore';
+import { addFeedStore } from '@/functions/addFeedStore';
 
 const feeds = ref<Feed[]>([]);
 const selectedFile = ref<File | null>(null);
@@ -566,6 +563,9 @@ const handleFeedAdded = async () => {
     loading.value = true;
     await fetchFeeds(true); // Refresh feeds
 };
+
+// The add feed modal lives in App.vue (it opens on every page with A)
+watch(addFeedStore.addedCount, handleFeedAdded);
 
 onMounted(() => {
     loading.value = true;

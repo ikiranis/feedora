@@ -403,6 +403,11 @@
         <language code="el">Εισάγετε την URL της RSS ροής ή του ιστότοπου</language>
     </entry>
 
+    <entry id="Add a feed (on every page)">
+        <language code="en">Add a feed (on every page)</language>
+        <language code="el">Προσθήκη ροής (σε κάθε σελίδα)</language>
+    </entry>
+
     <entry id="Feeds found on this page">
         <language code="en">Feeds found on this page</language>
         <language code="el">Ροές που βρέθηκαν σε αυτή τη σελίδα</language>
