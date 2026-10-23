@@ -536,6 +536,65 @@ class PostControllerTest extends ApiTestBase {
     }
 
     @Test
+    void linkContentIsExtractedFromThePageOfThePostsLink() throws Exception {
+        createFeeds();
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/article", 200, "text/html", articlePage());
+            Post post = createPost("Post", bbc, user, false, now);
+            post.setLinkUrl(server.url("/article"));
+            postRepository.save(post);
+
+            mockMvc.perform(auth(get("/api/posts/linkContent/" + post.getId())))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content", containsString("Readability needs a long enough article")));
+
+            assertThat(postRepository.findById(post.getId()).orElseThrow().getContent()).isNull();
+        }
+    }
+
+    @Test
+    void linkContentUsesTheLinkInTheDescriptionWithoutAStoredLink() throws Exception {
+        createFeeds();
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/article", 200, "text/html", articlePage());
+            Post post = createPost("Post", bbc, user, false, now);
+            post.setDescription("<p>Read this " + server.url("/article") + "</p>");
+            postRepository.save(post);
+
+            mockMvc.perform(auth(get("/api/posts/linkContent/" + post.getId())))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content", containsString("Readability needs a long enough article")));
+        }
+    }
+
+    @Test
+    void linkContentIsNullAndLoggedWhenThePageCantBeRead() throws Exception {
+        createFeeds();
+        try (TestHttpServer server = new TestHttpServer()) {
+            Post post = createPost("Post", bbc, user, false, now);
+            post.setLinkUrl(server.url("/missing"));
+            postRepository.save(post);
+
+            mockMvc.perform(auth(get("/api/posts/linkContent/" + post.getId())))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content").doesNotExist());
+
+            assertThat(logEntryRepository.findAll()).singleElement()
+                    .satisfies(log -> assertThat(log.getType()).isEqualTo(LogType.CONTENT_EXTRACT));
+        }
+    }
+
+    @Test
+    void linkContentOfAForeignPostIsNotFound() throws Exception {
+        User other = createUser("other", "other@example.com", "secret123");
+        Feed foreignFeed = createFeed("Foreign", "http://f.example/rss", null, other);
+        Post foreign = createPost("Foreign", foreignFeed, other, false, now);
+
+        mockMvc.perform(auth(get("/api/posts/linkContent/" + foreign.getId())))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void contentOfAForeignPostIsNotFound() throws Exception {
         User other = createUser("other", "other@example.com", "secret123");
         Feed foreignFeed = createFeed("Foreign", "http://f.example/rss", null, other);

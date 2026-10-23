@@ -85,7 +85,11 @@
                     </div>
                     <div v-else-if="contentHtml" ref="contentRef" class="post-modal-content" :class="{ 'tweet-content': isTweet }" v-html="contentHtml"
                         @error.capture="hideBrokenImage"></div>
-                    <LinkPreview v-if="linkPreview" :preview="linkPreview" large />
+                    <!-- Replaced by the article of its page when that's shown -->
+                    <LinkPreview v-if="linkPreview && !linkContentStore.isShown(post.id)" :preview="linkPreview" large />
+                    <LinkContent v-if="linkPreview" :post-id="post.id" v-slot="{ html }">
+                        <div class="post-modal-content" v-html="html" @error.capture="hideBrokenImage"></div>
+                    </LinkContent>
                 </article>
             </div>
             <!-- Shown for a moment after a swipe, before moving to the previous/next post -->
@@ -104,12 +108,14 @@
 <script setup lang="ts">
 import { PostType } from '@/types';
 import { postContentStore } from '@/functions/postContentStore';
+import { linkContentStore } from '@/functions/linkContentStore';
 import { hideBrokenImage } from '@/functions/hideBrokenImage';
 import { youtubeEmbedStore } from '@/functions/youtubeEmbedStore';
 import LiveBadge from '@/components/LiveBadge.vue';
 import VideoDuration from '@/components/VideoDuration.vue';
 import PostShareActions from '@/components/PostShareActions.vue';
 import LinkPreview from '@/components/LinkPreview.vue';
+import LinkContent from '@/components/LinkContent.vue';
 import { isTweetLink, removePreviewedLink, tweetLinkPreview } from '@/functions/tweet';
 import { muteVideos, playFirstVideo } from '@/functions/videoPlayback';
 import { language } from '@/functions/languageStore';

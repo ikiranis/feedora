@@ -207,7 +207,11 @@
             <div v-else-if="detailsHtml" ref="detailsRef" class="summary-description"
                 :class="{ 'post-content': fullContent }" v-html="detailsHtml"
                 @error.capture="hideBrokenImage"></div>
-            <LinkPreview v-if="linkPreview" :preview="linkPreview" large />
+            <!-- Replaced by the article of its page when that's shown -->
+            <LinkPreview v-if="linkPreview && !linkContentStore.isShown(post.id)" :preview="linkPreview" large />
+            <LinkContent v-if="linkPreview" :post-id="post.id" v-slot="{ html }">
+                <div class="summary-description post-content" v-html="html" @error.capture="hideBrokenImage"></div>
+            </LinkContent>
         </div>
     </div>
 </template>
@@ -216,6 +220,7 @@
 import { PostType } from '@/types';
 import { markAsRead } from '@/api/post';
 import { postContentStore } from '@/functions/postContentStore';
+import { linkContentStore } from '@/functions/linkContentStore';
 import { hideBrokenImage } from '@/functions/hideBrokenImage';
 import { youtubeEmbedStore } from '@/functions/youtubeEmbedStore';
 import { cardColorStore } from '@/functions/cardColorStore';
@@ -224,6 +229,7 @@ import VideoDuration from '@/components/VideoDuration.vue';
 import PostShareActions from '@/components/PostShareActions.vue';
 import CopyLinkButton from '@/components/CopyLinkButton.vue';
 import LinkPreview from '@/components/LinkPreview.vue';
+import LinkContent from '@/components/LinkContent.vue';
 import { isCardImage, isTweetGif, isTweetLink, plainText, removePreviewedLink, sameImage, tweetLinkPreview } from '@/functions/tweet';
 import { isModalOpen, pauseVideo, playFirstVideo, playVideo } from '@/functions/videoPlayback';
 import { language } from '@/functions/languageStore';

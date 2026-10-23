@@ -717,6 +717,34 @@ public class PostService {
     }
 
     /**
+     * Returns the article of the page a post links to (the link its preview shows, e.g. a tweet's link), to show it
+     * inside the post. Not stored, it's only read when asked for.
+     * @param postId The post's id
+     * @param user The post's owner
+     * @return Sanitized article HTML, or null if the post has no link or its page has no article (or couldn't be read, which is logged)
+     */
+    public String getLinkContent(UUID postId, User user) {
+        Post post = postRepository.findById(postId)
+                .filter(p -> p.getUser().getId().equals(user.getId()))
+                .orElseThrow(() -> new NotFoundException(Language.getActionString("Post not found")));
+
+        String url = post.getLinkUrl();
+        if (url == null) {
+            LinkPreviewExtractor.FoundLink link = LinkPreviewExtractor.findLink(post.getDescription());
+            url = link != null ? link.url() : null;
+        }
+        if (url == null) return null;
+
+        try {
+            return ArticleExtractor.extractFromUrl(url);
+        } catch (Exception e) {
+            logService.logPost(post, LogLevel.ERROR, LogType.CONTENT_EXTRACT,
+                    "Couldn't read the page of the post's link: " + e.getMessage(), LogService.describe(e));
+            return null;
+        }
+    }
+
+    /**
      * Returns paginated unread posts for a given user.
      * @param user The user
      * @param page The page number (1-indexed)

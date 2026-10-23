@@ -135,6 +135,15 @@ public class PostController {
         return result;
     }
 
+    // The article of the page the post's link preview shows (null if none could be read)
+    @GetMapping("/linkContent/{postId}")
+    public Map<String, Object> getLinkContent(@PathVariable UUID postId) {
+        User currentUser = userService.getCurrentUser();
+        Map<String, Object> result = new HashMap<>();
+        result.put("content", postService.getLinkContent(postId, currentUser));
+        return result;
+    }
+
     @PutMapping("/saved/{postId}")
     public ResponseEntity<Void> setPostSaved(@PathVariable UUID postId, @RequestParam boolean saved) {
         User currentUser = userService.getCurrentUser();

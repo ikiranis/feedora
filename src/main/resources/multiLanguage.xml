@@ -1868,4 +1868,29 @@
         <language code="el">Κλείσιμο μενού</language>
     </entry>
 
+    <entry id="Show the article">
+        <language code="en">Show the article</language>
+        <language code="el">Εμφάνιση του άρθρου</language>
+    </entry>
+
+    <entry id="Hide the article">
+        <language code="en">Hide the article</language>
+        <language code="el">Απόκρυψη του άρθρου</language>
+    </entry>
+
+    <entry id="Show the article of the link inside the post">
+        <language code="en">Show the article of the link inside the post</language>
+        <language code="el">Εμφάνιση του άρθρου του συνδέσμου μέσα στην ανάρτηση</language>
+    </entry>
+
+    <entry id="The article of the link couldn't be loaded">
+        <language code="en">The article of the link couldn't be loaded</language>
+        <language code="el">Δεν ήταν δυνατή η φόρτωση του άρθρου του συνδέσμου</language>
+    </entry>
+
+    <entry id="Show / hide the article of the link preview inside the selected post">
+        <language code="en">Show / hide the article of the link preview inside the selected post</language>
+        <language code="el">Εμφάνιση / απόκρυψη του άρθρου της προεπισκόπησης συνδέσμου μέσα στην επιλεγμένη ανάρτηση</language>
+    </entry>
+
 </root>

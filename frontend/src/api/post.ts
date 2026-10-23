@@ -104,6 +104,17 @@ export const getPostContent = async (postId: string): Promise<{ content: string 
 };
 
 /**
+ * Fetch the article of the page a post's link preview shows (e.g. the article a tweet links to), to show it inside the post.
+ * @param {string} postId - The UUID of the post
+ * @returns {Promise<string | null>} Sanitized article HTML, or null if none could be read
+ * @throws Error if the request fails
+ */
+export const getLinkContent = async (postId: string): Promise<string | null> => {
+    const response = await axios.get(config.defaultServer() + `/api/posts/linkContent/${postId}`);
+    return response.data.content;
+};
+
+/**
  * Trigger backend to parse the RSS feeds and update posts for the current user.
  * Only the feeds of a folder, or a single feed, are parsed when given; otherwise all of them.
  * @param {string | null} folderId - The folder whose feeds to parse, or null

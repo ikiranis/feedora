@@ -390,6 +390,8 @@ import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType, Feed } fro
 import { cardColorStore } from '@/functions/cardColorStore';
 import { language } from '@/functions/languageStore';
 import { postContentStore } from '@/functions/postContentStore';
+import { linkContentStore } from '@/functions/linkContentStore';
+import { tweetLinkPreview } from '@/functions/tweet';
 import PostElement from '@/components/PostElement.vue';
 import PostModal from '@/components/PostModal.vue';
 import LogsModal from '@/components/log/LogsModal.vue';
@@ -1316,6 +1318,7 @@ const getShortcutKey = (event: KeyboardEvent): string => {
  * In list mode, Up/Down scroll the list instead (so long expanded posts can be read) and Left/Right move between posts.
  * Enter or O opens the selected post in a modal (Esc closes it), B opens its link in a background tab, F saves it for later (or unsaves it),
  * S adds it to the favorites (or removes it), C copies its link to the clipboard.
+ * W shows (or hides) the article of its link preview inside it, opening it in the modal when only its card is shown.
  * H shows the help modal with all the keyboard shortcuts.
  */
 const handleKeydown = (event: KeyboardEvent) => {
@@ -1394,6 +1397,19 @@ const handleKeydown = (event: KeyboardEvent) => {
         case 'c':
             if (current >= 0 && posts.value[current]?.link) {
                 clipboardStore.copy(posts.value[current].link);
+                event.preventDefault();
+            }
+            return;
+        case 'w':
+            if (current >= 0 && posts.value[current] && tweetLinkPreview(posts.value[current])) {
+                const postId = posts.value[current].id;
+                // In grid mode the card can't show the article, so the post is opened with it shown
+                if (showDetails.value && !modalOpen.value) {
+                    modalOpen.value = true;
+                    if (!linkContentStore.isShown(postId)) linkContentStore.toggle(postId);
+                } else {
+                    linkContentStore.toggle(postId);
+                }
                 event.preventDefault();
             }
             return;
