@@ -7,6 +7,8 @@ import eu.apps4net.feedora.models.User;
 import eu.apps4net.feedora.repositories.FeedRepository;
 import eu.apps4net.feedora.repositories.FolderRepository;
 import eu.apps4net.feedora.repositories.PostRepository;
+import eu.apps4net.feedora.support.TestHttpServer;
+import eu.apps4net.feedora.utilities.FeedDiscovery;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,12 +22,14 @@ import org.springframework.data.domain.Sort;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -182,6 +186,62 @@ class FeedServiceTest {
     void fetchFeedInfoWrapsConnectionErrors() {
         assertThatThrownBy(() -> feedService.fetchFeedInfo("http://127.0.0.1:1/rss"))
                 .hasMessageStartingWith("Failed to fetch feed info");
+    }
+
+    @Test
+    void fetchFeedInfoFindsTheFeedsOfAWebPage() throws Exception {
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/", 200, "text/html", "<html><head>"
+                            + "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"Posts\" href=\"/feed\">"
+                            + "<link rel=\"alternate\" type=\"application/rss+xml\" title=\"Comments\" href=\"/comments/feed\">"
+                            + "</head></html>")
+                    .respond("/feed", 200, "application/rss+xml", TestHttpServer.rss("Site posts"));
+
+            Map<String, Object> feedInfo = feedService.fetchFeedInfo(server.url("/"));
+
+            assertThat(feedInfo.get("title")).isEqualTo("Site posts");
+            assertThat(feedInfo.get("url")).isEqualTo(server.url("/feed"));
+            assertThat(feedInfo.get("feeds")).isEqualTo(List.of(
+                    new FeedDiscovery.DiscoveredFeed(server.url("/feed"), "Posts"),
+                    new FeedDiscovery.DiscoveredFeed(server.url("/comments/feed"), "Comments")));
+        }
+    }
+
+    @Test
+    void fetchFeedInfoOfAFeedListsNoFeeds() throws Exception {
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/feed", 200, "application/rss+xml", TestHttpServer.rss("Site posts"));
+
+            Map<String, Object> feedInfo = feedService.fetchFeedInfo(server.url("/feed"));
+
+            assertThat(feedInfo.get("title")).isEqualTo("Site posts");
+            assertThat(feedInfo).doesNotContainKey("feeds");
+        }
+    }
+
+    @Test
+    void fetchFeedInfoFailsForAPageWithoutFeeds() throws Exception {
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/", 200, "text/html", "<html><body>Hello</body></html>");
+
+            assertThatThrownBy(() -> feedService.fetchFeedInfo(server.url("/")))
+                    .hasMessageStartingWith("Failed to fetch feed info");
+        }
+    }
+
+    @Test
+    void addSingleFeedSavesTheFeedOfAWebPage() throws Exception {
+        try (TestHttpServer server = new TestHttpServer()) {
+            server.respond("/", 200, "text/html",
+                            "<link rel=\"alternate\" type=\"application/rss+xml\" href=\"/feed\">")
+                    .respond("/feed", 200, "application/rss+xml", TestHttpServer.rss("Site posts"));
+            when(feedRepository.findByXmlUrlAndUser(server.url("/feed"), user)).thenReturn(java.util.Optional.empty());
+
+            feedService.addSingleFeed(server.url("/"), null, null, user);
+
+            verify(feedRepository).save(argThat(feed -> feed.getXmlUrl().equals(server.url("/feed"))
+                    && feed.getTitle().equals("Site posts")));
+        }
     }
 
     @Test

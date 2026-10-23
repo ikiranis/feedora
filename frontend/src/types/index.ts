@@ -45,6 +45,12 @@ export interface Feed {
 }
 
 // Parsing statistics of a feed, updated whenever the feed is parsed
+// A feed found on a web page, when adding a feed by the site's URL
+export interface DiscoveredFeed {
+    url: string;
+    title: string | null;
+}
+
 export interface FeedStatistics {
     lastCheckedAt: string | null;
     lastSuccessAt: string | null;

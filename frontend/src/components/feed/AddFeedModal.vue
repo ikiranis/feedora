@@ -15,10 +15,25 @@
                                 class="form-control" 
                                 id="feedUrl"
                                 v-model="feedUrl"
-                                :placeholder="language.get('Enter the RSS feed URL')"
+                                :placeholder="language.get('Enter the RSS feed or website URL')"
                                 @blur="fetchFeedTitle"
                                 required
                             />
+                        </div>
+
+                        <div v-if="discoveredFeeds.length > 1" class="mb-3">
+                            <label for="discoveredFeed" class="form-label">{{ language.get('Feeds found on this page') }}</label>
+                            <select
+                                class="form-select"
+                                id="discoveredFeed"
+                                v-model="feedUrl"
+                                @change="fetchFeedTitle"
+                                :disabled="fetchingTitle"
+                            >
+                                <option v-for="feed in discoveredFeeds" :key="feed.url" :value="feed.url">
+                                    {{ feed.title ? `${feed.title} (${feed.url})` : feed.url }}
+                                </option>
+                            </select>
                         </div>
                         
                         <div class="mb-3">
@@ -79,7 +94,7 @@ import { language } from '@/functions/languageStore';
 import { getFolders } from '@/api/folder';
 import { addFeed, fetchFeedInfo } from '@/api/feed';
 import { errorStore } from '@/components/error/errorStore';
-import type { FolderType } from '@/types';
+import type { DiscoveredFeed, FolderType } from '@/types';
 
 const feedUrl = ref('');
 const feedTitle = ref('');
@@ -87,6 +102,8 @@ const selectedFolderId = ref('');
 const folders = ref<FolderType[]>([]);
 const adding = ref(false);
 const fetchingTitle = ref(false);
+// Feeds found when the URL is a web page instead of a feed, to choose from
+const discoveredFeeds = ref<DiscoveredFeed[]>([]);
 
 const emit = defineEmits<{
     'feed-added': []
@@ -157,11 +174,18 @@ const fetchFeedTitle = async () => {
         fetchingTitle.value = true;
         const feedInfo = await fetchFeedInfo(feedUrl.value);
         feedTitle.value = feedInfo.title || '';
-        // Backend may resolve page URLs (e.g. YouTube channels) to their feed URL
+        // A web page's feeds; keep the list while one of its feeds is chosen
+        if (feedInfo.feeds) {
+            discoveredFeeds.value = feedInfo.feeds;
+        } else if (!discoveredFeeds.value.some(feed => feed.url === feedUrl.value)) {
+            discoveredFeeds.value = [];
+        }
+        // Backend may resolve page URLs (e.g. YouTube channels or sites) to their feed URL
         if (feedInfo.url) {
             feedUrl.value = feedInfo.url;
         }
     } catch (error) {
+        discoveredFeeds.value = [];
         console.error('Failed to fetch feed title:', error);
         errorStore.set(true, language.get('Failed to fetch feed title') || 'Failed to fetch feed title', 500);
     } finally {
@@ -197,6 +221,7 @@ const handleAddFeed = async () => {
         feedUrl.value = '';
         feedTitle.value = '';
         selectedFolderId.value = '';
+        discoveredFeeds.value = [];
         
         // Emit event to parent to refresh feeds
         emit('feed-added');

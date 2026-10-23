@@ -398,9 +398,14 @@
         <language code="el">URL Ροής</language>
     </entry>
 
-    <entry id="Enter the RSS feed URL">
-        <language code="en">Enter the RSS feed URL</language>
-        <language code="el">Εισάγετε την URL της RSS ροής</language>
+    <entry id="Enter the RSS feed or website URL">
+        <language code="en">Enter the RSS feed or website URL</language>
+        <language code="el">Εισάγετε την URL της RSS ροής ή του ιστότοπου</language>
+    </entry>
+
+    <entry id="Feeds found on this page">
+        <language code="en">Feeds found on this page</language>
+        <language code="el">Ροές που βρέθηκαν σε αυτή τη σελίδα</language>
     </entry>
 
     <entry id="Select Folder">

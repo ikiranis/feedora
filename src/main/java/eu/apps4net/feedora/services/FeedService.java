@@ -11,6 +11,7 @@ import eu.apps4net.feedora.repositories.FolderRepository;
 import eu.apps4net.feedora.repositories.PostRepository;
 import eu.apps4net.feedora.utilities.FaviconColorExtractor;
 import eu.apps4net.feedora.utilities.YouTubeChannelAvatar;
+import eu.apps4net.feedora.utilities.FeedDiscovery;
 import eu.apps4net.feedora.utilities.YouTubeFeedResolver;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -310,6 +311,20 @@ public class FeedService {
     public String addSingleFeed(String url, String folderId, String title, User user) throws Exception {
         url = YouTubeFeedResolver.resolve(url);
 
+        // If no title provided, fetch it from the feed (a web page's URL is replaced by its feed's URL)
+        Exception feedInfoError = null;
+        if (title == null || title.trim().isEmpty()) {
+            try {
+                Map<String, Object> feedInfo = fetchFeedInfo(url);
+                title = (String) feedInfo.get("title");
+                url = (String) feedInfo.get("url");
+            } catch (Exception e) {
+                // If we can't fetch title, use URL as fallback
+                title = url;
+                feedInfoError = e;
+            }
+        }
+
         // Check if feed already exists for this user
         if (feedRepository.findByXmlUrlAndUser(url, user).isPresent()) {
             throw new Exception(Language.getActionString("Feed already exists"));
@@ -320,19 +335,6 @@ public class FeedService {
             folder = folderRepository.findById(UUID.fromString(folderId)).orElse(null);
             if (folder == null || !folder.getUser().getId().equals(user.getId())) {
                 throw new Exception(Language.getActionString("Folder not found or doesn't belong to user"));
-            }
-        }
-
-        // If no title provided, fetch it from the feed
-        Exception feedInfoError = null;
-        if (title == null || title.trim().isEmpty()) {
-            try {
-                Map<String, Object> feedInfo = fetchFeedInfo(url);
-                title = (String) feedInfo.get("title");
-            } catch (Exception e) {
-                // If we can't fetch title, use URL as fallback
-                title = url;
-                feedInfoError = e;
             }
         }
 
@@ -349,70 +351,101 @@ public class FeedService {
 
     /**
      * Fetches feed information from a URL.
+     * If the URL is a web page instead of a feed, the page's feeds are found and the first one is read;
+     * all of them are returned in "feeds", for the user to choose from.
      *
-     * @param url The RSS feed URL
+     * @param url The RSS feed URL, or the URL of a web page that has feeds
      * @return Map containing feed information
      * @throws Exception if there is an error fetching the feed
      */
     public Map<String, Object> fetchFeedInfo(String url) throws Exception {
-        Map<String, Object> feedInfo = new HashMap<>();
-        
         try {
             url = YouTubeFeedResolver.resolve(url);
-            java.net.URI feedUri = java.net.URI.create(url);
-            java.net.HttpURLConnection connection = (java.net.HttpURLConnection) feedUri.toURL().openConnection();
-            connection.setRequestMethod("GET");
-            connection.setRequestProperty("User-Agent", "Feedora RSS Reader");
-            connection.setConnectTimeout(10000);
-            connection.setReadTimeout(10000);
-            
-            if (connection.getResponseCode() != 200) {
-                throw new Exception("HTTP " + connection.getResponseCode() + ": " + connection.getResponseMessage());
-            }
-            
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(connection.getInputStream());
-            doc.getDocumentElement().normalize();
-            
-            String title = "";
-            String description = "";
-            
-            // Try RSS format first
-            NodeList titleNodes = doc.getElementsByTagName("title");
-            if (titleNodes.getLength() > 0) {
-                Element titleElement = (Element) titleNodes.item(0);
-                if (titleElement.getParentNode().getNodeName().equals("channel")) {
-                    title = titleElement.getTextContent();
+            try {
+                return readFeedInfo(url);
+            } catch (Exception feedError) {
+                List<FeedDiscovery.DiscoveredFeed> feeds;
+                try {
+                    feeds = FeedDiscovery.discover(url);
+                } catch (Exception e) {
+                    throw feedError;
                 }
-            }
-            
-            // Try Atom format if RSS didn't work
-            if (title.isEmpty()) {
-                titleNodes = doc.getElementsByTagName("title");
-                for (int i = 0; i < titleNodes.getLength(); i++) {
-                    Element titleElement = (Element) titleNodes.item(i);
-                    if (titleElement.getParentNode().getNodeName().equals("feed")) {
-                        title = titleElement.getTextContent();
-                        break;
-                    }
+                if (feeds.isEmpty()) {
+                    throw feedError;
                 }
+
+                Map<String, Object> feedInfo = readFeedInfo(feeds.get(0).url());
+                feedInfo.put("feeds", feeds);
+                return feedInfo;
             }
-            
-            // Get description
-            NodeList descNodes = doc.getElementsByTagName("description");
-            if (descNodes.getLength() > 0) {
-                description = descNodes.item(0).getTextContent();
-            }
-            
-            feedInfo.put("title", title.isEmpty() ? "Untitled Feed" : title);
-            feedInfo.put("description", description);
-            feedInfo.put("url", url);
-            
         } catch (Exception e) {
             throw new Exception(Language.getActionString("Failed to fetch feed info").replace("{0}", e.getMessage()));
         }
-        
+    }
+
+    /**
+     * Downloads a feed and reads its title and description.
+     *
+     * @throws Exception if the URL can't be downloaded or isn't an RSS/Atom feed
+     */
+    private Map<String, Object> readFeedInfo(String url) throws Exception {
+        Map<String, Object> feedInfo = new HashMap<>();
+
+        java.net.URI feedUri = java.net.URI.create(url);
+        java.net.HttpURLConnection connection = (java.net.HttpURLConnection) feedUri.toURL().openConnection();
+        connection.setRequestMethod("GET");
+        connection.setRequestProperty("User-Agent", "Feedora RSS Reader");
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(10000);
+
+        if (connection.getResponseCode() != 200) {
+            throw new Exception("HTTP " + connection.getResponseCode() + ": " + connection.getResponseMessage());
+        }
+
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder builder = factory.newDocumentBuilder();
+        Document doc = builder.parse(connection.getInputStream());
+        doc.getDocumentElement().normalize();
+
+        // A well-formed XHTML page parses too, so check that it's a feed
+        String root = doc.getDocumentElement().getNodeName();
+        if (!root.equals("rss") && !root.equals("feed") && !root.endsWith("RDF")) {
+            throw new Exception("Not an RSS or Atom feed");
+        }
+
+        String title = "";
+        String description = "";
+
+        // Try RSS format first
+        NodeList titleNodes = doc.getElementsByTagName("title");
+        if (titleNodes.getLength() > 0) {
+            Element titleElement = (Element) titleNodes.item(0);
+            if (titleElement.getParentNode().getNodeName().equals("channel")) {
+                title = titleElement.getTextContent();
+            }
+        }
+
+        // Try Atom format if RSS didn't work
+        if (title.isEmpty()) {
+            titleNodes = doc.getElementsByTagName("title");
+            for (int i = 0; i < titleNodes.getLength(); i++) {
+                Element titleElement = (Element) titleNodes.item(i);
+                if (titleElement.getParentNode().getNodeName().equals("feed")) {
+                    title = titleElement.getTextContent();
+                    break;
+                }
+            }
+        }
+
+        // Get description
+        NodeList descNodes = doc.getElementsByTagName("description");
+        if (descNodes.getLength() > 0) {
+            description = descNodes.item(0).getTextContent();
+        }
+
+        feedInfo.put("title", title.isEmpty() ? "Untitled Feed" : title);
+        feedInfo.put("description", description);
+        feedInfo.put("url", url);
         return feedInfo;
     }
 
