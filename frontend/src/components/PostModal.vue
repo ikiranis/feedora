@@ -497,7 +497,9 @@ defineExpose({ scrollBy });
     border-radius: 0.5rem;
 }
 
+/* A link is inline, which Safari sizes to nothing, unlike Chrome (Bootstrap's .ratio only sets the width) */
 .video-thumbnail {
+    display: block;
     overflow: hidden;
     border-radius: 0.5rem;
     background-color: #000;
