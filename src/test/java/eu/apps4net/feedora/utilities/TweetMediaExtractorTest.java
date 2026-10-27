@@ -66,7 +66,7 @@ class TweetMediaExtractorTest {
 
         assertThat(TweetMediaExtractor.parseMedia(json, null).video()).isEqualTo(new TweetMediaExtractor.TweetVideo(
                 "https://video.twimg.com/tweet_video/g.mp4", "https://pbs.twimg.com/tweet_video_thumb/g.jpg"));
-        assertThat(TweetMediaExtractor.parseMedia("{\"mediaDetails\": []}", null)).isEqualTo(new TweetMediaExtractor.TweetMedia(null, List.of()));
+        assertThat(TweetMediaExtractor.parseMedia("{\"mediaDetails\": []}", null)).isEqualTo(new TweetMediaExtractor.TweetMedia(null, List.of(), List.of()));
         assertThat(TweetMediaExtractor.isGif("https://video.twimg.com/tweet_video/g.mp4")).isTrue();
         assertThat(TweetMediaExtractor.isGif("https://video.twimg.com/amplify_video/1/vid/a.mp4")).isFalse();
     }
@@ -80,10 +80,22 @@ class TweetMediaExtractorTest {
                  "quoted_tweet": {"mediaDetails": [{"type": "photo", "media_url_https": "https://pbs.twimg.com/media/q.jpg"}]}}""";
 
         assertThat(TweetMediaExtractor.parseMedia(json, null))
-                .isEqualTo(new TweetMediaExtractor.TweetMedia(null, List.of("https://pbs.twimg.com/media/a.jpg", "https://pbs.twimg.com/media/b.jpg")));
+                .isEqualTo(new TweetMediaExtractor.TweetMedia(null, List.of("https://pbs.twimg.com/media/a.jpg", "https://pbs.twimg.com/media/b.jpg"), List.of()));
         assertThat(TweetMediaExtractor.parseMedia("{\"quoted_tweet\": {\"mediaDetails\": [{\"type\": \"photo\", "
                 + "\"media_url_https\": \"https://pbs.twimg.com/media/q.jpg\"}]}}", null).photos())
                 .containsExactly("https://pbs.twimg.com/media/q.jpg");
+    }
+
+    @Test
+    void findsFullUrlsOfLinks() throws Exception {
+        String json = """
+                {"entities": {"urls": [
+                  {"display_url": "amna.gr/sport/article/…", "expanded_url": "https://www.amna.gr/sport/article/1032636/LIVE",
+                   "url": "https://t.co/WKixnfUmTc"},
+                  {"display_url": "x.com/AP/status/1", "expanded_url": "https://x.com/AP/status/1", "url": "https://t.co/b"}]}}""";
+
+        assertThat(TweetMediaExtractor.parseMedia(json, null).links())
+                .containsExactly("https://www.amna.gr/sport/article/1032636/LIVE", "https://x.com/AP/status/1");
     }
 
     @Test

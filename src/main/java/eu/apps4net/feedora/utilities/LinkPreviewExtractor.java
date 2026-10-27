@@ -4,8 +4,11 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Entities;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -21,6 +24,7 @@ public final class LinkPreviewExtractor {
     private static final Pattern URL = Pattern.compile("https?://[^\\s<>\"]+");
     // Twitter cuts long links in the text with an ellipsis; sentence punctuation after a link isn't part of it
     private static final Pattern TRAILING = Pattern.compile("[…\\.,;:!?)\\]»'\"]+$");
+    private static final Pattern HOST = Pattern.compile("https?://([^/?#:\\s]+)");
     private static final int MAX_URL_LENGTH = 2048;
     private static final int MAX_TITLE_LENGTH = 1000;
 
@@ -103,6 +107,98 @@ public final class LinkPreviewExtractor {
         if (photos.isEmpty()) return html;
         // The photos are laid out side by side (class added after sanitizing, which removes classes)
         return (html != null ? html : "") + "<div class=\"tweet-photos\">" + photos + "</div>";
+    }
+
+    /**
+     * Whether the text of a tweet's HTML has a link cut with an ellipsis, e.g. https://a.example/article/1/slug-cu…
+     * Some feeds give a tweet's text as Twitter shows it, so long links are cut (and sometimes mangled before the ellipsis).
+     */
+    public static boolean hasCutLink(String html) {
+        if (html == null) return false;
+        Matcher matcher = URL.matcher(Jsoup.parse(html).text());
+        while (matcher.find()) {
+            if (matcher.group().endsWith("…")) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Replaces the links cut with an ellipsis in the text of a tweet's HTML (see hasCutLink) with links to their full URL,
+     * as Twitter gives them (see TweetMediaExtractor). Each cut link gets the next full URL to the same site, in the order
+     * of the text, so a cut link nothing matches is left as is.
+     *
+     * @param html The tweet's description or content HTML
+     * @param links The full URLs of the tweet's links, in the order of its text
+     * @return The HTML with the full links, or the given HTML if it has no cut link to replace
+     */
+    public static String withFullLinks(String html, List<String> links) {
+        if (html == null || links.isEmpty() || !hasCutLink(html)) return html;
+        Document doc = Jsoup.parseBodyFragment(html);
+        doc.outputSettings().prettyPrint(false);
+
+        List<String> unused = new ArrayList<>(links);
+        boolean replaced = false;
+        for (TextNode text : textNodes(doc.body())) {
+            replaced |= replaceCutLinks(text, unused);
+        }
+        return replaced ? doc.body().html() : html;
+    }
+
+    /**
+     * Text nodes of an element and its descendants, outside of links.
+     */
+    private static List<TextNode> textNodes(Element element) {
+        List<TextNode> texts = new ArrayList<>();
+        for (Node child : element.childNodes()) {
+            if (child instanceof TextNode text) texts.add(text);
+            else if (child instanceof Element childElement && !childElement.nameIs("a")) texts.addAll(textNodes(childElement));
+        }
+        return texts;
+    }
+
+    /**
+     * Replaces the cut links of a text node with links to the first unused full URL to the same site, which is then used.
+     *
+     * @return Whether a link was replaced
+     */
+    private static boolean replaceCutLinks(TextNode text, List<String> unused) {
+        String value = text.getWholeText();
+        Matcher matcher = URL.matcher(value);
+        List<Node> nodes = new ArrayList<>();
+        int start = 0;
+        while (matcher.find()) {
+            if (!matcher.group().endsWith("…")) continue;
+            String full = fullLink(matcher.group(), unused);
+            if (full == null) continue;
+            unused.remove(full);
+            if (matcher.start() > start) nodes.add(new TextNode(value.substring(start, matcher.start())));
+            nodes.add(new Element("a").attr("href", full).attr("target", "_blank").attr("rel", "noopener noreferrer").text(full));
+            start = matcher.end();
+        }
+        if (nodes.isEmpty()) return false;
+        if (start < value.length()) nodes.add(new TextNode(value.substring(start)));
+        for (Node node : nodes) {
+            text.before(node);
+        }
+        text.remove();
+        return true;
+    }
+
+    /**
+     * First of the full URLs to the same site as a cut link (ignoring www.), or null if none is.
+     */
+    private static String fullLink(String cutLink, List<String> links) {
+        String site = site(TRAILING.matcher(cutLink).replaceFirst(""));
+        if (site == null) return null;
+        return links.stream().filter(link -> site.equals(site(link))).findFirst().orElse(null);
+    }
+
+    /**
+     * Host of a URL without www., read from the text since a cut link may not parse as a URI (e.g. a mangled path).
+     */
+    private static String site(String url) {
+        Matcher matcher = HOST.matcher(url);
+        return matcher.lookingAt() ? matcher.group(1).toLowerCase().replaceFirst("^www\\.", "") : null;
     }
 
     private static boolean isPreviewable(String url) {

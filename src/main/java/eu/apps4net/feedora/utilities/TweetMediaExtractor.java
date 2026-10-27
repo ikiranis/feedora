@@ -46,9 +46,10 @@ public final class TweetMediaExtractor {
     public record TweetVideo(String url, String thumbnail) {}
 
     /**
-     * A tweet's media: its video (null if none) and its photos (empty if none).
+     * A tweet's media: its video (null if none) and its photos (empty if none), along with the full URLs of the links
+     * in its text (feeds may give them cut, see LinkPreviewExtractor.withFullLinks).
      */
-    public record TweetMedia(TweetVideo video, List<String> photos) {}
+    public record TweetMedia(TweetVideo video, List<String> photos, List<String> links) {}
 
     private TweetMediaExtractor() {}
 
@@ -125,7 +126,19 @@ public final class TweetMediaExtractor {
         JsonNode tweet = MAPPER.readTree(json);
         List<String> photos = photos(tweet);
         if (photos.isEmpty()) photos = photos(tweet.path("quoted_tweet"));
-        return new TweetMedia(parseVideo(tweet, thumbnail), photos);
+        return new TweetMedia(parseVideo(tweet, thumbnail), photos, links(tweet));
+    }
+
+    /**
+     * Full URLs of the links in a tweet's text, in the order of the text.
+     */
+    private static List<String> links(JsonNode tweet) {
+        List<String> links = new ArrayList<>();
+        for (JsonNode link : tweet.path("entities").path("urls")) {
+            String url = link.path("expanded_url").asText("");
+            if (url.startsWith("http") && url.length() <= MAX_URL_LENGTH) links.add(url);
+        }
+        return links;
     }
 
     private static List<String> photos(JsonNode tweet) {

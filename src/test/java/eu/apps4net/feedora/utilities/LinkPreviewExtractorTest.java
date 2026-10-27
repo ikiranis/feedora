@@ -48,6 +48,27 @@ class LinkPreviewExtractorTest {
     }
 
     @Test
+    void replacesCutLinksWithTheirFullUrl() {
+        String description = "<p>Title<br/>https://amna.gr/macedonia/article/1034549/dimografiko-problimarn… and https://x.com/AP/status/1</p>";
+        String html = LinkPreviewExtractor.withFullLinks(description,
+                List.of("https://x.com/AP/status/1", "https://www.amna.gr/macedonia/article/1034549/dimografiko-problima"));
+
+        assertThat(html).isEqualTo("<p>Title<br><a href=\"https://www.amna.gr/macedonia/article/1034549/dimografiko-problima\" target=\"_blank\" "
+                + "rel=\"noopener noreferrer\">https://www.amna.gr/macedonia/article/1034549/dimografiko-problima</a> and https://x.com/AP/status/1</p>");
+        assertThat(LinkPreviewExtractor.hasCutLink(html)).isFalse();
+        assertThat(LinkPreviewExtractor.findLink(html).url()).isEqualTo("https://www.amna.gr/macedonia/article/1034549/dimografiko-problima");
+    }
+
+    @Test
+    void keepsCutLinksWithoutAFullUrlToTheSameSite() {
+        String description = "<p>Text https://a.example/article/slug-cu…</p>";
+
+        assertThat(LinkPreviewExtractor.hasCutLink(description)).isTrue();
+        assertThat(LinkPreviewExtractor.withFullLinks(description, List.of("https://b.example/article/slug-cut"))).isEqualTo(description);
+        assertThat(LinkPreviewExtractor.hasCutLink("<p>Text https://a.example/article</p>")).isFalse();
+    }
+
+    @Test
     void findsNoLinkInTextWithout() {
         assertThat(LinkPreviewExtractor.findLink("<p>No link <img src=\"https://pbs.twimg.com/media/a.jpg\"></p>")).isNull();
         assertThat(LinkPreviewExtractor.findLink(null)).isNull();

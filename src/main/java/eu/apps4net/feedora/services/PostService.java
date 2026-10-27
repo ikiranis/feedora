@@ -242,8 +242,9 @@ public class PostService {
                         }
                     }
                     List<String> liveCheckErrors = checkLiveStates(feed, user, postsToSave, youtubeApiKey);
-                    addLinkPreviews(postsToSave);
+                    // Before the link previews, which need the tweets' full links
                     addTweetMedia(postsToSave);
+                    addLinkPreviews(postsToSave);
                     matchLinkImagesToPhotos(postsToSave);
                     newPosts = savePosts(feed, postsToSave);
                     if (!liveCheckErrors.isEmpty()) {
@@ -377,6 +378,7 @@ public class PostService {
      * Adds the media the feed didn't give to new tweets published within LINK_PREVIEW_MAX_AGE_DAYS, before they're saved:
      * the video (MP4 URL) of tweets that show a video thumbnail, and the photos and video of tweets that show no image
      * at all (see TweetMediaExtractor). Tweets whose media couldn't be found are checked again when opened.
+     * Links the feed gave cut with an ellipsis get their full URL (see LinkPreviewExtractor.withFullLinks).
      *
      * @param newPosts The feed's new posts, not saved yet
      */
@@ -384,8 +386,7 @@ public class PostService {
         LocalDateTime oldest = LocalDateTime.now().minusDays(LINK_PREVIEW_MAX_AGE_DAYS);
         List<Post> tweets = newPosts.stream()
                 .filter(post -> LinkPreviewExtractor.isTweet(post.getLink()) && !post.getPubDate().isBefore(oldest))
-                .filter(post -> post.getVideo() == null)
-                .filter(post -> TweetMediaExtractor.mayHaveMissingMedia(post.getThumbnail(), contentOrDescription(post, post.getContent())))
+                .filter(post -> mayHaveMissingMedia(post) || LinkPreviewExtractor.hasCutLink(post.getDescription()))
                 .toList();
         if (tweets.isEmpty()) return;
 
@@ -395,7 +396,11 @@ public class PostService {
             for (Post post : tweets) {
                 tasks.add(executor.submit(() -> {
                     try {
-                        setMedia(post, TweetMediaExtractor.fetch(post.getLink(), videoThumbnail(post, post.getContent())));
+                        boolean missingMedia = mayHaveMissingMedia(post);
+                        TweetMediaExtractor.TweetMedia media = TweetMediaExtractor.fetch(post.getLink(), videoThumbnail(post, post.getContent()));
+                        if (media != null) post.setDescription(LinkPreviewExtractor.withFullLinks(post.getDescription(), media.links()));
+                        if (missingMedia) setMedia(post, media);
+                        if (media != null) setFullLinks(post, media.links());
                     } catch (Exception ignored) {
                         // Left unchecked, the tweet shows what the feed gave and is checked again when opened
                     }
@@ -411,6 +416,21 @@ public class PostService {
         } finally {
             executor.shutdownNow();
         }
+    }
+
+    private static boolean mayHaveMissingMedia(Post post) {
+        return post.getVideo() == null
+                && TweetMediaExtractor.mayHaveMissingMedia(post.getThumbnail(), contentOrDescription(post, post.getContent()));
+    }
+
+    /**
+     * Gives the cut links of a tweet's content their full URL, like its description.
+     */
+    private static void setFullLinks(Post post, List<String> links) {
+        String content = post.getContent();
+        if (content == null || !content.startsWith(LinkPreviewExtractor.TWEET_CONTENT_MARKER)) return;
+        String html = content.substring(LinkPreviewExtractor.TWEET_CONTENT_MARKER.length());
+        post.setContent(LinkPreviewExtractor.TWEET_CONTENT_MARKER + LinkPreviewExtractor.withFullLinks(html, links));
     }
 
     /**
