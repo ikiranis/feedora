@@ -22,6 +22,8 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     List<Post> findByUser(User user);
     List<Post> findByUser(User user, Pageable pageable);
     List<Post> findByUserAndReadFalse(User user);
+    // A post of the user with the given link, from any feed or saved from the browser
+    Optional<Post> findFirstByUserAndLink(User user, String link);
 
     // Excludes the YouTube Shorts of the feeds in the given folders, when hideShorts is true
     String NOT_HIDDEN_SHORT = " AND (:hideShorts = false OR p.link IS NULL OR p.link NOT LIKE '%youtube.com/shorts/%' OR " +

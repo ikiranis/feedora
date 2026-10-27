@@ -11,6 +11,7 @@ import eu.apps4net.feedora.support.ApiTestBase;
 import eu.apps4net.feedora.support.TestHttpServer;
 import eu.apps4net.feedora.utilities.ArticleExtractor;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDateTime;
@@ -463,6 +464,98 @@ class PostControllerTest extends ApiTestBase {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value("Post not found"))
                 .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    void savePageAddsASavedPostWithoutAFeed() throws Exception {
+        createFeeds();
+        createPost("Unread", bbc, user, false, now);
+        String body = "{\"url\":\"https://blog.example/article\",\"title\":\" Article \",\"description\":\"Summary\","
+                + "\"thumbnail\":\"https://blog.example/image.jpg\",\"author\":\"Jane\",\"pubDate\":\"2024-05-01T10:00:00Z\"}";
+
+        mockMvc.perform(auth(post("/api/posts/savePage")).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk())
+                .andExpect(content().string("Page saved"));
+
+        mockMvc.perform(auth(get("/api/posts/getPosts").param("page", "1").param("pageSize", "10").param("saved", "true")))
+                .andExpect(jsonPath("$[*].title", contains("Article")))
+                .andExpect(jsonPath("$[0].link").value("https://blog.example/article"))
+                .andExpect(jsonPath("$[0].description").value("Summary"))
+                .andExpect(jsonPath("$[0].thumbnail").value("https://blog.example/image.jpg"))
+                .andExpect(jsonPath("$[0].author").value("Jane"))
+                .andExpect(jsonPath("$[0].pubDate").value(containsString("2024-05-01")))
+                .andExpect(jsonPath("$[0].feed").doesNotExist());
+
+        // Not in the newsfeed, which only has the posts of the feeds
+        mockMvc.perform(auth(get("/api/posts/getPosts").param("page", "1").param("pageSize", "10")))
+                .andExpect(jsonPath("$[*].title", contains("Unread")));
+        mockMvc.perform(auth(get("/api/posts/unreadCounts")))
+                .andExpect(jsonPath("$.total").value(1))
+                .andExpect(jsonPath("$.saved").value(1));
+    }
+
+    @Test
+    void savePageSavesTheExistingPostOfThatLink() throws Exception {
+        createFeeds();
+        Post post = createPost("From feed", bbc, user, false, now);
+        String body = "{\"url\":\"" + post.getLink() + "\",\"title\":\"Other title\"}";
+
+        mockMvc.perform(auth(post("/api/posts/savePage")).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk());
+        mockMvc.perform(auth(post("/api/posts/savePage")).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk());
+
+        assertThat(postRepository.findAll()).hasSize(1);
+        Post saved = postRepository.findById(post.getId()).orElseThrow();
+        assertThat(saved.isSaved()).isTrue();
+        assertThat(saved.getTitle()).isEqualTo("From feed");
+    }
+
+    @Test
+    void savePageWithoutTitleOrDateUsesTheUrlAndNow() throws Exception {
+        mockMvc.perform(auth(post("/api/posts/savePage")).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"url\":\"https://blog.example/page\",\"pubDate\":\"yesterday\",\"thumbnail\":\"javascript:alert(1)\"}"))
+                .andExpect(status().isOk());
+
+        Post saved = postRepository.findAll().get(0);
+        assertThat(saved.getTitle()).isEqualTo("https://blog.example/page");
+        assertThat(saved.getPubDate()).isAfter(now.minusMinutes(1));
+        assertThat(saved.getThumbnail()).isNull();
+        assertThat(saved.getFeed()).isNull();
+        assertThat(saved.getUser().getId()).isEqualTo(user.getId());
+    }
+
+    @Test
+    void savePageRejectsNonWebUrls() throws Exception {
+        for (String url : new String[]{"", "chrome://extensions", "file:///etc/passwd", "javascript:alert(1)"}) {
+            mockMvc.perform(auth(post("/api/posts/savePage")).contentType(MediaType.APPLICATION_JSON).content("{\"url\":\"" + url + "\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+        assertThat(postRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    void savePageRequiresAuthentication() throws Exception {
+        mockMvc.perform(post("/api/posts/savePage").contentType(MediaType.APPLICATION_JSON).content("{\"url\":\"https://blog.example/\"}"))
+                .andExpect(status().is4xxClientError());
+        assertThat(postRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    void unsavingASavedPageMarksItAsReadForTheCleanup() throws Exception {
+        mockMvc.perform(auth(post("/api/posts/savePage")).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"url\":\"https://blog.example/page\"}"))
+                .andExpect(status().isOk());
+        Post page = postRepository.findAll().get(0);
+        assertThat(page.isRead()).isFalse();
+
+        mockMvc.perform(auth(put("/api/posts/saved/" + page.getId()).param("saved", "false")))
+                .andExpect(status().isOk());
+
+        Post unsaved = postRepository.findById(page.getId()).orElseThrow();
+        assertThat(unsaved.isSaved()).isFalse();
+        assertThat(unsaved.isRead()).isTrue();
+        assertThat(unsaved.getReadAt()).isNotNull();
     }
 
     @Test

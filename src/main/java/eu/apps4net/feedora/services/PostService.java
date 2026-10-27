@@ -43,7 +43,10 @@ import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.net.URI;
+import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -1165,7 +1168,76 @@ public class PostService {
                 .filter(p -> p.getUser().getId().equals(user.getId()))
                 .orElseThrow(() -> new NotFoundException(Language.getActionString("Post not found")));
         post.setSaved(saved);
+        // A page saved from the browser has no feed to show it in once removed from the saved posts, so it's marked
+        // as read for the cleanup to delete it later
+        if (!saved && post.getFeed() == null && !post.isFavorite() && !post.isRead()) {
+            post.setRead(true);
+            post.setReadAt(LocalDateTime.now());
+        }
         postRepository.save(post);
+    }
+
+    /**
+     * Saves a web page for later, e.g. the page open in the browser, sent by the extension.
+     * If the user already has a post with that link (from a feed, or saved before), that post is saved instead.
+     * Otherwise a post without a feed is added, whose content is read from the page when it's opened.
+     *
+     * @param user The user
+     * @param url The page URL (http or https)
+     * @param title The page title, or null to use the URL
+     * @param description Summary of the page, or null
+     * @param thumbnail Image for the post's card, or null
+     * @param author The page author, or null
+     * @param pubDate When the page was published (ISO 8601, with or without offset), or null (or unreadable) for now
+     * @return The saved post
+     * @throws IllegalArgumentException if the URL isn't a web page URL
+     */
+    public Post savePage(User user, String url, String title, String description, String thumbnail, String author, String pubDate) {
+        if (!isWebUrl(url) || url.length() > 2048) {
+            throw new IllegalArgumentException(Language.getActionString("Invalid page URL"));
+        }
+
+        Post post = postRepository.findFirstByUserAndLink(user, url).orElse(null);
+        if (post == null) {
+            post = new Post(truncate(blankToNull(title) != null ? title.trim() : url, 1000), url, blankToNull(description),
+                    parseDate(pubDate), truncate(blankToNull(author), 255), false);
+            post.setThumbnail(isWebUrl(thumbnail) && thumbnail.length() <= 2048 ? thumbnail : null);
+            post.setUser(user);
+        }
+        post.setSaved(true);
+        return postRepository.save(post);
+    }
+
+    private static boolean isWebUrl(String value) {
+        if (value == null) return false;
+        try {
+            String scheme = URI.create(value.trim()).getScheme();
+            return "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme);
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+    }
+
+    // A date of a web page, in the server's time zone like the feeds' dates; now if missing or unreadable
+    private static LocalDateTime parseDate(String value) {
+        if (value == null || value.isBlank()) return LocalDateTime.now();
+        try {
+            return OffsetDateTime.parse(value.trim()).atZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime();
+        } catch (DateTimeParseException e) {
+            try {
+                return LocalDateTime.parse(value.trim());
+            } catch (DateTimeParseException e2) {
+                return LocalDateTime.now();
+            }
+        }
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value;
+    }
+
+    private static String truncate(String value, int maxLength) {
+        return value != null && value.length() > maxLength ? value.substring(0, maxLength) : value;
     }
 
     /**

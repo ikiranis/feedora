@@ -1,4 +1,4 @@
-// Toolbar popup: lists the feeds of the current page and adds them to Feedora,
+// Toolbar popup: saves the current page to Feedora's saved posts, lists the feeds of the page and adds them to Feedora,
 // and enables the extension on the site Feedora runs on.
 
 const statusEl = document.getElementById('status');
@@ -32,6 +32,49 @@ function findFeeds() {
     }
 
     return feeds;
+}
+
+// Runs in the page: what Feedora shows of it as a saved post, from its Open Graph and other meta tags
+function readPage() {
+    const meta = (...names) => {
+        for (const name of names) {
+            const element = document.querySelector(`meta[property="${name}"], meta[name="${name}"], meta[itemprop="${name}"]`);
+            const value = element && (element.content || '').trim();
+            if (value) return value;
+        }
+        return null;
+    };
+    const absolute = (value) => {
+        try {
+            const url = new URL(value, location.href);
+            return url.protocol === 'http:' || url.protocol === 'https:' ? url.href : null;
+        } catch {
+            return null;
+        }
+    };
+
+    // The canonical URL matches the post of a feed better (no tracking parameters), unless it points elsewhere,
+    // e.g. some sites give their home page as the canonical URL of every page
+    let url = location.href;
+    const canonical = document.querySelector('link[rel="canonical"][href]');
+    const canonicalUrl = canonical && absolute(canonical.getAttribute('href'));
+    if (canonicalUrl && new URL(canonicalUrl).hostname.replace(/^www\./, '') === location.hostname.replace(/^www\./, '')
+            && (new URL(canonicalUrl).pathname !== '/' || location.pathname === '/')) {
+        url = canonicalUrl;
+    }
+
+    const image = meta('og:image', 'og:image:url', 'twitter:image', 'twitter:image:src');
+    // article:author is often a profile URL rather than a name
+    const author = [meta('author'), meta('article:author'), meta('twitter:creator')].find((value) => value && !/^https?:/.test(value));
+
+    return {
+        url,
+        title: meta('og:title', 'twitter:title') || document.title.trim() || null,
+        description: meta('og:description', 'description', 'twitter:description'),
+        thumbnail: image ? absolute(image) : null,
+        author: author || null,
+        pubDate: meta('article:published_time', 'datePublished', 'date', 'pubdate'),
+    };
 }
 
 // Runs in a page: the Feedora session, if it is a Feedora tab (marked by content.js)
@@ -79,6 +122,11 @@ const api = async (session, path, options = {}) => {
     }
     return response;
 };
+
+// The error to show for a failed call to Feedora
+const errorText = (session, error) => error instanceof TypeError
+    ? `Could not reach Feedora at ${session.server}`
+    : error.message;
 
 const loadFolders = async (session) => {
     const response = await api(session, '/api/folders');
@@ -138,9 +186,7 @@ const renderFeed = (session, feed) => {
             button.textContent = response.ok ? 'Added' : 'Add';
             button.disabled = response.ok;
         } catch (error) {
-            result.textContent = error instanceof TypeError
-                ? `Could not reach Feedora at ${session.server}`
-                : error.message;
+            result.textContent = errorText(session, error);
             result.className = 'feed-result error';
             button.disabled = false;
         }
@@ -151,7 +197,63 @@ const renderFeed = (session, feed) => {
     feedsEl.append(item);
 };
 
-const showFeeds = async (tab) => {
+const showPage = async (tab, sessionPromise) => {
+    let page;
+    try {
+        const [injection] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: readPage });
+        page = injection.result;
+    } catch {
+        // Pages the extension can't script (e.g. the browser's web store) are saved with just their address and title
+    }
+    if (!page) {
+        page = { url: tab.url, title: tab.title || null };
+    }
+
+    const titleEl = document.getElementById('page-title');
+    const urlEl = document.getElementById('page-url');
+    const button = document.getElementById('save-page');
+    const result = document.getElementById('page-result');
+
+    titleEl.textContent = page.title || new URL(page.url).hostname;
+    titleEl.title = page.title || '';
+    urlEl.textContent = page.url;
+    urlEl.title = page.url;
+    document.getElementById('page').hidden = false;
+
+    const showResult = (text, ok) => {
+        result.textContent = text;
+        result.className = `feed-result ${ok ? 'ok' : 'error'}`;
+        result.hidden = false;
+    };
+
+    const session = await sessionPromise;
+    if (!session) {
+        showResult('Open Feedora in a tab and sign in to save this page.', false);
+        return;
+    }
+    button.disabled = false;
+
+    button.addEventListener('click', async () => {
+        button.disabled = true;
+        result.hidden = true;
+        try {
+            const response = await api(session, '/api/posts/savePage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(page),
+            });
+            const text = await response.text();
+            showResult(text || (response.ok ? 'Page saved' : `Error ${response.status}`), response.ok);
+            button.textContent = response.ok ? 'Saved' : 'Save';
+            button.disabled = response.ok;
+        } catch (error) {
+            showResult(errorText(session, error), false);
+            button.disabled = false;
+        }
+    });
+};
+
+const showFeeds = async (tab, sessionPromise) => {
     let feeds = [];
     try {
         const [injection] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: findFeeds });
@@ -166,7 +268,7 @@ const showFeeds = async (tab) => {
         return;
     }
 
-    let session = await findSession();
+    let session = await sessionPromise;
     let status = feeds.length === 1 ? '' : `${feeds.length} feeds found.`;
     if (!session) {
         status = 'Open Feedora in a tab and sign in to add a feed.';
@@ -174,7 +276,7 @@ const showFeeds = async (tab) => {
         try {
             await loadFolders(session);
         } catch (error) {
-            status = error instanceof TypeError ? `Could not reach Feedora at ${session.server}` : error.message;
+            status = errorText(session, error);
             session = null;
         }
     }
@@ -230,10 +332,12 @@ const showEnable = async (tab) => {
 (async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab || !tab.url || !/^https?:/.test(tab.url)) {
-        setStatus('Open a web page to look for its feed.');
+        setStatus('Open a web page to save it or look for its feed.');
         return;
     }
 
     showEnable(tab);
-    await showFeeds(tab);
+    // Looked up once for both sections
+    const sessionPromise = findSession();
+    await Promise.all([showPage(tab, sessionPromise), showFeeds(tab, sessionPromise)]);
 })();

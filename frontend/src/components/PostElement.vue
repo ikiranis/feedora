@@ -35,7 +35,7 @@
             <div class="post-source">
                 <img v-if="siteIcon" :src="siteIcon" class="site-icon source-icon" alt="" loading="lazy" @error="iconFailed = true" />
                 <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
-                    @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ tweetAuthor || post.feed?.title }}</span>
+                    @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ tweetAuthor || postSource(post) }}</span>
                 <span v-if="post.feed?.folderName" class="post-folder text-truncate">&middot; {{ post.feed.folderName }}</span>
             </div>
             <!-- Without a title, the tweet text takes its place and opens the post in the modal -->
@@ -90,10 +90,10 @@
         <div v-if="!selected" class="list-line">
             <button type="button" class="read-dot" :class="{ unread: !post.read }" @click.stop="emit('toggle-read', post.id)"
                 :title="post.read ? (language.get('Mark as unread') || 'Mark as unread') : (language.get('Mark as read') || 'Mark as read')"></button>
-            <div class="list-source" :title="post.feed?.folderName ? `${post.feed?.title} — ${post.feed.folderName}` : post.feed?.title">
+            <div class="list-source" :title="post.feed?.folderName ? `${post.feed.title} — ${post.feed.folderName}` : postSource(post)">
                 <img v-if="siteIcon" :src="siteIcon" class="site-icon list-source-icon" alt="" loading="lazy" @error="iconFailed = true" />
                 <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
-                    @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ post.feed?.title }}</span>
+                    @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ postSource(post) }}</span>
             </div>
             <div class="list-main">
                 <span v-if="youtubeVideo" class="list-video-badge">
@@ -137,7 +137,7 @@
                 <div class="details-meta">
                     <img v-if="siteIcon" :src="siteIcon" class="details-icon" alt="" @error="iconFailed = true" />
                     <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
-                        @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ post.feed?.title }}</span>
+                        @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ postSource(post) }}</span>
                     <span v-if="post.author" class="text-truncate">&middot; {{ post.author }}</span>
                     <span v-if="post.pubDate" class="flex-shrink-0">&middot; {{ new Date(post.pubDate).toLocaleString() }}</span>
                 </div>
@@ -233,6 +233,7 @@ import LinkContent from '@/components/LinkContent.vue';
 import { isCardImage, isTweetGif, isTweetLink, plainText, removePreviewedLink, sameImage, tweetLinkPreview } from '@/functions/tweet';
 import { isModalOpen, pauseVideo, playFirstVideo, playVideo } from '@/functions/videoPlayback';
 import { language } from '@/functions/languageStore';
+import { postSource } from '@/functions/postSource';
 import { computed, nextTick, ref, watch } from 'vue';
 
 const props = defineProps<{

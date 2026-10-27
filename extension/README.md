@@ -5,6 +5,7 @@ Browser extension that:
 - lets Feedora open posts in a **background tab** when you press **B** on a selected post. Web pages can't open
   background tabs on their own, so the app hands the link to this extension. Without the extension, B still works
   but the browser switches to the new tab.
+- **saves the page you're on** to Feedora's **Saved** posts from its toolbar popup.
 - **adds the feed of the page you're on** to Feedora from its toolbar popup.
 
 ## Install
@@ -34,6 +35,16 @@ the site when the browser asks. The badge shows **ON**, B works right away, and 
 
 To disable it on a site, remove the extension's access to it in the browser's extension settings.
 
+## Saving a page
+
+1. Open Feedora and sign in once, so the extension knows your server and session.
+2. On any page, click the toolbar button and click **Save** under **This page**.
+
+The page appears in Feedora's **Saved** view, with the title, summary, image, author and date from its meta tags
+(Open Graph and the like). Its article is read from the page when you open it in Feedora. If one of your feeds
+already has a post with that link, that post is saved instead of adding a second one. Saved pages aren't in the
+newsfeed; removing one from the saved posts marks it as read, and it is deleted later like other read posts.
+
 ## Adding a page's feed
 
 1. Open Feedora and sign in once, so the extension knows your server and session.
@@ -56,4 +67,6 @@ For adding feeds, the app marks `<html>` with `data-feedora-server` (its API URL
 sends that URL and the login token (`auth_token` in the page's localStorage) to `background.js` when the page loads
 and when you leave the tab; it is kept in the extension's own storage. The popup first reads the session straight
 from an open Feedora tab (falling back to the page's origin on app builds without `data-feedora-server`), then finds the page's feeds with
-`chrome.scripting.executeScript` and calls `/api/folders` and `/api/feed/addFeed` with that token.
+`chrome.scripting.executeScript` and calls `/api/folders` and `/api/feed/addFeed` with that token. To save a page,
+it reads the page's URL (its canonical URL when that is on the same site) and meta tags the same way, and posts them
+to `/api/posts/savePage`.

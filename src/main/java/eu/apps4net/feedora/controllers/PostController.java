@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -151,6 +152,19 @@ public class PostController {
         return ResponseEntity.ok().build();
     }
 
+    // Saves a web page (e.g. the one open in the browser, sent by the extension) as a saved post
+    @PostMapping("/savePage")
+    public ResponseEntity<String> savePage(@RequestBody SavePageRequest request) {
+        User currentUser = userService.getCurrentUser();
+        try {
+            postService.savePage(currentUser, request.url, request.title, request.description, request.thumbnail,
+                    request.author, request.pubDate);
+            return ResponseEntity.ok(Language.getActionString("Page saved"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
     @PutMapping("/favorite/{postId}")
     public ResponseEntity<Void> setPostFavorite(@PathVariable UUID postId, @RequestParam boolean favorite) {
         User currentUser = userService.getCurrentUser();
@@ -190,5 +204,15 @@ public class PostController {
             return ResponseEntity.ok("Post marked as unread");
         }
         return ResponseEntity.badRequest().body("Failed to mark post as unread");
+    }
+
+    public static class SavePageRequest {
+        public String url;
+        public String title;
+        public String description;
+        public String thumbnail;
+        public String author;
+        // ISO 8601, e.g. from the page's article:published_time
+        public String pubDate;
     }
 }

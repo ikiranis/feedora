@@ -219,6 +219,7 @@ All data is in the `db/` folder. Stop the application and copy that folder to ba
 The `extension/` folder contains an optional browser extension that:
 
 - opens posts in a **background tab** when you press **B**, which web pages can't do on their own
+- **saves the page you're on** to Feedora's **Saved** posts from its toolbar popup
 - **adds the feed of the page you're on** to Feedora from its toolbar popup
 
 **Chrome / Edge / Brave:** open `chrome://extensions`, enable **Developer mode**, click **Load unpacked** and select the `extension` folder.

@@ -141,7 +141,8 @@ export interface PostType {
     liveStartAt: string | null;
     // YouTube videos: length in seconds, null if unknown (e.g. scheduled or live streams)
     duration: number | null;
-    feed: Feed;
+    // Null for pages saved from the browser (see the extension)
+    feed: Feed | null;
     user: UserType;
 }
 

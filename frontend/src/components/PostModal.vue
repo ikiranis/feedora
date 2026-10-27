@@ -20,7 +20,7 @@
                         <div class="post-modal-meta">
                             <img v-if="siteIcon" :src="siteIcon" class="post-modal-icon" alt="" @error="iconFailed = true" />
                             <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
-                                @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ post.feed?.title }}</span>
+                                @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ postSource(post) }}</span>
                             <span v-if="post.author" class="text-truncate">&middot; {{ post.author }}</span>
                             <span v-if="post.pubDate" class="flex-shrink-0">&middot; {{ new Date(post.pubDate).toLocaleString() }}</span>
                         </div>
@@ -119,6 +119,7 @@ import LinkContent from '@/components/LinkContent.vue';
 import { isTweetLink, removePreviewedLink, tweetLinkPreview } from '@/functions/tweet';
 import { muteVideos, playFirstVideo } from '@/functions/videoPlayback';
 import { language } from '@/functions/languageStore';
+import { postSource } from '@/functions/postSource';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const props = defineProps<{

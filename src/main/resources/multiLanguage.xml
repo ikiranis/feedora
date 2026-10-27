@@ -1049,6 +1049,16 @@
         <language code="el">Το άρθρο δεν βρέθηκε</language>
     </entry>
 
+    <entry id="Page saved">
+        <language code="en">Page saved</language>
+        <language code="el">Η σελίδα αποθηκεύτηκε</language>
+    </entry>
+
+    <entry id="Invalid page URL">
+        <language code="en">Only web pages (http or https) can be saved</language>
+        <language code="el">Μόνο ιστοσελίδες (http ή https) μπορούν να αποθηκευτούν</language>
+    </entry>
+
     <entry id="Live">
         <language code="en">Live</language>
         <language code="el">Ζωντανά</language>
