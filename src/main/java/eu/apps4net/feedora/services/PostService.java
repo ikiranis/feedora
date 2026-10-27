@@ -53,11 +53,14 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
@@ -96,6 +99,11 @@ public class PostService {
     private static final int LINK_PREVIEW_THREADS = 4;
     // Photos of a tweet compared with its link preview's image (tweets have up to 4)
     private static final int MAX_COMPARED_PHOTOS = 4;
+    // New tweets are left out if another feed added a post of their link published within this many days
+    private static final int OTHER_FEED_POST_MAX_AGE_DAYS = 14;
+    // Tweets left out (user id and tweet link), so their link isn't read again on every check; forgotten past this size
+    private final Set<String> skippedTweets = ConcurrentHashMap.newKeySet();
+    private static final int MAX_SKIPPED_TWEETS = 10_000;
 
     /**
      * Checks all the feeds of a user for new posts, and adds them as Posts in the database.
@@ -209,7 +217,7 @@ public class PostService {
                             continue;
                         }
 
-                        if (entry.getLink() != null && !knownLinks.add(entry.getLink())) {
+                        if (entry.getLink() != null && (!knownLinks.add(entry.getLink()) || skippedTweets.contains(skippedTweetKey(user, entry.getLink())))) {
                             continue;
                         }
 
@@ -245,6 +253,7 @@ public class PostService {
                     // Before the link previews, which need the tweets' full links
                     addTweetMedia(postsToSave);
                     addLinkPreviews(postsToSave);
+                    removeTweetsOfOtherFeedsPosts(feed, user, postsToSave);
                     matchLinkImagesToPhotos(postsToSave);
                     newPosts = savePosts(feed, postsToSave);
                     if (!liveCheckErrors.isEmpty()) {
@@ -372,6 +381,39 @@ public class PostService {
         } finally {
             executor.shutdownNow();
         }
+    }
+
+    /**
+     * Leaves out the new tweets whose link preview is the page of a post another feed of the user added (published within
+     * OTHER_FEED_POST_MAX_AGE_DAYS), e.g. a news site's tweet of an article from its own feed, so the article shows once.
+     * Pages are compared by LinkPreviewExtractor.pageKey. The tweets left out are remembered, so they aren't read again.
+     *
+     * @param feed The feed of the new posts
+     * @param user The user of the feed
+     * @param newPosts The feed's new posts, not saved yet, with their link previews
+     */
+    private void removeTweetsOfOtherFeedsPosts(Feed feed, User user, List<Post> newPosts) {
+        LocalDateTime since = LocalDateTime.now().minusDays(OTHER_FEED_POST_MAX_AGE_DAYS);
+        // Pages of the other feeds' posts, read once per site
+        Map<String, Set<String>> pagesBySite = new HashMap<>();
+        newPosts.removeIf(post -> {
+            if (!LinkPreviewExtractor.isTweet(post.getLink())) return false;
+            String page = LinkPreviewExtractor.pageKey(post.getLinkUrl());
+            if (page == null) return false;
+            String site = page.split("[/?]", 2)[0];
+            Set<String> pages = pagesBySite.computeIfAbsent(site, s -> postRepository.findOtherFeedLinksLike(user, feed, since, "%" + s + "%").stream()
+                    .map(LinkPreviewExtractor::pageKey)
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toSet()));
+            if (!pages.contains(page)) return false;
+            if (skippedTweets.size() >= MAX_SKIPPED_TWEETS) skippedTweets.clear();
+            skippedTweets.add(skippedTweetKey(user, post.getLink()));
+            return true;
+        });
+    }
+
+    private static String skippedTweetKey(User user, String link) {
+        return user.getId() + " " + link;
     }
 
     /**

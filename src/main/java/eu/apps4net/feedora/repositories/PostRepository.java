@@ -102,6 +102,12 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     @Query("SELECT p.link FROM Post p WHERE p.feed = :feed AND p.user = :user AND p.link IS NOT NULL")
     List<String> findLinksByFeedAndUser(@Param("feed") Feed feed, @Param("user") User user);
 
+    // Links of the posts of the user's other feeds published since the given date that contain the given text,
+    // to find articles that new tweets link to
+    @Query("SELECT p.link FROM Post p WHERE p.user = :user AND p.feed <> :feed AND p.pubDate >= :since AND p.link LIKE :pattern")
+    List<String> findOtherFeedLinksLike(@Param("user") User user, @Param("feed") Feed feed, @Param("since") LocalDateTime since,
+                                        @Param("pattern") String pattern);
+
     // Id, link, live status, start and length of the feed's scheduled or live videos, to check whether their state changed,
     // of its YouTube videos published since the given date that were never checked, or have no length and weren't
     // checked since recheckBefore (e.g. checked before lengths existed), and of its saved or favorite YouTube videos (any age)

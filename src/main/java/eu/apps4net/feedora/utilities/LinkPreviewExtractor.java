@@ -9,6 +9,7 @@ import org.jsoup.nodes.TextNode;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -26,6 +27,7 @@ public final class LinkPreviewExtractor {
     private static final Pattern TRAILING = Pattern.compile("[…\\.,;:!?)\\]»'\"]+$");
     private static final Pattern HOST = Pattern.compile("https?://([^/?#:\\s]+)");
     private static final int MAX_URL_LENGTH = 2048;
+    private static final Pattern TRACKING_PARAM = Pattern.compile("(?i)(utm_[^=]*|fbclid|gclid)(=|$)");
     private static final int MAX_TITLE_LENGTH = 1000;
 
     // Pages that forward with a meta refresh instead of an HTTP redirect (e.g. t.co for browsers) are followed this many times
@@ -199,6 +201,28 @@ public final class LinkPreviewExtractor {
     private static String site(String url) {
         Matcher matcher = HOST.matcher(url);
         return matcher.lookingAt() ? matcher.group(1).toLowerCase().replaceFirst("^www\\.", "") : null;
+    }
+
+    /**
+     * A page URL reduced to what tells the page apart, to find the same page linked from different places: its host
+     * without www., its path without a trailing slash and its query without tracking parameters (utm_…, fbclid);
+     * the scheme and fragment are ignored.
+     *
+     * @return The key, or null if the URL can't be read
+     */
+    public static String pageKey(String url) {
+        String site = url != null ? site(url) : null;
+        if (site == null) return null;
+        try {
+            URI uri = URI.create(url.trim());
+            String path = uri.getPath() != null ? uri.getPath().replaceAll("/+$", "") : "";
+            String query = uri.getQuery() == null ? "" : String.join("&", Arrays.stream(uri.getQuery().split("&"))
+                    .filter(param -> !TRACKING_PARAM.matcher(param).lookingAt())
+                    .toList());
+            return site + path + (query.isEmpty() ? "" : "?" + query);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     private static boolean isPreviewable(String url) {

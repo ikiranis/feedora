@@ -69,6 +69,17 @@ class LinkPreviewExtractorTest {
     }
 
     @Test
+    void pageKeyIgnoresSchemeWwwTrailingSlashFragmentAndTracking() {
+        String key = LinkPreviewExtractor.pageKey("https://www.news247.gr/kosmos/article/?utm_term=Autofeed&utm_source=Twitter#Echobox=1792502014");
+
+        assertThat(key).isEqualTo("news247.gr/kosmos/article");
+        assertThat(LinkPreviewExtractor.pageKey("http://news247.gr/kosmos/article")).isEqualTo(key);
+        assertThat(LinkPreviewExtractor.pageKey("https://a.example/article?id=1&fbclid=x")).isEqualTo("a.example/article?id=1");
+        assertThat(LinkPreviewExtractor.pageKey("https://a.example/article?id=2")).isNotEqualTo(LinkPreviewExtractor.pageKey("https://a.example/article?id=1"));
+        assertThat(LinkPreviewExtractor.pageKey(null)).isNull();
+    }
+
+    @Test
     void findsNoLinkInTextWithout() {
         assertThat(LinkPreviewExtractor.findLink("<p>No link <img src=\"https://pbs.twimg.com/media/a.jpg\"></p>")).isNull();
         assertThat(LinkPreviewExtractor.findLink(null)).isNull();
