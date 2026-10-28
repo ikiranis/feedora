@@ -319,7 +319,7 @@ public final class PageParser {
             return null;
         }
 
-        String title = heading != null ? heading.text().trim() : link.text().trim();
+        String title = title(heading != null ? heading : link, link);
         if (title.isEmpty()) {
             title = link.attr("title").trim();
         }
@@ -332,6 +332,24 @@ public final class PageParser {
         }
 
         return new PageItem(title, href, description(element, title), image(element), published(element));
+    }
+
+    /**
+     * The text of the title element. Pages may repeat the title in it (e.g. a desktop and a mobile version, one of
+     * them hidden with CSS), so it's the link's title attribute when the text holds it, or the repeated part.
+     */
+    private static String title(Element element, Element link) {
+        String text = element.text().trim();
+        String attribute = link.attr("title").trim();
+        if (attribute.length() >= MIN_TITLE_LENGTH && text.length() > attribute.length() && text.contains(attribute)) {
+            return attribute;
+        }
+
+        // The repeats may or may not be separated by a space
+        int half = text.length() / 2;
+        String first = text.substring(0, half);
+        String rest = text.substring(half).trim();
+        return first.trim().equals(rest) ? rest : text;
     }
 
     private static boolean isPostLink(String href) {

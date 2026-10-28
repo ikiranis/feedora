@@ -60,6 +60,23 @@ class PageParserTest {
     }
 
     @Test
+    void readsTitlesRepeatedForDesktopAndMobileOnce() {
+        String html = "<html><body><div>"
+                + "<article><h2><a title=\"First headline of the day\" href=\"/news/1\">"
+                + "<span class=\"desktop_title\">First headline of the day</span>"
+                + "<span class=\"mobile_title\">First headline of the day</span></a></h2></article>"
+                + "<article><h2><a href=\"/news/2\"><span>Second headline of the day</span>"
+                + "<span>Second headline of the day</span></a></h2></article>"
+                + "<article><h2><a title=\"Third headline\" href=\"/news/3\">Breaking: <span>Third headline</span></a></h2></article>"
+                + "</div></body></html>";
+
+        List<PageParser.PageItem> items = PageParser.extractItems(page(html), "article");
+
+        assertThat(items).extracting(PageParser.PageItem::title)
+                .containsExactly("First headline of the day", "Second headline of the day", "Third headline");
+    }
+
+    @Test
     void scopesTheSelectorToTheParentWhenTheTagIsUsedElsewhere() {
         Document doc = page("<html><body><div class=\"list\">"
                 + "<div><a href=\"/p/1\">A long enough post title one</a></div>"
