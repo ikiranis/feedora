@@ -9,6 +9,7 @@ import Feed from "@/views/Feed.vue"
 import User from "@/views/User.vue"
 import Post from "@/views/Post.vue"
 import Log from "@/views/Log.vue"
+import Parser from "@/views/Parser.vue"
 import LiveNewsfeed from "@/views/LiveNewsfeed.vue"
 import Auth from "@/views/Auth.vue"
 import { authStore } from "@/functions/authStore"
@@ -51,6 +52,12 @@ const routes : RouteRecordRaw[] = [
         component: Setting,
         props: true,
         meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+        path: '/parser',
+        name: 'Parser',
+        component: Parser,
+        meta: { requiresAuth: true }
     },
     {
         path: '/users',

@@ -163,3 +163,46 @@ export interface LogEntryType {
     postTitle: string | null;
     url: string | null;
 }
+
+// A post read from a parsed page
+export interface ParsePageItemType {
+    title: string;
+    link: string;
+    description: string | null;
+    image: string | null;
+    published: string | null;
+}
+
+// Repeated elements of a page that may hold its posts
+export interface ParseCandidateType {
+    selector: string;
+    count: number;
+    samples: ParsePageItemType[];
+}
+
+// A page analyzed by the parser, with the elements to choose the posts from
+export interface ParseAnalysisType {
+    url: string;
+    title: string;
+    candidates: ParseCandidateType[];
+}
+
+// A page without a feed, parsed into an RSS feed
+export interface ParsePageType {
+    id: string;
+    url: string;
+    title: string;
+    selector: string;
+    // Minutes between two parses
+    frequency: number;
+    feedName: string;
+    // Path of the generated feed on the server, e.g. /api/parser/feed/example.com.xml
+    feedPath: string;
+    createdAt: string;
+    lastParsedAt: string | null;
+    lastItemCount: number;
+    // Error of the last parse, null when it succeeded
+    lastError: string | null;
+    // The generated feed is already in the user's feeds
+    inFeeds: boolean;
+}

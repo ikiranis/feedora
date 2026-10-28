@@ -43,6 +43,9 @@ public class UserService {
     private LogEntryRepository logEntryRepository;
 
     @Autowired
+    private ParseService parseService;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     // The admin user that older versions created automatically, promoted when migrating to roles
@@ -232,7 +235,7 @@ public class UserService {
     }
 
     /**
-     * Deletes a user together with their log entries, posts, feeds and folders.
+     * Deletes a user together with their log entries, posts, feeds, folders and parsed pages.
      * The current user can't delete themselves.
      */
     @Transactional
@@ -248,6 +251,7 @@ public class UserService {
         postRepository.deleteByUser(user);
         feedRepository.deleteByUser(user);
         folderRepository.deleteByUser(user);
+        parseService.deleteAllByUser(user);
         userRepository.delete(user);
     }
 

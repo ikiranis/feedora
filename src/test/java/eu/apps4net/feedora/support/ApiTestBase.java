@@ -12,6 +12,7 @@ import eu.apps4net.feedora.repositories.FeedRepository;
 import eu.apps4net.feedora.repositories.FeedStatisticsRepository;
 import eu.apps4net.feedora.repositories.FolderRepository;
 import eu.apps4net.feedora.repositories.LogEntryRepository;
+import eu.apps4net.feedora.repositories.ParseRepository;
 import eu.apps4net.feedora.repositories.PostRepository;
 import eu.apps4net.feedora.repositories.UserRepository;
 import eu.apps4net.feedora.utilities.JwtUtil;
@@ -48,6 +49,8 @@ public abstract class ApiTestBase {
     @Autowired
     protected FeedStatisticsRepository feedStatisticsRepository;
     @Autowired
+    protected ParseRepository parseRepository;
+    @Autowired
     protected PasswordEncoder passwordEncoder;
     @Autowired
     protected JwtUtil jwtUtil;
@@ -61,6 +64,7 @@ public abstract class ApiTestBase {
         postRepository.deleteAll();
         feedRepository.deleteAll();
         folderRepository.deleteAll();
+        parseRepository.deleteAll();
         userRepository.deleteAll();
 
         user = userRepository.save(new User("tester", "tester@example.com", passwordEncoder.encode("secret123"), Role.ADMIN));

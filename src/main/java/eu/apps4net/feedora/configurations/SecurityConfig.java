@@ -45,6 +45,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/general/**").permitAll()
                 .requestMatchers("/api/language/**").permitAll()
+                // The generated feeds of the parsed pages are read by the feed parser, without a token
+                .requestMatchers(HttpMethod.GET, "/api/parser/feed/**").permitAll()
                 .requestMatchers("/", "/index.html", "/static/**", "/assets/**", "/flags/**", "/*.js", "/*.css", "/*.ico", "/*.png", "/*.svg").permitAll()
                 // Settings and user management are for the admin only; users can still see and edit themselves
                 .requestMatchers("/api/setting/**").hasRole("ADMIN")

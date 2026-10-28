@@ -1928,4 +1928,209 @@
         <language code="el">Εμφάνιση / απόκρυψη του άρθρου της προεπισκόπησης συνδέσμου μέσα στην επιλεγμένη ανάρτηση</language>
     </entry>
 
+    <entry id="Parser">
+        <language code="en">Parser</language>
+        <language code="el">Αναλυτής σελίδων</language>
+    </entry>
+
+    <entry id="Enter the URL of a page without a feed">
+        <language code="en">Enter the URL of a page without a feed</language>
+        <language code="el">Εισάγετε το URL μιας σελίδας χωρίς feed</language>
+    </entry>
+
+    <entry id="Read the page and choose the element of its posts">
+        <language code="en">Read the page and choose the element of its posts</language>
+        <language code="el">Ανάγνωση της σελίδας και επιλογή του στοιχείου των αναρτήσεών της</language>
+    </entry>
+
+    <entry id="Element of the posts">
+        <language code="en">Element of the posts</language>
+        <language code="el">Στοιχείο των αναρτήσεων</language>
+    </entry>
+
+    <entry id="Last parsed">
+        <language code="en">Last parsed</language>
+        <language code="el">Τελευταία ανάλυση</language>
+    </entry>
+
+    <entry id="In feeds">
+        <language code="en">In feeds</language>
+        <language code="el">Στα feeds</language>
+    </entry>
+
+    <entry id="Error">
+        <language code="en">Error</language>
+        <language code="el">Σφάλμα</language>
+    </entry>
+
+    <entry id="Parse this page now">
+        <language code="en">Parse this page now</language>
+        <language code="el">Ανάλυση της σελίδας τώρα</language>
+    </entry>
+
+    <entry id="This feed is already in your feeds">
+        <language code="en">This feed is already in your feeds</language>
+        <language code="el">Αυτό το feed υπάρχει ήδη στα feeds σας</language>
+    </entry>
+
+    <entry id="Add this feed to your feeds">
+        <language code="en">Add this feed to your feeds</language>
+        <language code="el">Προσθήκη αυτού του feed στα feeds σας</language>
+    </entry>
+
+    <entry id="Edit this page">
+        <language code="en">Edit this page</language>
+        <language code="el">Επεξεργασία αυτής της σελίδας</language>
+    </entry>
+
+    <entry id="Delete this page">
+        <language code="en">Delete this page</language>
+        <language code="el">Διαγραφή αυτής της σελίδας</language>
+    </entry>
+
+    <entry id="No parsed pages yet. Add the URL of a page without a feed to make one.">
+        <language code="en">No parsed pages yet. Add the URL of a page without a feed to make one.</language>
+        <language code="el">Δεν υπάρχουν σελίδες ακόμα. Προσθέστε το URL μιας σελίδας χωρίς feed για να δημιουργήσετε ένα.</language>
+    </entry>
+
+    <entry id="Failed to fetch the parsed pages">
+        <language code="en">Failed to fetch the parsed pages</language>
+        <language code="el">Αποτυχία φόρτωσης των σελίδων</language>
+    </entry>
+
+    <entry id="d">
+        <language code="en">d</language>
+        <language code="el">ημ</language>
+    </entry>
+
+    <entry id="h">
+        <language code="en">h</language>
+        <language code="el">ώ</language>
+    </entry>
+
+    <entry id="min">
+        <language code="en">min</language>
+        <language code="el">λεπ</language>
+    </entry>
+
+    <entry id="Failed to read the page">
+        <language code="en">Failed to read the page</language>
+        <language code="el">Αποτυχία ανάγνωσης της σελίδας</language>
+    </entry>
+
+    <entry id="Page parsed successfully">
+        <language code="en">Page parsed successfully</language>
+        <language code="el">Η σελίδα αναλύθηκε επιτυχώς</language>
+    </entry>
+
+    <entry id="posts">
+        <language code="en">posts</language>
+        <language code="el">αναρτήσεις</language>
+    </entry>
+
+    <entry id="Failed to parse the page">
+        <language code="en">Failed to parse the page</language>
+        <language code="el">Αποτυχία ανάλυσης της σελίδας</language>
+    </entry>
+
+    <entry id="Are you sure you want to delete this page? Its feed file is deleted too.">
+        <language code="en">Are you sure you want to delete this page? Its feed file is deleted too.</language>
+        <language code="el">Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή τη σελίδα; Διαγράφεται και το αρχείο του feed της.</language>
+    </entry>
+
+    <entry id="Failed to delete the page">
+        <language code="en">Failed to delete the page</language>
+        <language code="el">Αποτυχία διαγραφής της σελίδας</language>
+    </entry>
+
+    <entry id="Edit parsed page">
+        <language code="en">Edit parsed page</language>
+        <language code="el">Επεξεργασία σελίδας</language>
+    </entry>
+
+    <entry id="Choose the posts of the page">
+        <language code="en">Choose the posts of the page</language>
+        <language code="el">Επιλέξτε τις αναρτήσεις της σελίδας</language>
+    </entry>
+
+    <entry id="Page URL">
+        <language code="en">Page URL</language>
+        <language code="el">URL σελίδας</language>
+    </entry>
+
+    <entry id="Detect elements">
+        <language code="en">Detect elements</language>
+        <language code="el">Εντοπισμός στοιχείων</language>
+    </entry>
+
+    <entry id="CSS selector">
+        <language code="en">CSS selector</language>
+        <language code="el">CSS selector</language>
+    </entry>
+
+    <entry id="Parse every (minutes)">
+        <language code="en">Parse every (minutes)</language>
+        <language code="el">Ανάλυση κάθε (λεπτά)</language>
+    </entry>
+
+    <entry id="Failed to save the page">
+        <language code="en">Failed to save the page</language>
+        <language code="el">Αποτυχία αποθήκευσης της σελίδας</language>
+    </entry>
+
+    <entry id="No repeated elements with posts found on this page">
+        <language code="en">No repeated elements with posts found on this page</language>
+        <language code="el">Δεν βρέθηκαν επαναλαμβανόμενα στοιχεία με αναρτήσεις σε αυτή τη σελίδα</language>
+    </entry>
+
+    <entry id="This page is already parsed">
+        <language code="en">This page is already parsed</language>
+        <language code="el">Αυτή η σελίδα αναλύεται ήδη</language>
+    </entry>
+
+    <entry id="Page deleted successfully">
+        <language code="en">Page deleted successfully</language>
+        <language code="el">Η σελίδα διαγράφηκε επιτυχώς</language>
+    </entry>
+
+    <entry id="No posts found with the selected element">
+        <language code="en">No posts found with the selected element</language>
+        <language code="el">Δεν βρέθηκαν αναρτήσεις με το επιλεγμένο στοιχείο</language>
+    </entry>
+
+    <entry id="The page blocks the access">
+        <language code="en">The page blocks the access</language>
+        <language code="el">Η σελίδα εμποδίζει την πρόσβαση</language>
+    </entry>
+
+    <entry id="Invalid page ID">
+        <language code="en">Invalid page ID</language>
+        <language code="el">Μη έγκυρο ID σελίδας</language>
+    </entry>
+
+    <entry id="Page not found">
+        <language code="en">Page not found</language>
+        <language code="el">Η σελίδα δεν βρέθηκε</language>
+    </entry>
+
+    <entry id="Please enter a valid URL">
+        <language code="en">Please enter a valid URL</language>
+        <language code="el">Παρακαλώ εισάγετε ένα έγκυρο URL</language>
+    </entry>
+
+    <entry id="Please select the element of the posts">
+        <language code="en">Please select the element of the posts</language>
+        <language code="el">Παρακαλώ επιλέξτε το στοιχείο των αναρτήσεων</language>
+    </entry>
+
+    <entry id="Invalid CSS selector">
+        <language code="en">Invalid CSS selector</language>
+        <language code="el">Μη έγκυρος CSS selector</language>
+    </entry>
+
+    <entry id="The frequency must be between {0} and {1} minutes">
+        <language code="en">The frequency must be between {0} and {1} minutes</language>
+        <language code="el">Η συχνότητα πρέπει να είναι από {0} έως {1} λεπτά</language>
+    </entry>
+
 </root>
