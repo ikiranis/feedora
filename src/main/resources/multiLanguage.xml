@@ -16,6 +16,16 @@
         <language code="el">Ενέργεια</language>
     </entry>
 
+    <entry id="Display">
+        <language code="en">Display</language>
+        <language code="el">Εμφάνιση</language>
+    </entry>
+
+    <entry id="Language">
+        <language code="en">Language</language>
+        <language code="el">Γλώσσα</language>
+    </entry>
+
     <entry id="Date format">
         <language code="en">Date format</language>
         <language code="el">Μορφή ημερομηνίας</language>

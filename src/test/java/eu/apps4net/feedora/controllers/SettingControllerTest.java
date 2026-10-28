@@ -11,7 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -36,7 +38,8 @@ class SettingControllerTest extends ApiTestBase {
     void returnsTheDefaultSettings() throws Exception {
         mockMvc.perform(auth(get("/api/setting/all")))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[*].settingName", hasItems("uploadDir", "defaultActionsLanguage", "registrationEnabled")));
+                .andExpect(jsonPath("$[*].settingName", hasItems("defaultActionsLanguage", "registrationEnabled")))
+                .andExpect(jsonPath("$[*].settingName", not(hasItem("uploadDir"))));
     }
 
     @Test
@@ -55,7 +58,7 @@ class SettingControllerTest extends ApiTestBase {
     void registrationEnabledOnlyAcceptsBooleans() throws Exception {
         Setting setting = settingRepository.getBySettingName("registrationEnabled");
         // The name in the request is ignored, so it can't skip the validation
-        String body = "{\"id\":\"" + setting.getId() + "\",\"settingName\":\"uploadDir\",\"settingValue\":\"maybe\"}";
+        String body = "{\"id\":\"" + setting.getId() + "\",\"settingName\":\"youtubeApiKey\",\"settingValue\":\"maybe\"}";
 
         mockMvc.perform(auth(put("/api/setting")).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isBadRequest());
@@ -64,28 +67,25 @@ class SettingControllerTest extends ApiTestBase {
 
     @Test
     void returnsASettingById() throws Exception {
-        Setting setting = settingRepository.getBySettingName("uploadDir");
+        Setting setting = settingRepository.getBySettingName("registrationEnabled");
 
         mockMvc.perform(auth(get("/api/setting/" + setting.getId())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.settingName").value("uploadDir"))
-                .andExpect(jsonPath("$.settingValue").value("uploads"));
+                .andExpect(jsonPath("$.settingName").value("registrationEnabled"))
+                .andExpect(jsonPath("$.settingValue").value("true"));
     }
 
     @Test
     void updatesOnlyTheSettingValue() throws Exception {
-        Setting setting = settingRepository.getBySettingName("uploadDir");
-        String body = "{\"id\":\"" + setting.getId() + "\",\"settingName\":\"renamed\",\"settingValue\":\"files\"}";
+        Setting setting = settingRepository.getBySettingName("registrationEnabled");
+        String body = "{\"id\":\"" + setting.getId() + "\",\"settingName\":\"renamed\",\"settingValue\":\"false\"}";
 
         mockMvc.perform(auth(put("/api/setting")).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isOk());
 
         Setting updated = settingRepository.findById(setting.getId()).orElseThrow();
-        assertThat(updated.getSettingValue()).isEqualTo("files");
-        assertThat(updated.getSettingName()).isEqualTo("uploadDir");
-
-        updated.setSettingValue("uploads");
-        settingRepository.save(updated);
+        assertThat(updated.getSettingValue()).isEqualTo("false");
+        assertThat(updated.getSettingName()).isEqualTo("registrationEnabled");
     }
 
     @Test

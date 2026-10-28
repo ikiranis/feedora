@@ -33,10 +33,9 @@ class SettingServiceTest {
         settingService.setDefaultSettings();
 
         ArgumentCaptor<Setting> saved = ArgumentCaptor.forClass(Setting.class);
-        verify(settingRepository, times(5)).save(saved.capture());
+        verify(settingRepository, times(4)).save(saved.capture());
         assertThat(saved.getAllValues()).extracting(Setting::getSettingName, Setting::getSettingValue)
                 .containsExactly(
-                        org.assertj.core.groups.Tuple.tuple("uploadDir", "uploads"),
                         org.assertj.core.groups.Tuple.tuple("defaultActionsLanguage", "en"),
                         org.assertj.core.groups.Tuple.tuple("registrationEnabled", "true"),
                         org.assertj.core.groups.Tuple.tuple("youtubeApiKey", ""),
@@ -45,11 +44,11 @@ class SettingServiceTest {
 
     @Test
     void setDefaultSettingsOnlyAddsMissingSettings() {
-        Setting uploadDir = new Setting("uploadDir", "files");
-        when(settingRepository.findAll()).thenReturn(List.of(uploadDir));
-        when(settingRepository.getBySettingName("uploadDir")).thenReturn(uploadDir);
+        Setting registration = new Setting("registrationEnabled", "true");
+        when(settingRepository.findAll()).thenReturn(List.of(registration));
+        when(settingRepository.getBySettingName("uploadDir")).thenReturn(null);
         when(settingRepository.getBySettingName("defaultActionsLanguage")).thenReturn(null);
-        when(settingRepository.getBySettingName("registrationEnabled")).thenReturn(new Setting("registrationEnabled", "true"));
+        when(settingRepository.getBySettingName("registrationEnabled")).thenReturn(registration);
         when(settingRepository.getBySettingName("youtubeApiKey")).thenReturn(new Setting("youtubeApiKey", ""));
         when(settingRepository.getBySettingName("liveNewsfeedRefreshSeconds")).thenReturn(new Setting("liveNewsfeedRefreshSeconds", "60"));
 
@@ -62,8 +61,8 @@ class SettingServiceTest {
 
     @Test
     void setDefaultSettingsKeepsExistingSettings() {
-        when(settingRepository.findAll()).thenReturn(List.of(new Setting("uploadDir", "files")));
-        when(settingRepository.getBySettingName("uploadDir")).thenReturn(new Setting("uploadDir", "files"));
+        when(settingRepository.findAll()).thenReturn(List.of(new Setting("defaultActionsLanguage", "el")));
+        when(settingRepository.getBySettingName("uploadDir")).thenReturn(null);
         when(settingRepository.getBySettingName("defaultActionsLanguage")).thenReturn(new Setting("defaultActionsLanguage", "el"));
         when(settingRepository.getBySettingName("registrationEnabled")).thenReturn(new Setting("registrationEnabled", "false"));
         when(settingRepository.getBySettingName("youtubeApiKey")).thenReturn(new Setting("youtubeApiKey", "key"));
@@ -72,14 +71,24 @@ class SettingServiceTest {
         settingService.setDefaultSettings();
 
         verify(settingRepository, never()).save(any());
+        verify(settingRepository, never()).delete(any());
+    }
+
+    @Test
+    void setDefaultSettingsRemovesTheUploadDirSetting() {
+        Setting uploadDir = new Setting("uploadDir", "uploads");
+        when(settingRepository.findAll()).thenReturn(List.of(uploadDir));
+        when(settingRepository.getBySettingName("uploadDir")).thenReturn(uploadDir);
+
+        settingService.setDefaultSettings();
+
+        verify(settingRepository).delete(uploadDir);
     }
 
     @Test
     void gettersReadTheSettingValues() {
-        when(settingRepository.getBySettingName("uploadDir")).thenReturn(new Setting("uploadDir", "files"));
         when(settingRepository.getBySettingName("defaultActionsLanguage")).thenReturn(new Setting("defaultActionsLanguage", "el"));
 
-        assertThat(settingService.getUploadDir()).isEqualTo("files");
         assertThat(settingService.getDefaultActionsLanguage()).isEqualTo("el");
     }
 

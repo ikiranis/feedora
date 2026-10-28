@@ -18,6 +18,8 @@ public class SettingService {
 	public static final String LIVE_NEWSFEED_REFRESH_SECONDS = "liveNewsfeedRefreshSeconds";
 	public static final int DEFAULT_LIVE_NEWSFEED_REFRESH_SECONDS = 60;
 	public static final int MIN_LIVE_NEWSFEED_REFRESH_SECONDS = 5;
+	// Settings that are no longer used, removed from older databases
+	private static final List<String> REMOVED_SETTINGS = List.of("uploadDir");
 
 	private final SettingRepository settingRepository;
 
@@ -27,13 +29,16 @@ public class SettingService {
 	}
 
 	/**
-	 * Sets default settings if there are no settings in the database.
+	 * Sets default settings if there are no settings in the database, and removes the ones no longer used.
 	 */
 	public void setDefaultSettings() {
 		List<Setting> settings = settingRepository.findAll();
 
-		if (settings.isEmpty() || settingRepository.getBySettingName("uploadDir") == null) {
-			settingRepository.save(new Setting("uploadDir", "uploads"));
+		for (String name : REMOVED_SETTINGS) {
+			Setting removed = settingRepository.getBySettingName(name);
+			if (removed != null) {
+				settingRepository.delete(removed);
+			}
 		}
 
 		if (settings.isEmpty() || settingRepository.getBySettingName("defaultActionsLanguage") == null) {
@@ -51,15 +56,6 @@ public class SettingService {
 		if (settings.isEmpty() || settingRepository.getBySettingName(LIVE_NEWSFEED_REFRESH_SECONDS) == null) {
 			settingRepository.save(new Setting(LIVE_NEWSFEED_REFRESH_SECONDS, String.valueOf(DEFAULT_LIVE_NEWSFEED_REFRESH_SECONDS)));
 		}
-	}
-
-	/**
-	 * Returns the upload directory.
-	 *
-	 * @return the upload directory
-	 */
-	public String getUploadDir() {
-		return settingRepository.getBySettingName("uploadDir").getSettingValue();
 	}
 
 	public String getDefaultActionsLanguage() {

@@ -42,7 +42,8 @@ const routes : RouteRecordRaw[] = [
         path: '/settings',
         name: 'Settings',
         component: Settings,
-        meta: { requiresAuth: true, requiresAdmin: true }
+        // Open to every user; the app settings on it are only shown to the admin
+        meta: { requiresAuth: true }
     },
     {
         path: '/setting/:id',

@@ -7,6 +7,8 @@ import router from "@/router";
 import {language} from "@/functions/languageStore.ts";
 import Page404 from "@/components/error/Page404.vue";
 import Loading from "@/components/utilities/Loading.vue";
+import LanguageSelect from "@/components/utilities/LanguageSelect.vue";
+import {authStore} from "@/functions/authStore.ts";
 import {dateFormatStore, DateFormat} from "@/functions/dateFormatStore.ts";
 
 const dateFormats: DateFormat[] = ['DD-MM-YYYY', 'MM-DD-YYYY']
@@ -16,7 +18,10 @@ const settings: Ref<any[]> = ref([]);
 const loading = ref(false)
 
 onMounted(() => {
-    loadSettings()
+    // The app settings are only available to the admin
+    if (authStore.isAdmin.value) {
+        loadSettings()
+    }
 })
 
 /**
@@ -43,24 +48,36 @@ const editSetting = (id: number) => {
 </script>
 
 <template>
-    <!-- Display settings, kept in this browser -->
-    <div class="my-3 d-flex align-items-center gap-3">
-        <span class="fw-semibold">{{ language.get('Date format') || 'Date format' }}</span>
-        <div class="btn-group btn-group-sm" role="group" :aria-label="language.get('Date format') || 'Date format'">
-            <button v-for="format in dateFormats" :key="format" type="button" class="btn btn-outline-secondary"
-                    :class="{ active: dateFormatStore.format.value === format }"
-                    :aria-pressed="dateFormatStore.format.value === format"
-                    @click="dateFormatStore.format.value = format">
-                {{ format }}
-            </button>
+    <!-- Display settings of the current user, kept in this browser -->
+    <div class="my-3">
+        <h5>{{ language.get('Display') || 'Display' }}</h5>
+
+        <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="setting-label fw-semibold">{{ language.get('Language') || 'Language' }}</span>
+            <language-select />
+        </div>
+
+        <div class="d-flex align-items-center gap-3">
+            <span class="setting-label fw-semibold">{{ language.get('Date format') || 'Date format' }}</span>
+            <div class="btn-group btn-group-sm" role="group" :aria-label="language.get('Date format') || 'Date format'">
+                <button v-for="format in dateFormats" :key="format" type="button" class="btn btn-outline-secondary"
+                        :class="{ active: dateFormatStore.format.value === format }"
+                        :aria-pressed="dateFormatStore.format.value === format"
+                        @click="dateFormatStore.format.value = format">
+                    {{ format }}
+                </button>
+            </div>
         </div>
     </div>
+
+    <template v-if="authStore.isAdmin.value">
+    <h5 class="mt-4">{{ language.get('App Settings') }}</h5>
 
     <div v-if="loading" class="row">
         <Loading />
     </div>
 
-    <div v-if="settings && settings.length > 0 && !loading" class="my-3">
+    <div v-if="settings && settings.length > 0 && !loading" class="mb-3">
         <table class="table table-striped table-hover">
             <thead class="text-bg-dark">
             <tr>
@@ -105,6 +122,18 @@ const editSetting = (id: number) => {
     <Page404 v-if="!loading && settings.length === 0"  class="my-3"
              :title="language.get('Search problem')"
              :text="language.get('No Settings Founded')" />
+    </template>
 
     <error />
 </template>
+
+<style scoped lang="scss">
+.setting-label {
+    min-width: 8rem;
+}
+
+// The language flags are made for the dark sidebar; outline the current one in the page's text color
+:deep(.currentLanguage) {
+    border-color: var(--bs-secondary-color);
+}
+</style>
