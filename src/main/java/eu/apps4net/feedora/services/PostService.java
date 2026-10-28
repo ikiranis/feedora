@@ -339,8 +339,8 @@ public class PostService {
     /**
      * Adds a preview (page URL, title and image) of the link of new tweets published within LINK_PREVIEW_MAX_AGE_DAYS
      * (see LinkPreviewExtractor.findLink), before they're saved. Each link is read once, even if several tweets share it.
-     * Tweets whose link couldn't be read get the title of Twitter's link card if they have one, otherwise no preview;
-     * it's not worth a log entry.
+     * Tweets whose link couldn't be read (e.g. sites behind a bot check that blocks the server) get the title of
+     * Twitter's link card if they have one, otherwise a preview of the link with the tweet's photo; it's not worth a log entry.
      *
      * @param newPosts The feed's new posts, not saved yet
      */
@@ -367,11 +367,11 @@ public class PostService {
                 // The page's own title is preferred, Twitter's link card title is the fallback
                 String title = preview != null && preview.title() != null ? preview.title() : link.title();
                 String image = preview != null ? preview.image() : null;
-                if (title == null && image == null) return;
                 for (Post post : posts) {
                     post.setLinkUrl(preview != null ? preview.url() : link.url());
                     post.setLinkTitle(title);
-                    post.setLinkImage(image);
+                    // Nothing read from the page (e.g. a bot check answered instead): the tweet's photo stands in
+                    post.setLinkImage(title != null || image != null ? image : tweetPhotos(post).stream().findFirst().orElse(null));
                 }
             })));
             for (Future<?> task : tasks) {

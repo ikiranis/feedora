@@ -35,7 +35,7 @@ public class Post {
     private String thumbnail;
 
     // Tweets: preview of the first link in the text (page URL after redirects, title and image), found when parsed.
-    // Null if the tweet has no link or its page couldn't be read (see LinkPreviewExtractor).
+    // Null if the tweet has no link. A page that couldn't be read has no title, and the tweet's photo as its image (see LinkPreviewExtractor).
     @Column(length = 2048)
     private String linkUrl;
     @Column(length = 1000)
