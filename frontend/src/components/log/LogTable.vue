@@ -48,6 +48,7 @@
 <script setup lang="ts">
 import type { LogEntryType, LogLevel } from '@/types';
 import { language } from '@/functions/languageStore';
+import { dateFormatStore } from '@/functions/dateFormatStore';
 
 interface Props {
     logs: LogEntryType[];
@@ -69,7 +70,7 @@ const emit = defineEmits<{
     filter: [key: 'feedId' | 'postId', id: string];
 }>();
 
-const formatDate = (date: string) => new Date(date).toLocaleString();
+const formatDate = (date: string) => dateFormatStore.dateTime(date, true);
 
 const levelClass = (logLevel: LogLevel) => {
     switch (logLevel) {

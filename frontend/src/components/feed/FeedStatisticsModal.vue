@@ -47,6 +47,7 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import type { Feed } from '@/types';
 import { language } from '@/functions/languageStore';
+import { dateFormatStore } from '@/functions/dateFormatStore';
 
 interface Props {
     feed?: Feed | null;
@@ -73,7 +74,7 @@ const stats = computed(() => props.feed?.statistics ?? null);
 
 const getModal = () => (window as any).bootstrap.Modal.getOrCreateInstance(modalRef.value);
 
-const formatDate = (date: string | null) => date ? new Date(date).toLocaleString() : language.get('Never');
+const formatDate = (date: string | null) => date ? dateFormatStore.dateTime(date) : language.get('Never');
 
 const formatNumber = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 

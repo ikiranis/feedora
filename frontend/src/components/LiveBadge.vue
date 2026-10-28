@@ -12,6 +12,7 @@
 <script setup lang="ts">
 import { PostType } from '@/types';
 import { language } from '@/functions/languageStore';
+import { dateFormatStore } from '@/functions/dateFormatStore';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -28,15 +29,15 @@ const label = computed(() => {
 
     const upcoming = language.get('Upcoming') || 'Upcoming';
     if (!startAt.value || startAt.value < new Date()) return upcoming;
-    const time = startAt.value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const time = dateFormatStore.time(startAt.value);
     return startAt.value.toDateString() === new Date().toDateString()
         ? `${upcoming} · ${time}`
-        : `${upcoming} · ${startAt.value.toLocaleDateString([], { day: 'numeric', month: 'short' })}, ${time}`;
+        : `${upcoming} · ${dateFormatStore.shortDate(startAt.value)}, ${time}`;
 });
 
 const tooltip = computed(() => {
     if (!startAt.value) return '';
-    const date = startAt.value.toLocaleString();
+    const date = dateFormatStore.dateTime(startAt.value);
     return props.post.liveStatus === 'LIVE'
         ? `${language.get('Live since') || 'Live since'} ${date}`
         : `${language.get('Scheduled for') || 'Scheduled for'} ${date}`;

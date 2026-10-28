@@ -16,6 +16,11 @@
         <language code="el">Ενέργεια</language>
     </entry>
 
+    <entry id="Date format">
+        <language code="en">Date format</language>
+        <language code="el">Μορφή ημερομηνίας</language>
+    </entry>
+
     <entry id="Date">
         <language code="en">Date</language>
         <language code="el">Ημερομηνία</language>

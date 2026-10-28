@@ -22,7 +22,7 @@
                             <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
                                 @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ postSource(post) }}</span>
                             <span v-if="post.author" class="text-truncate">&middot; {{ post.author }}</span>
-                            <span v-if="post.pubDate" class="flex-shrink-0">&middot; {{ new Date(post.pubDate).toLocaleString() }}</span>
+                            <span v-if="post.pubDate" class="flex-shrink-0">&middot; {{ dateFormatStore.dateTime(post.pubDate) }}</span>
                         </div>
                         <div class="post-modal-actions">
                             <button type="button" class="post-modal-action" :class="{ favorite: post.favorite }" @click="emit('toggle-favorite', post.id)"
@@ -119,6 +119,7 @@ import LinkContent from '@/components/LinkContent.vue';
 import { isTweetLink, removePreviewedLink, tweetLinkPreview } from '@/functions/tweet';
 import { muteVideos, playFirstVideo } from '@/functions/videoPlayback';
 import { language } from '@/functions/languageStore';
+import { dateFormatStore } from '@/functions/dateFormatStore';
 import { postSource } from '@/functions/postSource';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 

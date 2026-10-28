@@ -45,7 +45,7 @@
             <LinkPreview v-if="linkPreview" :preview="linkPreview" :hide-image="cardShowsLinkImage" />
 
             <div class="card-footer-row">
-                <span class="post-time" :title="post.pubDate ? new Date(post.pubDate).toLocaleString() : ''">{{ shortDate }}</span>
+                <span class="post-time" :title="post.pubDate ? dateFormatStore.dateTime(post.pubDate) : ''">{{ shortDate }}</span>
                 <div class="d-flex align-items-center gap-3">
                     <button v-if="logCount" type="button" class="footer-action save-button logs-action" @click.stop="emit('show-logs', post)"
                         :title="language.get('The content of this post couldn\'t be fully retrieved') + ' — ' + language.get('View logs')">
@@ -126,7 +126,7 @@
                         <path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5V2zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1H4z"/>
                     </svg>
                 </button>
-            <span class="list-time" :title="post.pubDate ? new Date(post.pubDate).toLocaleString() : ''">{{ shortDate }}</span>
+            <span class="list-time" :title="post.pubDate ? dateFormatStore.dateTime(post.pubDate) : ''">{{ shortDate }}</span>
         </div>
         <!-- Expanded details for the selected post -->
         <div v-if="selected" class="list-details" @click.stop>
@@ -139,7 +139,7 @@
                     <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
                         @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ postSource(post) }}</span>
                     <span v-if="post.author" class="text-truncate">&middot; {{ post.author }}</span>
-                    <span v-if="post.pubDate" class="flex-shrink-0">&middot; {{ new Date(post.pubDate).toLocaleString() }}</span>
+                    <span v-if="post.pubDate" class="flex-shrink-0">&middot; {{ dateFormatStore.dateTime(post.pubDate) }}</span>
                 </div>
                 <div class="details-actions">
                     <button type="button" class="details-action save-button favorite-button" :class="{ favorite: post.favorite }" @click="emit('toggle-favorite', post.id)"
@@ -224,6 +224,7 @@ import { linkContentStore } from '@/functions/linkContentStore';
 import { hideBrokenImage } from '@/functions/hideBrokenImage';
 import { youtubeEmbedStore } from '@/functions/youtubeEmbedStore';
 import { cardColorStore } from '@/functions/cardColorStore';
+import { dateFormatStore } from '@/functions/dateFormatStore';
 import LiveBadge from '@/components/LiveBadge.vue';
 import VideoDuration from '@/components/VideoDuration.vue';
 import PostShareActions from '@/components/PostShareActions.vue';
@@ -375,8 +376,8 @@ const shortDate = computed(() => {
     if (!props.post.pubDate) return '';
     const date = new Date(props.post.pubDate);
     return date.toDateString() === new Date().toDateString()
-        ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        : date.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+        ? dateFormatStore.time(date)
+        : dateFormatStore.date(date);
 });
 
 watch(() => props.post.id, () => {

@@ -304,7 +304,7 @@
                 </div>
                 <div class="row justify-content-end">
                     <div class="col-auto">
-                        <small class="text-muted last-parsed d-block" :title="lastParsedAt ? new Date(lastParsedAt).toLocaleString() : ''">
+                        <small class="text-muted last-parsed d-block" :title="lastParsedAt ? dateFormatStore.dateTime(lastParsedAt) : ''">
                             {{ language.get('Last parsing') || 'Last parsing' }}: {{ lastParsedLabel }}
                         </small>
                     </div>
@@ -388,6 +388,7 @@ import { getFeedOperationStatus, getLastParsedAt, getFeeds, deleteFeed } from '@
 import { getFolders, deleteFolder } from '@/api/folder';
 import { PostType, FolderType, UnreadCountsType, FeedUnreadCountType, Feed } from '@/types';
 import { cardColorStore } from '@/functions/cardColorStore';
+import { dateFormatStore } from '@/functions/dateFormatStore';
 import { language } from '@/functions/languageStore';
 import { postContentStore } from '@/functions/postContentStore';
 import { linkContentStore } from '@/functions/linkContentStore';
@@ -907,8 +908,8 @@ const lastParsedLabel = computed(() => {
     }
     const date = new Date(lastParsedAt.value);
     return date.toDateString() === new Date().toDateString()
-        ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        : date.toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        ? dateFormatStore.time(date)
+        : `${dateFormatStore.shortDate(date)} ${dateFormatStore.time(date)}`;
 });
 
 /**

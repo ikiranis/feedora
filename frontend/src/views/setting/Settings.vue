@@ -7,6 +7,9 @@ import router from "@/router";
 import {language} from "@/functions/languageStore.ts";
 import Page404 from "@/components/error/Page404.vue";
 import Loading from "@/components/utilities/Loading.vue";
+import {dateFormatStore, DateFormat} from "@/functions/dateFormatStore.ts";
+
+const dateFormats: DateFormat[] = ['DD-MM-YYYY', 'MM-DD-YYYY']
 
 const settings: Ref<any[]> = ref([]);
 
@@ -40,6 +43,19 @@ const editSetting = (id: number) => {
 </script>
 
 <template>
+    <!-- Display settings, kept in this browser -->
+    <div class="my-3 d-flex align-items-center gap-3">
+        <span class="fw-semibold">{{ language.get('Date format') || 'Date format' }}</span>
+        <div class="btn-group btn-group-sm" role="group" :aria-label="language.get('Date format') || 'Date format'">
+            <button v-for="format in dateFormats" :key="format" type="button" class="btn btn-outline-secondary"
+                    :class="{ active: dateFormatStore.format.value === format }"
+                    :aria-pressed="dateFormatStore.format.value === format"
+                    @click="dateFormatStore.format.value = format">
+                {{ format }}
+            </button>
+        </div>
+    </div>
+
     <div v-if="loading" class="row">
         <Loading />
     </div>
