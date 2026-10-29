@@ -6,6 +6,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 
 import eu.apps4net.feedora.configurations.Language;
+import eu.apps4net.feedora.desktop.DesktopWindow;
 import eu.apps4net.feedora.services.SettingService;
 import eu.apps4net.feedora.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,11 @@ public class Feedora {
 
     public static void main(String[] args)
     {
+        // Started with a double click on the jar (no terminal), show a window with the app info
+        if (DesktopWindow.shouldShow(args) && DesktopWindow.start(Feedora.class, args)) {
+            return;
+        }
+
         SpringApplication.run(Feedora.class, args);
         System.out.println("Run app on http://localhost:9999");
     }
