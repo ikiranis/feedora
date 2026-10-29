@@ -330,7 +330,7 @@
                             @click="selectedIndex = !showDetails && selectedIndex === index ? -1 : index">
                             <PostElement :post="post" :show-details="showDetails" :selected="index === selectedIndex"
                                 @post-read="handlePostRead" @toggle-saved="toggleSaved" @toggle-favorite="toggleFavorite" @toggle-read="toggleRead" @show-logs="showPostLogs"
-                                @show-feed="showFeed" @close="selectedIndex = -1" @open="selectedIndex = index; modalOpen = true" />
+                                @show-feed="showFeed" @show-folder="showFolder" @close="selectedIndex = -1" @open="selectedIndex = index; modalOpen = true" />
                         </div>
                         <div v-if="allLoaded && posts.length > 0 && !searchTerm.trim()" class="text-center w-100 text-muted my-4">
                             {{ language.get('No more posts') || 'No more posts' }}
@@ -364,7 +364,7 @@
     </div>
 
     <PostModal v-if="modalPost" ref="postModalRef" :post="modalPost"
-        @close="modalOpen = false" @next="selectPost(selectedIndex + 1)" @previous="selectPost(selectedIndex - 1)" @toggle-saved="toggleSaved" @toggle-favorite="toggleFavorite" @show-logs="showPostLogs" @show-feed="showFeed" />
+        @close="modalOpen = false" @next="selectPost(selectedIndex + 1)" @previous="selectPost(selectedIndex - 1)" @toggle-saved="toggleSaved" @toggle-favorite="toggleFavorite" @show-logs="showPostLogs" @show-feed="showFeed" @show-folder="showFolder" />
 
     <LogsModal :post-id="logsPost?.id" :feed-id="logsPost?.feed?.id" :title="logsPost?.title" :show="!!logsPost"
         @logs-cleared="handlePostLogsCleared" @modal-hidden="logsPost = null" />
@@ -747,6 +747,15 @@ const showFeed = (feedId: string) => {
     modalOpen.value = false;
     selectedIndex.value = -1;
     selectFeed(feedId);
+};
+
+/**
+ * Shows the posts of the folder of a post's feed, closing the opened post.
+ */
+const showFolder = (folderId: string) => {
+    modalOpen.value = false;
+    selectedIndex.value = -1;
+    selectFolder(folderId);
 };
 
 /**
@@ -1515,9 +1524,12 @@ onMounted(() => {
     // Clear any existing errors when navigating to posts page
     errorStore.clear();
 
-    // A feed selected from the feeds page. The query is removed, so it doesn't override later filter changes.
+    // A feed or folder selected from another page. The query is removed, so it doesn't override later filter changes.
     if (typeof route.query.feed === 'string') {
         selectedFeedId.value = route.query.feed;
+        router.replace({ query: {} });
+    } else if (typeof route.query.folder === 'string') {
+        selectedFolderId.value = route.query.folder;
         router.replace({ query: {} });
     }
 

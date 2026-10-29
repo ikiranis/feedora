@@ -21,6 +21,9 @@
                             <img v-if="siteIcon" :src="siteIcon" class="post-modal-icon" alt="" @error="iconFailed = true" />
                             <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
                                 @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ postSource(post) }}</span>
+                            <span v-if="post.feed?.folderName && post.feed.folderId" class="text-truncate">&middot;
+                                <span class="feed-link" role="button" :title="language.get('Show the posts of this folder') || 'Show the posts of this folder'"
+                                    @click.stop="emit('show-folder', post.feed.folderId)">{{ post.feed.folderName }}</span></span>
                             <span v-if="post.author" class="text-truncate">&middot; {{ post.author }}</span>
                             <span v-if="post.pubDate" class="flex-shrink-0">&middot; {{ dateFormatStore.dateTime(post.pubDate) }}</span>
                         </div>
@@ -133,6 +136,7 @@ const emit = defineEmits<{
     'toggle-favorite': [postId: string]
     'show-logs': [post: PostType]
     'show-feed': [feedId: string]
+    'show-folder': [folderId: string]
     'next': []
     'previous': []
 }>();

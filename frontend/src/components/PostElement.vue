@@ -34,9 +34,13 @@
             <a v-if="!isTweet" :href="post.link" target="_blank" class="post-title" @click="handleGridTitleClick"><LiveBadge :post="post" class="me-2" />{{ post.title }}</a>
             <div class="post-source">
                 <img v-if="siteIcon" :src="siteIcon" class="site-icon source-icon" alt="" loading="lazy" @error="iconFailed = true" />
-                <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
-                    @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ tweetAuthor || postSource(post) }}</span>
-                <span v-if="post.feed?.folderName" class="post-folder text-truncate">&middot; {{ post.feed.folderName }}</span>
+                <!-- The feed, and under it the folder it's in -->
+                <div class="source-names">
+                    <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
+                        @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ tweetAuthor || postSource(post) }}</span>
+                    <span v-if="post.feed?.folderName && post.feed.folderId" class="post-folder text-truncate feed-link" role="button" :title="language.get('Show the posts of this folder') || 'Show the posts of this folder'"
+                        @click.stop="emit('show-folder', post.feed.folderId)">{{ post.feed.folderName }}</span>
+                </div>
             </div>
             <!-- Without a title, the tweet text takes its place and opens the post in the modal -->
             <p v-if="!youtubeVideo && cardExcerpt" class="post-excerpt" :class="{ 'no-media': !thumbnailUrl && !tweetVideo, 'tweet-text': isTweet }"
@@ -138,6 +142,9 @@
                     <img v-if="siteIcon" :src="siteIcon" class="details-icon" alt="" @error="iconFailed = true" />
                     <span class="text-truncate feed-link" role="button" :title="language.get('Show the posts of this feed') || 'Show the posts of this feed'"
                         @click.stop="post.feed && emit('show-feed', post.feed.id)">{{ postSource(post) }}</span>
+                    <span v-if="post.feed?.folderName && post.feed.folderId" class="text-truncate">&middot;
+                        <span class="feed-link" role="button" :title="language.get('Show the posts of this folder') || 'Show the posts of this folder'"
+                            @click.stop="emit('show-folder', post.feed.folderId)">{{ post.feed.folderName }}</span></span>
                     <span v-if="post.author" class="text-truncate">&middot; {{ post.author }}</span>
                     <span v-if="post.pubDate" class="flex-shrink-0">&middot; {{ dateFormatStore.dateTime(post.pubDate) }}</span>
                 </div>
@@ -432,6 +439,7 @@ const emit = defineEmits<{
     'toggle-read': [postId: string]
     'show-logs': [post: PostType]
     'show-feed': [feedId: string]
+    'show-folder': [folderId: string]
     'close': []
     'open': [postId: string]
 }>();
@@ -667,8 +675,15 @@ video.media-image {
     text-decoration: underline;
 }
 
+.source-names {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
+}
+
 .post-folder {
-    flex-shrink: 1;
+    font-size: 0.85em;
     opacity: 0.8;
 }
 

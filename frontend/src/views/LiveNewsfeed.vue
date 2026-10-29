@@ -53,7 +53,7 @@
                     <div v-for="post in posts" :key="post.id" class="live-item" :class="{ fresh: freshPostIds.has(post.id) }">
                         <PostElement :post="post" :show-details="true" :autoplay="post.id === currentPostId"
                             @post-read="handlePostRead" @toggle-read="toggleRead" @toggle-saved="toggleSaved" @toggle-favorite="toggleFavorite"
-                            @show-logs="logsPost = $event" @show-feed="showFeed" @open="modalPostId = $event" />
+                            @show-logs="logsPost = $event" @show-feed="showFeed" @show-folder="showFolder" @open="modalPostId = $event" />
                     </div>
                 </TransitionGroup>
 
@@ -72,7 +72,7 @@
     </div>
 
     <PostModal v-if="modalPost" :post="modalPost"
-        @close="modalPostId = null" @toggle-saved="toggleSaved" @toggle-favorite="toggleFavorite" @show-logs="logsPost = $event" @show-feed="showFeed" />
+        @close="modalPostId = null" @toggle-saved="toggleSaved" @toggle-favorite="toggleFavorite" @show-logs="logsPost = $event" @show-feed="showFeed" @show-folder="showFolder" />
 
     <LogsModal :post-id="logsPost?.id" :feed-id="logsPost?.feed?.id" :title="logsPost?.title" :show="!!logsPost"
         @logs-cleared="logsPost && postContentStore.clearLogCount(logsPost.id)" @modal-hidden="logsPost = null" />
@@ -310,6 +310,13 @@ const toggleFavorite = async (postId: string) => {
  */
 const showFeed = (feedId: string) => {
     router.push({ name: 'Posts', query: { feed: feedId } });
+};
+
+/**
+ * Opens the posts page with the posts of the folder.
+ */
+const showFolder = (folderId: string) => {
+    router.push({ name: 'Posts', query: { folder: folderId } });
 };
 
 const handleKeydown = (event: KeyboardEvent) => {
