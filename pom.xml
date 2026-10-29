@@ -10,7 +10,7 @@
     </parent>
     <groupId>eu.apps4net</groupId>
     <artifactId>Feedora</artifactId>
-    <version>1.6.0</version>
+    <version>1.6.1</version>
     <name>Feedora</name>
     <description>RSS reader app</description>
     <url/>
@@ -196,6 +196,17 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <!-- Keeps the local JWT secret out of the jar, as the jar is published in the GitHub releases.
+                Without it the app creates its own secret on the first start (see JwtSecretGenerator) -->
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>application-secrets.properties</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
 
             <plugin>

@@ -96,20 +96,79 @@ Feedora is a self-hosted, multi-user RSS reader. It follows your RSS/Atom feeds 
 
 ## 🚀 Installation
 
-### Prerequisites
+There are two ways to install Feedora:
+- **[Download and run](#option-1-download-and-run)** the ready-made jar from the GitHub releases. This is the easiest way.
+- **[Build from source](#option-2-build-from-source)**, if you want to change the code or run the latest unreleased version.
+
+Then follow the [first steps](#first-steps).
+
+### Option 1: Download and run
+
+#### Requirements
+**Java 21** or newer. Check with `java -version` in a terminal. If you don't have it, install it from [Adoptium](https://adoptium.net/) (Temurin, version 21 or newer).
+
+#### 1. Download
+Download `Feedora-x.y.z.jar` from the [latest release](https://github.com/ikiranis/feedora/releases/latest).
+
+#### 2. Put it in its own folder
+Create a folder for Feedora (e.g. `Feedora` in your Documents) and move the jar there. **Feedora keeps all its data in the folder of the jar**, so don't leave it in your Downloads folder.
+
+#### 3. Double-click the jar
+A small Feedora window opens and shows:
+
+| | |
+|---|---|
+| **Status** | `Starting...`, then `Running`, or the error if it couldn't start (e.g. the port is in use) |
+| **Version** | The running version |
+| **Address** | The address on this computer, `http://localhost:9990`. Click it or **Open in browser** |
+| **Network** | The address other devices of your network (phone, tablet, other computers) can use, e.g. `http://192.168.1.20:9990` |
+| **Data folder** | The folder where the data is kept (the folder of the jar) |
+
+Feedora runs while the window is open. **Quit**, or closing the window, stops it.
+
+If the double-click doesn't start it:
+- **Windows:** if the jar opens with a zip program, right-click it, choose **Open with → Choose another app** and select **Java(TM) Platform SE binary**. If Windows asks about the firewall, allow access to use Feedora from other devices.
+- **macOS:** the first time, right-click the jar and choose **Open**, then **Open** again, as the jar is not signed by Apple. The window is available on Apple Silicon Macs (M1 and newer). On Intel Macs Feedora runs without it, so start it from a terminal instead (see below).
+- **Linux:** right-click the jar and choose **Open with** your Java runtime. You may need to allow it to run as a program first (Properties → Permissions).
+
+#### Running from a terminal
+You can also start Feedora from a terminal, e.g. on a server:
+
+```bash
+java -jar Feedora-x.y.z.jar
+```
+
+From a terminal there is no window, Feedora keeps its data in the **current folder** (not the folder of the jar), and you stop it with `Ctrl+C`. Add `--gui` to show the window anyway, or `--no-gui` to never show it.
+
+#### The files of Feedora
+Feedora creates these next to the jar on its first start:
+
+| File / folder | What it is |
+|---|---|
+| `db/` | The database: users, feeds, posts and settings |
+| `application-secrets.properties` | The secret key that signs the logins, created automatically. Keep it private: anyone who has it can log in as any user |
+| `feeds/` | The RSS feeds made from web pages on the **Parser** page |
+| `derby.log` | The database log |
+
+#### Updating
+Quit Feedora, replace the jar with the new one in the same folder, and start it again. Your data stays as it is. It's a good idea to [back up](#backups) the folder first.
+
+### Option 2: Build from source
+
+#### Prerequisites
 - **Java 21** or newer (JDK)
 - **Node.js 18+** with npm, needed to build the frontend
 - **Git**
 - Maven is optional, because the included Maven wrapper (`./mvnw`) downloads it for you
 
-### 1. Clone the repository
+#### 1. Clone the repository
 ```bash
 git clone https://github.com/ikiranis/feedora.git
 cd feedora
 ```
 
-### 2. Create the secrets file
-The JWT secret lives in a file that is excluded from Git. Create it from the template:
+#### 2. Create the secrets file (optional)
+The JWT secret lives in a file that is excluded from Git and from the jar. If you skip this step, Feedora creates a random secret on its first start and saves it in `application-secrets.properties` in the folder it runs from. To set your own, create the file from the template:
 
 ```bash
 cp src/main/resources/application-secrets.properties.template \
@@ -123,7 +182,7 @@ Open `src/main/resources/application-secrets.properties` and paste the generated
 
 > ⚠️ Never commit `application-secrets.properties`. Changing `jwt.secret` signs out every user.
 
-### 3. Build the frontend
+#### 3. Build the frontend
 ```bash
 cd frontend
 npm install
@@ -133,20 +192,24 @@ cd ..
 
 This creates `frontend/dist/`. The Maven build copies it into the application, so the backend serves the frontend itself.
 
-### 4. Build and run the application
+#### 4. Build and run the application
 ```bash
 ./mvnw clean package
-java -jar target/Feedora-0.11.8.jar
+java -jar target/Feedora-x.y.z.jar
 ```
 
 The JAR name follows the version in `pom.xml`. On Windows, use `mvnw.cmd` instead of `./mvnw`.
 
-Open **http://localhost:9999**.
+Open **http://localhost:9990**.
 
-### 5. Create the first account
+The jar can also be copied to its own folder and started with a double-click, like the [released jar](#3-double-click-the-jar). Don't double-click it inside `target/`, as its data would be created there and deleted by `./mvnw clean`.
+
+### First steps
+
+#### 1. Create the first account
 Click **Sign up** and register. **The first user becomes the admin.** If you don't want other people to register, turn off `registrationEnabled` in **Settings** afterwards and add users yourself from the **Users** page.
 
-### 6. Add your feeds
+#### 2. Add your feeds
 Add feeds one by one from the **Feeds** page, or import an OPML file exported from another reader. Feedora starts fetching them right away.
 
 ---
@@ -156,7 +219,7 @@ Add feeds one by one from the **Feeds** page, or import an OPML file exported fr
 Run the backend and the Vite dev server side by side to get hot reload:
 
 ```bash
-# Terminal 1 – backend on http://localhost:9999
+# Terminal 1 – backend on http://localhost:9990
 ./mvnw spring-boot:run
 
 # Terminal 2 – frontend with hot reload
@@ -165,7 +228,7 @@ npm install
 npm run dev
 ```
 
-Open the URL Vite prints (usually **http://localhost:5173**). In development mode the frontend calls the backend at `http://localhost:9999`, and in production it uses the address it was served from.
+Open the URL Vite prints (usually **http://localhost:5173**). In development mode the frontend calls the backend at `http://localhost:9990`, and in production it uses the address it was served from.
 
 ### Running the tests
 ```bash
@@ -183,20 +246,20 @@ File: `src/main/resources/application.properties`
 
 | Property | Default | Description |
 |---|---|---|
-| `server.port` | `9999` | HTTP port |
+| `server.port` | `9990` | HTTP port |
 | `spring.datasource.url` | `jdbc:derby:db;create=true;` | Derby database. The `db/` folder is created in the working directory on first run |
 | `feedora.logs.retention-days` | `30` | Days to keep feed/post log entries |
 | `feedora.posts.read-retention-days` | `30` | Days to keep read posts after they were read. Saved posts are always kept |
 
 Any property can also be passed when starting the app, for example:
 ```bash
-java -jar target/Feedora-0.11.8.jar --server.port=8080
+java -jar target/Feedora-x.y.z.jar --server.port=8080
 ```
 
 ### `application-secrets.properties`
 | Property | Default | Description |
 |---|---|---|
-| `jwt.secret` | — | **Required.** Base64 key, at least 256 bits |
+| `jwt.secret` | Generated | Base64 key, at least 256 bits. When it's not set, Feedora creates one on its first start and saves it in `application-secrets.properties` in its data folder |
 | `jwt.expiration` | `86400000` (24 h) | Session length in milliseconds |
 | `jwt.remember-me-expiration` | `2592000000` (30 days) | Session length when "remember me" is checked |
 
@@ -211,7 +274,7 @@ On the **Settings** page:
 | `defaultActionsLanguage` | Default language for messages |
 
 ### Backups
-All data is in the `db/` folder. Stop the application and copy that folder to back it up.
+All data is in the `db/` folder. Stop the application and copy that folder, together with `application-secrets.properties`, to back it up. Without the secrets file the backup still works, but everyone has to log in again.
 
 ---
 

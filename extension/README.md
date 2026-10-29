@@ -26,7 +26,7 @@ Temporary add-ons are removed when Firefox restarts.
 ## Where it runs
 
 The extension is always active on `http://localhost` and `http://127.0.0.1` (any port), which covers the Vite
-dev server and the Spring Boot app on port 9999.
+dev server and the Spring Boot app on port 9990.
 
 If Feedora runs somewhere else (e.g. in Docker on `http://192.168.1.10:8820`), open it, **click the extension's
 toolbar button** (pin it from the extensions menu first) and choose **Enable the companion here**. Allow access to

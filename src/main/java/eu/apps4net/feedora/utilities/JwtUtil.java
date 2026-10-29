@@ -15,7 +15,8 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secretKey;
     
-    @Value("${jwt.expiration}")
+    // Default: 24 hours
+    @Value("${jwt.expiration:86400000}")
     private long jwtExpiration;
     
     // For users who chose to stay connected at login (default: 30 days)

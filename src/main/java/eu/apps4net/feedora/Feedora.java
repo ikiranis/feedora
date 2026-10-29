@@ -7,6 +7,7 @@ import org.springframework.context.event.EventListener;
 
 import eu.apps4net.feedora.configurations.Language;
 import eu.apps4net.feedora.desktop.DesktopWindow;
+import eu.apps4net.feedora.services.ParseService;
 import eu.apps4net.feedora.services.SettingService;
 import eu.apps4net.feedora.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,11 +16,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class Feedora {
     private static SettingService settingService;
     private static UserService userService;
+    private static ParseService parseService;
 
     @Autowired
-    public Feedora(SettingService settingService, UserService userService) {
+    public Feedora(SettingService settingService, UserService userService, ParseService parseService) {
         Feedora.settingService = settingService;
         Feedora.userService = userService;
+        Feedora.parseService = parseService;
     }
 
     public static void main(String[] args)
@@ -30,12 +33,13 @@ public class Feedora {
         }
 
         SpringApplication.run(Feedora.class, args);
-        System.out.println("Run app on http://localhost:9999");
+        System.out.println("Run app on http://localhost:9990");
     }
 
     @EventListener(ApplicationReadyEvent.class)
     public void initApp() {
         userService.migrateUserRoles();
+        parseService.migrateFeedUrls();
         
         // Initialize Language configuration after Spring context is ready
         try {

@@ -3,11 +3,13 @@ package eu.apps4net.feedora.controllers;
 import eu.apps4net.feedora.models.Folder;
 import eu.apps4net.feedora.models.Parse;
 import eu.apps4net.feedora.models.User;
+import eu.apps4net.feedora.services.ParseService;
 import eu.apps4net.feedora.support.ApiTestBase;
 import eu.apps4net.feedora.support.TestHttpServer;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,6 +28,9 @@ class ParserControllerTest extends ApiTestBase {
             + "<div class=\"story\"><h3><a href=\"/s/2\">The second story of the page</a></h3></div>"
             + "<div class=\"story\"><h3><a href=\"/s/3\">The third story of the page</a></h3></div>"
             + "</main></body></html>";
+
+    @Autowired
+    private ParseService parseService;
 
     private TestHttpServer server;
 
@@ -158,5 +163,20 @@ class ParserControllerTest extends ApiTestBase {
         mockMvc.perform(get("/api/parser/feed/..%2Fpom.xml")).andExpect(status().is4xxClientError());
         mockMvc.perform(get("/api/parser/feed/pom")).andExpect(status().isNotFound());
         mockMvc.perform(get("/api/parser/feed/missing.xml")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void generatedFeedsMoveToTheCurrentPort() {
+        Folder folder = createFolder("Local", user);
+        Parse parse = new Parse();
+        parse.setFeedName("example.com");
+        createFeed("Old port", "http://localhost:9999/api/parser/feed/example.com.xml", folder, user);
+        createFeed("Other site", "https://example.com/api/parser/feed/example.com.xml", folder, user);
+
+        parseService.migrateFeedUrls();
+
+        assertThat(feedRepository.findByUser(user)).extracting(feed -> feed.getXmlUrl()).containsExactlyInAnyOrder(
+                parseService.feedUrl(parse),
+                "https://example.com/api/parser/feed/example.com.xml");
     }
 }

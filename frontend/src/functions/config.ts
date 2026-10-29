@@ -18,7 +18,7 @@ const languages: Array<Language> = [
  * the same origin (works with any host/IP/port, e.g. behind Docker). The Vite dev server needs the full URL.
  */
 const defaultServer = () => {
-    return import.meta.env.DEV ? 'http://localhost:9999' : window.location.origin
+    return import.meta.env.DEV ? 'http://localhost:9990' : window.location.origin
 }
 
 /**

@@ -5,6 +5,7 @@ import com.rometools.rome.io.SyndFeedInput;
 import com.rometools.rome.io.XmlReader;
 import eu.apps4net.feedora.configurations.Language;
 import eu.apps4net.feedora.exceptions.PageBlockedException;
+import eu.apps4net.feedora.models.Feed;
 import eu.apps4net.feedora.models.Parse;
 import eu.apps4net.feedora.models.ParseDTO;
 import eu.apps4net.feedora.models.User;
@@ -41,10 +42,30 @@ public class ParseService {
     private String feedsDir;
 
     // Address the feed parser downloads the generated feeds from, i.e. this server
-    @Value("${feedora.parser.feed-base-url:http://localhost:${server.port:9999}}")
+    @Value("${feedora.parser.feed-base-url:http://localhost:${server.port:9990}}")
     private String feedBaseUrl;
 
     private static final Pattern FEED_FILE_NAME = Pattern.compile("[a-z0-9][a-z0-9.-]*\\.xml");
+
+    // A generated feed's URL on this server with any port, e.g. http://localhost:9999/api/parser/feed/
+    private static final Pattern LOCAL_FEED_URL_PREFIX = Pattern.compile("^http://localhost:\\d+/api/parser/feed/");
+
+    /**
+     * Points the generated feeds added to the user's feeds to the current address, when the server's port
+     * changed (e.g. from the old default 9999), otherwise they can't be downloaded anymore.
+     */
+    public void migrateFeedUrls() {
+        String currentPrefix = feedBaseUrl + "/api/parser/feed/";
+        List<Feed> changed = new ArrayList<>();
+        for (Feed feed : feedRepository.findByXmlUrlContaining("/api/parser/feed/")) {
+            String xmlUrl = feed.getXmlUrl();
+            if (LOCAL_FEED_URL_PREFIX.matcher(xmlUrl).find() && !xmlUrl.startsWith(currentPrefix)) {
+                feed.setXmlUrl(LOCAL_FEED_URL_PREFIX.matcher(xmlUrl).replaceFirst(currentPrefix));
+                changed.add(feed);
+            }
+        }
+        feedRepository.saveAll(changed);
+    }
 
     /**
      * Downloads a page and finds its repeated elements, for the user to choose the one that holds the posts.

@@ -108,6 +108,10 @@ public class DesktopWindow extends Application {
 		}
 		dataDir = jar.getAbsoluteFile().getParentFile().toPath();
 
+		// Where JwtSecretGenerator keeps the generated secret
+		if (System.getProperty("feedora.data-dir") == null) {
+			System.setProperty("feedora.data-dir", dataDir.toString());
+		}
 		// Derby resolves the relative database name of spring.datasource.url (and derby.log) against it
 		if (System.getProperty("derby.system.home") == null) {
 			System.setProperty("derby.system.home", dataDir.toString());
@@ -199,7 +203,7 @@ public class DesktopWindow extends Application {
 	private void startSpring() {
 		try {
 			context = SpringApplication.run(appClass, appArgs);
-			String port = context.getEnvironment().getProperty("local.server.port", "9999");
+			String port = context.getEnvironment().getProperty("local.server.port", "9990");
 			BuildProperties buildProperties = context.getBeanProvider(BuildProperties.class).getIfAvailable();
 			String version = buildProperties != null ? buildProperties.getVersion() : "dev";
 			appUrl = "http://localhost:" + port;
