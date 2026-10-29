@@ -66,6 +66,7 @@ Feedora is a self-hosted, multi-user RSS reader. It follows your RSS/Atom feeds 
 | `F` | Save / unsave the selected post |
 | `S` | Add / remove the selected post from favorites |
 | `C` | Copy the selected post's link |
+| `R` | Show the new posts, when the new posts badge is shown |
 | `H` | Show / hide the shortcuts |
 
 ### 👥 Users and Administration

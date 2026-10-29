@@ -1470,6 +1470,10 @@
         <language code="en">new post</language>
         <language code="el">νέα ανάρτηση</language>
     </entry>
+    <entry id="Show the new posts, when there are any">
+        <language code="en">Show the new posts, when there are any</language>
+        <language code="el">Εμφάνιση των νέων αναρτήσεων, όταν υπάρχουν</language>
+    </entry>
     <entry id="Show the new posts">
         <language code="en">Show the new posts</language>
         <language code="el">Εμφάνιση των νέων αναρτήσεων</language>

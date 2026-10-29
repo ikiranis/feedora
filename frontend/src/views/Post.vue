@@ -316,7 +316,7 @@
                 <div v-if="newPostsCount > 0" class="new-posts-badge-wrapper">
                     <button type="button" class="btn btn-sm btn-primary rounded-pill shadow-sm new-posts-badge d-flex align-items-center gap-1"
                         @click="showNewPosts" :disabled="loading"
-                        :title="language.get('Show the new posts') || 'Show the new posts'">
+                        :title="(language.get('Show the new posts') || 'Show the new posts') + ' (R)'">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-arrow-up" viewBox="0 0 16 16">
                             <path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5"/>
                         </svg>
@@ -1321,7 +1321,7 @@ const getShortcutKey = (event: KeyboardEvent): string => {
  * Enter or O opens the selected post in a modal (Esc closes it), B opens its link in a background tab, F saves it for later (or unsaves it),
  * S adds it to the favorites (or removes it), C copies its link to the clipboard.
  * W shows (or hides) the article of its link preview inside it, opening it in the modal when only its card is shown.
- * H shows the help modal with all the keyboard shortcuts.
+ * H shows the help modal with all the keyboard shortcuts. R shows the new posts, when the new posts badge is shown.
  */
 const handleKeydown = (event: KeyboardEvent) => {
     // The logs and add feed modals handle their own keys (Esc closes them)
@@ -1337,7 +1337,15 @@ const handleKeydown = (event: KeyboardEvent) => {
         return;
     }
     // The help modal handles its own keys (Esc closes it)
-    if (showShortcuts.value || posts.value.length === 0) return;
+    if (showShortcuts.value) return;
+    if (key === 'r') {
+        if (newPostsCount.value > 0 && !loading.value && !modalOpen.value) {
+            showNewPosts();
+            event.preventDefault();
+        }
+        return;
+    }
+    if (posts.value.length === 0) return;
 
     const current = selectedIndex.value;
     const columns = getColumnCount();
