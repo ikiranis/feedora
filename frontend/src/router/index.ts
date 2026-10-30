@@ -13,6 +13,7 @@ import Parser from "@/views/Parser.vue"
 import LiveNewsfeed from "@/views/LiveNewsfeed.vue"
 import Auth from "@/views/Auth.vue"
 import Support from "@/views/Support.vue"
+import Help from "@/views/Help.vue"
 import { authStore } from "@/functions/authStore"
 import { errorStore } from "@/components/error/errorStore"
 
@@ -88,6 +89,12 @@ const routes : RouteRecordRaw[] = [
         path: '/support',
         name: 'Support',
         component: Support,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/help',
+        name: 'Help',
+        component: Help,
         meta: { requiresAuth: true }
     },
 ]

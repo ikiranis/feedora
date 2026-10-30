@@ -2181,4 +2181,704 @@
         <language code="el">Δωρεά μέσω PayPal</language>
     </entry>
 
+    <entry id="Getting started">
+        <language code="en">Getting started</language>
+        <language code="el">Ξεκινώντας</language>
+    </entry>
+
+    <entry id="What Feedora does, and how to find your way around it.">
+        <language code="en">What Feedora does, and how to find your way around it.</language>
+        <language code="el">Τι κάνει το Feedora και πώς να βρείτε τον δρόμο σας σε αυτό.</language>
+    </entry>
+
+    <entry id="Feedora follows your RSS and Atom feeds and YouTube channels, checks each one in the background, and collects their new posts in one place for you to read. Every user has their own feeds, folders and posts.">
+        <language code="en">Feedora follows your RSS and Atom feeds and YouTube channels, checks each one in the background, and collects their new posts in one place for you to read. Every user has their own feeds, folders and posts.</language>
+        <language code="el">Το Feedora παρακολουθεί τα RSS και Atom feeds σας και τα κανάλια σας στο YouTube, ελέγχει το καθένα στο παρασκήνιο, και συγκεντρώνει τα νέα τους posts σε ένα μέρος για να τα διαβάσετε. Κάθε χρήστης έχει τα δικά του feeds, φακέλους και posts.</language>
+    </entry>
+
+    <entry id="1. Add your feeds">
+        <language code="en">1. Add your feeds</language>
+        <language code="el">1. Προσθέστε τα feeds σας</language>
+    </entry>
+
+    <entry id="Press A on any page, or use Add Feed on the Feeds page, and paste the address of a feed, a website or a YouTube channel. You can also import an OPML file from another reader.">
+        <language code="en">Press A on any page, or use Add Feed on the Feeds page, and paste the address of a feed, a website or a YouTube channel. You can also import an OPML file from another reader.</language>
+        <language code="el">Πατήστε A σε οποιαδήποτε σελίδα, ή χρησιμοποιήστε την Προσθήκη Feed στη σελίδα των Feeds, και επικολλήστε τη διεύθυνση ενός feed, ενός ιστότοπου ή ενός καναλιού του YouTube. Μπορείτε επίσης να εισάγετε ένα αρχείο OPML από άλλο πρόγραμμα ανάγνωσης.</language>
+    </entry>
+
+    <entry id="2. Organise them in folders">
+        <language code="en">2. Organise them in folders</language>
+        <language code="el">2. Οργανώστε τα σε φακέλους</language>
+    </entry>
+
+    <entry id="Choose a folder for each feed when you add it, and create new folders from the Posts page.">
+        <language code="en">Choose a folder for each feed when you add it, and create new folders from the Posts page.</language>
+        <language code="el">Επιλέξτε έναν φάκελο για κάθε feed όταν το προσθέτετε, και δημιουργήστε νέους φακέλους από τη σελίδα των Posts.</language>
+    </entry>
+
+    <entry id="3. Read">
+        <language code="en">3. Read</language>
+        <language code="el">3. Διαβάστε</language>
+    </entry>
+
+    <entry id="The Posts page shows the unread posts of all your feeds, newest first. Posts are marked as read as you scroll past them.">
+        <language code="en">The Posts page shows the unread posts of all your feeds, newest first. Posts are marked as read as you scroll past them.</language>
+        <language code="el">Η σελίδα των Posts δείχνει τα μη αναγνωσμένα posts όλων των feeds σας, με τα νεότερα πρώτα. Τα posts σημειώνονται ως αναγνωσμένα καθώς τα προσπερνάτε κάνοντας κύλιση.</language>
+    </entry>
+
+    <entry id="Menu">
+        <language code="en">Menu</language>
+        <language code="el">Μενού</language>
+    </entry>
+
+    <entry id="Every page is one click away from the menu on the left. On a narrow screen it opens from the menu button at the top.">
+        <language code="en">Every page is one click away from the menu on the left. On a narrow screen it opens from the menu button at the top.</language>
+        <language code="el">Κάθε σελίδα απέχει ένα κλικ από το μενού στα αριστερά. Σε στενή οθόνη ανοίγει από το κουμπί του μενού στην κορυφή.</language>
+    </entry>
+
+    <entry id="Theme">
+        <language code="en">Theme</language>
+        <language code="el">Θέμα</language>
+    </entry>
+
+    <entry id="The sun and moon button switches between the dark and the light theme, and your choice is remembered in this browser.">
+        <language code="en">The sun and moon button switches between the dark and the light theme, and your choice is remembered in this browser.</language>
+        <language code="el">Το κουμπί με τον ήλιο και το φεγγάρι αλλάζει ανάμεσα στο σκοτεινό και το φωτεινό θέμα, και η επιλογή σας θυμάται σε αυτόν τον browser.</language>
+    </entry>
+
+    <entry id="Feedora logo">
+        <language code="en">Feedora logo</language>
+        <language code="el">Λογότυπο Feedora</language>
+    </entry>
+
+    <entry id="Takes you to all the posts of all your folders.">
+        <language code="en">Takes you to all the posts of all your folders.</language>
+        <language code="el">Σας πηγαίνει σε όλα τα posts όλων των φακέλων σας.</language>
+    </entry>
+
+    <entry id="The Posts page">
+        <language code="en">The Posts page</language>
+        <language code="el">Η σελίδα των Posts</language>
+    </entry>
+
+    <entry id="Browsing, filtering and marking your posts.">
+        <language code="en">Browsing, filtering and marking your posts.</language>
+        <language code="el">Περιήγηση, φιλτράρισμα και σήμανση των posts σας.</language>
+    </entry>
+
+    <entry id="The left column of the Posts page lists All Posts, Saved, Favorites, your folders and their feeds, each with its number of unread posts. Click one to show only its posts. Click the arrow of a folder to show its feeds.">
+        <language code="en">The left column of the Posts page lists All Posts, Saved, Favorites, your folders and their feeds, each with its number of unread posts. Click one to show only its posts. Click the arrow of a folder to show its feeds.</language>
+        <language code="el">Η αριστερή στήλη της σελίδας των Posts δείχνει τα Όλα τα Posts, τα Αποθηκευμένα, τα Αγαπημένα, τους φακέλους σας και τα feeds τους, το καθένα με τον αριθμό των μη αναγνωσμένων posts του. Κάντε κλικ σε ένα για να δείτε μόνο τα posts του. Κάντε κλικ στο βέλος ενός φακέλου για να δείτε τα feeds του.</language>
+    </entry>
+
+    <entry id="Unread / All">
+        <language code="en">Unread / All</language>
+        <language code="el">Μη αναγνωσμένα / Όλα</language>
+    </entry>
+
+    <entry id="Show only the unread posts, or the read ones too.">
+        <language code="en">Show only the unread posts, or the read ones too.</language>
+        <language code="el">Δείχνει μόνο τα μη αναγνωσμένα posts, ή και τα αναγνωσμένα.</language>
+    </entry>
+
+    <entry id="Marks every post of the current view as read. Its arrow marks only the posts older than 1 day, 3 days, 1 week, 2 weeks or 1 month.">
+        <language code="en">Marks every post of the current view as read. Its arrow marks only the posts older than 1 day, 3 days, 1 week, 2 weeks or 1 month.</language>
+        <language code="el">Σημειώνει όλα τα posts της τρέχουσας προβολής ως αναγνωσμένα. Το βέλος του σημειώνει μόνο τα posts που είναι παλαιότερα από 1 ημέρα, 3 ημέρες, 1 εβδομάδα, 2 εβδομάδες ή 1 μήνα.</language>
+    </entry>
+
+    <entry id="Show Details / Show Summary">
+        <language code="en">Show Details / Show Summary</language>
+        <language code="el">Εμφάνιση Λεπτομερειών / Εμφάνιση Περίληψης</language>
+    </entry>
+
+    <entry id="Switches between cards with images and descriptions, and a compact list of titles.">
+        <language code="en">Switches between cards with images and descriptions, and a compact list of titles.</language>
+        <language code="el">Αλλάζει ανάμεσα σε κάρτες με εικόνες και περιγραφές, και σε μια συμπαγή λίστα τίτλων.</language>
+    </entry>
+
+    <entry id="Feed colors">
+        <language code="en">Feed colors</language>
+        <language code="el">Χρώματα feeds</language>
+    </entry>
+
+    <entry id="In the cards view, gives each card a light background in the color of its feed.">
+        <language code="en">In the cards view, gives each card a light background in the color of its feed.</language>
+        <language code="el">Στην προβολή καρτών, δίνει σε κάθε κάρτα ένα απαλό φόντο στο χρώμα του feed της.</language>
+    </entry>
+
+    <entry id="Hide YouTube Shorts">
+        <language code="en">Hide YouTube Shorts</language>
+        <language code="el">Απόκρυψη YouTube Shorts</language>
+    </entry>
+
+    <entry id="Hides the YouTube Shorts of the selected folder. It is remembered for each folder.">
+        <language code="en">Hides the YouTube Shorts of the selected folder. It is remembered for each folder.</language>
+        <language code="el">Κρύβει τα YouTube Shorts του επιλεγμένου φακέλου. Η επιλογή θυμάται για κάθε φάκελο ξεχωριστά.</language>
+    </entry>
+
+    <entry id="Checks the feeds of the current view for new posts right away, with a progress bar. The time of the last check is shown under the search box.">
+        <language code="en">Checks the feeds of the current view for new posts right away, with a progress bar. The time of the last check is shown under the search box.</language>
+        <language code="el">Ελέγχει αμέσως τα feeds της τρέχουσας προβολής για νέα posts, με μια μπάρα προόδου. Η ώρα του τελευταίου ελέγχου φαίνεται κάτω από το πεδίο αναζήτησης.</language>
+    </entry>
+
+    <entry id="Search">
+        <language code="en">Search</language>
+        <language code="el">Αναζήτηση</language>
+    </entry>
+
+    <entry id="Filters the posts by their title or description.">
+        <language code="en">Filters the posts by their title or description.</language>
+        <language code="el">Φιλτράρει τα posts με βάση τον τίτλο ή την περιγραφή τους.</language>
+    </entry>
+
+    <entry id="New posts badge">
+        <language code="en">New posts badge</language>
+        <language code="el">Ένδειξη νέων posts</language>
+    </entry>
+
+    <entry id="Shows how many new posts arrived since the list was loaded. Click it, or press R, to show them.">
+        <language code="en">Shows how many new posts arrived since the list was loaded. Click it, or press R, to show them.</language>
+        <language code="el">Δείχνει πόσα νέα posts έφτασαν από τη στιγμή που φορτώθηκε η λίστα. Κάντε κλικ σε αυτή, ή πατήστε R, για να τα δείτε.</language>
+    </entry>
+
+    <entry id="The pencil next to Folders lets you rename or delete folders. The eye button shows or hides the empty folders. When a folder is deleted, its feeds move to the default folder.">
+        <language code="en">The pencil next to Folders lets you rename or delete folders. The eye button shows or hides the empty folders. When a folder is deleted, its feeds move to the default folder.</language>
+        <language code="el">Το μολύβι δίπλα στους Φακέλους σας επιτρέπει να μετονομάσετε ή να διαγράψετε φακέλους. Το κουμπί με το μάτι εμφανίζει ή κρύβει τους άδειους φακέλους. Όταν διαγράφεται ένας φάκελος, τα feeds του μεταφέρονται στον προεπιλεγμένο φάκελο.</language>
+    </entry>
+
+    <entry id="Feed menu">
+        <language code="en">Feed menu</language>
+        <language code="el">Μενού feed</language>
+    </entry>
+
+    <entry id="When a feed is selected, its name at the top opens a menu to edit the feed, see its statistics or unfollow it.">
+        <language code="en">When a feed is selected, its name at the top opens a menu to edit the feed, see its statistics or unfollow it.</language>
+        <language code="el">Όταν είναι επιλεγμένο ένα feed, το όνομά του στην κορυφή ανοίγει ένα μενού για να επεξεργαστείτε το feed, να δείτε τα στατιστικά του ή να σταματήσετε να το ακολουθείτε.</language>
+    </entry>
+
+    <entry id="Read posts are deleted automatically after 30 days. Saved posts are never deleted, so save the ones you want to keep.">
+        <language code="en">Read posts are deleted automatically after 30 days. Saved posts are never deleted, so save the ones you want to keep.</language>
+        <language code="el">Τα αναγνωσμένα posts διαγράφονται αυτόματα μετά από 30 ημέρες. Τα αποθηκευμένα posts δεν διαγράφονται ποτέ, οπότε αποθηκεύστε όσα θέλετε να κρατήσετε.</language>
+    </entry>
+
+    <entry id="Reading a post">
+        <language code="en">Reading a post</language>
+        <language code="el">Διαβάζοντας ένα post</language>
+    </entry>
+
+    <entry id="The full article, videos, and the actions of each post.">
+        <language code="en">The full article, videos, and the actions of each post.</language>
+        <language code="el">Το πλήρες άρθρο, τα βίντεο και οι ενέργειες κάθε post.</language>
+    </entry>
+
+    <entry id="Click a post, or press Enter, to open it. Feedora fetches the full article from the original page, cleans it up and shows it with its main image, so you rarely need to leave the app. The next posts are loaded in advance, so they open instantly.">
+        <language code="en">Click a post, or press Enter, to open it. Feedora fetches the full article from the original page, cleans it up and shows it with its main image, so you rarely need to leave the app. The next posts are loaded in advance, so they open instantly.</language>
+        <language code="el">Κάντε κλικ σε ένα post, ή πατήστε Enter, για να το ανοίξετε. Το Feedora φέρνει το πλήρες άρθρο από την αρχική σελίδα, το καθαρίζει και το δείχνει με την κύρια εικόνα του, οπότε σπάνια χρειάζεται να φύγετε από την εφαρμογή. Τα επόμενα posts φορτώνονται από πριν, ώστε να ανοίγουν αμέσως.</language>
+    </entry>
+
+    <entry id="Keeps the post in Saved, where it is never deleted.">
+        <language code="en">Keeps the post in Saved, where it is never deleted.</language>
+        <language code="el">Κρατάει το post στα Αποθηκευμένα, όπου δεν διαγράφεται ποτέ.</language>
+    </entry>
+
+    <entry id="Marks the post with a star and lists it under Favorites.">
+        <language code="en">Marks the post with a star and lists it under Favorites.</language>
+        <language code="el">Σημειώνει το post με ένα αστέρι και το εμφανίζει στα Αγαπημένα.</language>
+    </entry>
+
+    <entry id="Mark as unread">
+        <language code="en">Mark as unread</language>
+        <language code="el">Σήμανση ως μη αναγνωσμένο</language>
+    </entry>
+
+    <entry id="Brings a read post back to the unread ones.">
+        <language code="en">Brings a read post back to the unread ones.</language>
+        <language code="el">Επαναφέρει ένα αναγνωσμένο post στα μη αναγνωσμένα.</language>
+    </entry>
+
+    <entry id="Copy link and share">
+        <language code="en">Copy link and share</language>
+        <language code="el">Αντιγραφή συνδέσμου και κοινοποίηση</language>
+    </entry>
+
+    <entry id="Copy the link of the post, or share it from the share menu.">
+        <language code="en">Copy the link of the post, or share it from the share menu.</language>
+        <language code="el">Αντιγράψτε τον σύνδεσμο του post, ή κοινοποιήστε το από το μενού κοινοποίησης.</language>
+    </entry>
+
+    <entry id="Open original">
+        <language code="en">Open original</language>
+        <language code="el">Άνοιγμα πρωτοτύπου</language>
+    </entry>
+
+    <entry id="Opens the post on its website, in a new tab.">
+        <language code="en">Opens the post on its website, in a new tab.</language>
+        <language code="el">Ανοίγει το post στον ιστότοπό του, σε νέα καρτέλα.</language>
+    </entry>
+
+    <entry id="Shows the problems Feedora had reading this post, if there were any.">
+        <language code="en">Shows the problems Feedora had reading this post, if there were any.</language>
+        <language code="el">Δείχνει τα προβλήματα που είχε το Feedora διαβάζοντας αυτό το post, αν υπήρξαν.</language>
+    </entry>
+
+    <entry id="YouTube">
+        <language code="en">YouTube</language>
+        <language code="el">YouTube</language>
+    </entry>
+
+    <entry id="Videos play inside Feedora and show their duration. Live streams and premieres get a live badge that is kept up to date.">
+        <language code="en">Videos play inside Feedora and show their duration. Live streams and premieres get a live badge that is kept up to date.</language>
+        <language code="el">Τα βίντεο παίζουν μέσα στο Feedora και δείχνουν τη διάρκειά τους. Οι ζωντανές μεταδόσεις και οι πρεμιέρες έχουν μια ένδειξη live που ενημερώνεται συνεχώς.</language>
+    </entry>
+
+    <entry id="Tweets">
+        <language code="en">Tweets</language>
+        <language code="el">Tweets</language>
+    </entry>
+
+    <entry id="Posts from X / Twitter are shown with their photos and link previews.">
+        <language code="en">Posts from X / Twitter are shown with their photos and link previews.</language>
+        <language code="el">Τα posts από το X / Twitter εμφανίζονται με τις φωτογραφίες τους και τις προεπισκοπήσεις των συνδέσμων τους.</language>
+    </entry>
+
+    <entry id="Link previews">
+        <language code="en">Link previews</language>
+        <language code="el">Προεπισκοπήσεις συνδέσμων</language>
+    </entry>
+
+    <entry id="A post that links to an article shows a preview of it. Press W to read that article inside the post.">
+        <language code="en">A post that links to an article shows a preview of it. Press W to read that article inside the post.</language>
+        <language code="el">Ένα post που παραπέμπει σε ένα άρθρο δείχνει μια προεπισκόπησή του. Πατήστε W για να διαβάσετε αυτό το άρθρο μέσα στο post.</language>
+    </entry>
+
+    <entry id="On mobile">
+        <language code="en">On mobile</language>
+        <language code="el">Σε κινητό</language>
+    </entry>
+
+    <entry id="Swipe left or right to move between posts, and pinch to zoom.">
+        <language code="en">Swipe left or right to move between posts, and pinch to zoom.</language>
+        <language code="el">Σύρετε αριστερά ή δεξιά για να μετακινηθείτε ανάμεσα στα posts, και τσιμπήστε για μεγέθυνση.</language>
+    </entry>
+
+    <entry id="Read, save and move between posts without the mouse.">
+        <language code="en">Read, save and move between posts without the mouse.</language>
+        <language code="el">Διαβάστε, αποθηκεύστε και μετακινηθείτε ανάμεσα στα posts χωρίς ποντίκι.</language>
+    </entry>
+
+    <entry id="Press H on the Posts page to see this list at any time.">
+        <language code="en">Press H on the Posts page to see this list at any time.</language>
+        <language code="el">Πατήστε H στη σελίδα των Posts για να δείτε αυτή τη λίστα οποιαδήποτε στιγμή.</language>
+    </entry>
+
+    <entry id="Feeds and folders">
+        <language code="en">Feeds and folders</language>
+        <language code="el">Feeds και φάκελοι</language>
+    </entry>
+
+    <entry id="Adding, editing and importing your feeds.">
+        <language code="en">Adding, editing and importing your feeds.</language>
+        <language code="el">Προσθήκη, επεξεργασία και εισαγωγή των feeds σας.</language>
+    </entry>
+
+    <entry id="The Feeds page lists all the feeds you follow, with a search box to find one by name.">
+        <language code="en">The Feeds page lists all the feeds you follow, with a search box to find one by name.</language>
+        <language code="el">Η σελίδα των Feeds δείχνει όλα τα feeds που ακολουθείτε, με ένα πεδίο αναζήτησης για να βρείτε ένα με το όνομά του.</language>
+    </entry>
+
+    <entry id="Paste the address of a feed or of a website. Feedora finds the feeds of the website and lets you choose one when there are many, reads the title of the feed, and lets you choose its folder.">
+        <language code="en">Paste the address of a feed or of a website. Feedora finds the feeds of the website and lets you choose one when there are many, reads the title of the feed, and lets you choose its folder.</language>
+        <language code="el">Επικολλήστε τη διεύθυνση ενός feed ή ενός ιστότοπου. Το Feedora βρίσκει τα feeds του ιστότοπου και σας αφήνει να επιλέξετε ένα όταν είναι πολλά, διαβάζει τον τίτλο του feed, και σας αφήνει να επιλέξετε τον φάκελό του.</language>
+    </entry>
+
+    <entry id="YouTube channels and playlists">
+        <language code="en">YouTube channels and playlists</language>
+        <language code="el">Κανάλια και playlists του YouTube</language>
+    </entry>
+
+    <entry id="Paste the normal address of a YouTube channel or playlist, and Feedora turns it into its feed.">
+        <language code="en">Paste the normal address of a YouTube channel or playlist, and Feedora turns it into its feed.</language>
+        <language code="el">Επικολλήστε την κανονική διεύθυνση ενός καναλιού ή μιας playlist του YouTube, και το Feedora τη μετατρέπει στο feed της.</language>
+    </entry>
+
+    <entry id="Change the title, the folder and the card color of a feed. By default, the card color is the main color of the feed's favicon.">
+        <language code="en">Change the title, the folder and the card color of a feed. By default, the card color is the main color of the feed's favicon.</language>
+        <language code="el">Αλλάξτε τον τίτλο, τον φάκελο και το χρώμα καρτών ενός feed. Από προεπιλογή, το χρώμα καρτών είναι το κύριο χρώμα του favicon του feed.</language>
+    </entry>
+
+    <entry id="Shows how often the feed posts, how often it is checked, its last and next check, and its failed checks. Feeds with problems are listed first.">
+        <language code="en">Shows how often the feed posts, how often it is checked, its last and next check, and its failed checks. Feeds with problems are listed first.</language>
+        <language code="el">Δείχνει πόσο συχνά δημοσιεύει το feed, πόσο συχνά ελέγχεται, τον τελευταίο και τον επόμενο έλεγχό του, και τους αποτυχημένους ελέγχους του. Τα feeds με προβλήματα εμφανίζονται πρώτα.</language>
+    </entry>
+
+    <entry id="Removes the feed and its posts from your account.">
+        <language code="en">Removes the feed and its posts from your account.</language>
+        <language code="el">Αφαιρεί το feed και τα posts του από τον λογαριασμό σας.</language>
+    </entry>
+
+    <entry id="Downloads your feeds and folders as an OPML file, to back them up or move them to another reader.">
+        <language code="en">Downloads your feeds and folders as an OPML file, to back them up or move them to another reader.</language>
+        <language code="el">Κατεβάζει τα feeds και τους φακέλους σας ως αρχείο OPML, για αντίγραφο ασφαλείας ή για μεταφορά σε άλλο πρόγραμμα ανάγνωσης.</language>
+    </entry>
+
+    <entry id="Adds the feeds and folders of an OPML file exported from another reader. The feeds are read in the background.">
+        <language code="en">Adds the feeds and folders of an OPML file exported from another reader. The feeds are read in the background.</language>
+        <language code="el">Προσθέτει τα feeds και τους φακέλους ενός αρχείου OPML που εξήχθη από άλλο πρόγραμμα ανάγνωσης. Τα feeds διαβάζονται στο παρασκήνιο.</language>
+    </entry>
+
+    <entry id="Importing an OPML file replaces everything you have: your existing feeds, folders and posts are deleted first. Export an OPML file before you import one.">
+        <language code="en">Importing an OPML file replaces everything you have: your existing feeds, folders and posts are deleted first. Export an OPML file before you import one.</language>
+        <language code="el">Η εισαγωγή ενός αρχείου OPML αντικαθιστά όλα όσα έχετε: τα υπάρχοντα feeds, οι φάκελοι και τα posts σας διαγράφονται πρώτα. Εξάγετε ένα αρχείο OPML πριν εισάγετε κάποιο.</language>
+    </entry>
+
+    <entry id="A feed with an http:// address whose checks keep failing is marked with a warning. Editing it to use https:// usually fixes it.">
+        <language code="en">A feed with an http:// address whose checks keep failing is marked with a warning. Editing it to use https:// usually fixes it.</language>
+        <language code="el">Ένα feed με διεύθυνση http:// του οποίου οι έλεγχοι αποτυγχάνουν συνεχώς σημειώνεται με μια προειδοποίηση. Συνήθως διορθώνεται αν το επεξεργαστείτε ώστε να χρησιμοποιεί https://.</language>
+    </entry>
+
+    <entry id="How feeds are updated">
+        <language code="en">How feeds are updated</language>
+        <language code="el">Πώς ενημερώνονται τα feeds</language>
+    </entry>
+
+    <entry id="When Feedora checks your feeds for new posts.">
+        <language code="en">When Feedora checks your feeds for new posts.</language>
+        <language code="el">Πότε ελέγχει το Feedora τα feeds σας για νέα posts.</language>
+    </entry>
+
+    <entry id="Feedora checks your feeds in the background, while it runs. Each feed is checked as often as it actually posts, so busy feeds are fresh and quiet ones don't waste requests. Up to 8 feeds are checked at the same time, and posts that already exist are skipped.">
+        <language code="en">Feedora checks your feeds in the background, while it runs. Each feed is checked as often as it actually posts, so busy feeds are fresh and quiet ones don't waste requests. Up to 8 feeds are checked at the same time, and posts that already exist are skipped.</language>
+        <language code="el">Το Feedora ελέγχει τα feeds σας στο παρασκήνιο, όσο τρέχει. Κάθε feed ελέγχεται τόσο συχνά όσο πραγματικά δημοσιεύει, ώστε τα πολυάσχολα feeds να είναι πάντα ενημερωμένα και τα ήσυχα να μη σπαταλούν αιτήματα. Έως 8 feeds ελέγχονται ταυτόχρονα, και τα posts που υπάρχουν ήδη παραλείπονται.</language>
+    </entry>
+
+    <entry id="More than 30 posts per hour">
+        <language code="en">More than 30 posts per hour</language>
+        <language code="el">Περισσότερα από 30 posts την ώρα</language>
+    </entry>
+
+    <entry id="Checked every minute.">
+        <language code="en">Checked every minute.</language>
+        <language code="el">Ελέγχεται κάθε λεπτό.</language>
+    </entry>
+
+    <entry id="More than 10 posts per hour">
+        <language code="en">More than 10 posts per hour</language>
+        <language code="el">Περισσότερα από 10 posts την ώρα</language>
+    </entry>
+
+    <entry id="Checked every 5 minutes.">
+        <language code="en">Checked every 5 minutes.</language>
+        <language code="el">Ελέγχεται κάθε 5 λεπτά.</language>
+    </entry>
+
+    <entry id="More than 1 post per hour">
+        <language code="en">More than 1 post per hour</language>
+        <language code="el">Περισσότερα από 1 post την ώρα</language>
+    </entry>
+
+    <entry id="Checked every 10 minutes.">
+        <language code="en">Checked every 10 minutes.</language>
+        <language code="el">Ελέγχεται κάθε 10 λεπτά.</language>
+    </entry>
+
+    <entry id="More than 1 post per day">
+        <language code="en">More than 1 post per day</language>
+        <language code="el">Περισσότερα από 1 post την ημέρα</language>
+    </entry>
+
+    <entry id="Checked every hour.">
+        <language code="en">Checked every hour.</language>
+        <language code="el">Ελέγχεται κάθε ώρα.</language>
+    </entry>
+
+    <entry id="Up to 1 post per day">
+        <language code="en">Up to 1 post per day</language>
+        <language code="el">Έως 1 post την ημέρα</language>
+    </entry>
+
+    <entry id="Checked every 6 hours.">
+        <language code="en">Checked every 6 hours.</language>
+        <language code="el">Ελέγχεται κάθε 6 ώρες.</language>
+    </entry>
+
+    <entry id="To check a feed or a folder right away, select it on the Posts page and click Parse RSS Feeds.">
+        <language code="en">To check a feed or a folder right away, select it on the Posts page and click Parse RSS Feeds.</language>
+        <language code="el">Για να ελέγξετε αμέσως ένα feed ή έναν φάκελο, επιλέξτε τον στη σελίδα των Posts και κάντε κλικ στην Ανάλυση RSS Feeds.</language>
+    </entry>
+
+    <entry id="A page that keeps itself up to date, for a second screen.">
+        <language code="en">A page that keeps itself up to date, for a second screen.</language>
+        <language code="el">Μια σελίδα που ενημερώνεται μόνη της, για μια δεύτερη οθόνη.</language>
+    </entry>
+
+    <entry id="The Live Newsfeed shows your latest unread posts and checks for new ones on its own. New posts appear at the top one at a time, 5 seconds apart, or 2 seconds apart when more than 50 are waiting. The badge at the top shows how many are still waiting.">
+        <language code="en">The Live Newsfeed shows your latest unread posts and checks for new ones on its own. New posts appear at the top one at a time, 5 seconds apart, or 2 seconds apart when more than 50 are waiting. The badge at the top shows how many are still waiting.</language>
+        <language code="el">Η Ζωντανή Ροή Ειδήσεων δείχνει τα πιο πρόσφατα μη αναγνωσμένα posts σας και ελέγχει μόνη της για νέα. Τα νέα posts εμφανίζονται στην κορυφή ένα-ένα, με 5 δευτερόλεπτα απόσταση, ή 2 δευτερόλεπτα όταν περιμένουν περισσότερα από 50. Η ένδειξη στην κορυφή δείχνει πόσα περιμένουν ακόμα.</language>
+    </entry>
+
+    <entry id="Pause / Resume">
+        <language code="en">Pause / Resume</language>
+        <language code="el">Παύση / Συνέχεια</language>
+    </entry>
+
+    <entry id="Stops new posts from appearing while you read, and lets them in again.">
+        <language code="en">Stops new posts from appearing while you read, and lets them in again.</language>
+        <language code="el">Σταματά την εμφάνιση νέων posts όσο διαβάζετε, και τα αφήνει ξανά να εμφανιστούν.</language>
+    </entry>
+
+    <entry id="New posts also wait while you are scrolled down. The arrow takes you back to the top and lets them in.">
+        <language code="en">New posts also wait while you are scrolled down. The arrow takes you back to the top and lets them in.</language>
+        <language code="el">Τα νέα posts περιμένουν επίσης όσο έχετε κάνει κύλιση προς τα κάτω. Το βέλος σας επιστρέφει στην κορυφή και τα αφήνει να εμφανιστούν.</language>
+    </entry>
+
+    <entry id="Shown when the last check for new posts failed. Feedora keeps trying.">
+        <language code="en">Shown when the last check for new posts failed. Feedora keeps trying.</language>
+        <language code="el">Εμφανίζεται όταν ο τελευταίος έλεγχος για νέα posts απέτυχε. Το Feedora συνεχίζει να προσπαθεί.</language>
+    </entry>
+
+    <entry id="Make a feed for a website that doesn't have one.">
+        <language code="en">Make a feed for a website that doesn't have one.</language>
+        <language code="el">Φτιάξτε ένα feed για έναν ιστότοπο που δεν έχει.</language>
+    </entry>
+
+    <entry id="Some websites have no RSS feed. On the Parser page, enter the address of such a page and Feedora reads it and suggests the elements of the page that look like its list of posts, with how many posts each one has. Choose one, or write your own CSS selector, and set how often the page is read.">
+        <language code="en">Some websites have no RSS feed. On the Parser page, enter the address of such a page and Feedora reads it and suggests the elements of the page that look like its list of posts, with how many posts each one has. Choose one, or write your own CSS selector, and set how often the page is read.</language>
+        <language code="el">Κάποιοι ιστότοποι δεν έχουν RSS feed. Στη σελίδα του Parser, εισάγετε τη διεύθυνση μιας τέτοιας σελίδας και το Feedora τη διαβάζει και προτείνει τα στοιχεία της σελίδας που μοιάζουν με τη λίστα των posts της, μαζί με το πόσα posts έχει το καθένα. Επιλέξτε ένα, ή γράψτε τον δικό σας CSS selector, και ορίστε πόσο συχνά θα διαβάζεται η σελίδα.</language>
+    </entry>
+
+    <entry id="Feedora then reads the page on that schedule and makes an RSS feed of it. Click the RSS button of the page to add that feed to your feeds, like any other feed.">
+        <language code="en">Feedora then reads the page on that schedule and makes an RSS feed of it. Click the RSS button of the page to add that feed to your feeds, like any other feed.</language>
+        <language code="el">Στη συνέχεια το Feedora διαβάζει τη σελίδα με αυτή τη συχνότητα και φτιάχνει ένα RSS feed από αυτή. Κάντε κλικ στο κουμπί RSS της σελίδας για να προσθέσετε αυτό το feed στα feeds σας, όπως κάθε άλλο feed.</language>
+    </entry>
+
+    <entry id="Reads the page right away and updates its feed.">
+        <language code="en">Reads the page right away and updates its feed.</language>
+        <language code="el">Διαβάζει αμέσως τη σελίδα και ενημερώνει το feed της.</language>
+    </entry>
+
+    <entry id="Change the title, the element of the posts or the frequency.">
+        <language code="en">Change the title, the element of the posts or the frequency.</language>
+        <language code="el">Αλλάξτε τον τίτλο, το στοιχείο των posts ή τη συχνότητα.</language>
+    </entry>
+
+    <entry id="Shown when the last reading of the page failed. Hover it to see why.">
+        <language code="en">Shown when the last reading of the page failed. Hover it to see why.</language>
+        <language code="el">Εμφανίζεται όταν η τελευταία ανάγνωση της σελίδας απέτυχε. Περάστε το ποντίκι από πάνω για να δείτε το γιατί.</language>
+    </entry>
+
+    <entry id="Feedora Companion">
+        <language code="en">Feedora Companion</language>
+        <language code="el">Feedora Companion</language>
+    </entry>
+
+    <entry id="The optional browser extension.">
+        <language code="en">The optional browser extension.</language>
+        <language code="el">Η προαιρετική επέκταση του browser.</language>
+    </entry>
+
+    <entry id="Feedora Companion is a browser extension for Chrome, Edge, Brave and Firefox, found in the extension folder of Feedora's source code.">
+        <language code="en">Feedora Companion is a browser extension for Chrome, Edge, Brave and Firefox, found in the extension folder of Feedora's source code.</language>
+        <language code="el">Το Feedora Companion είναι μια επέκταση για Chrome, Edge, Brave και Firefox, που βρίσκεται στον φάκελο extension του πηγαίου κώδικα του Feedora.</language>
+    </entry>
+
+    <entry id="Background tabs">
+        <language code="en">Background tabs</language>
+        <language code="el">Καρτέλες στο παρασκήνιο</language>
+    </entry>
+
+    <entry id="With the extension, B opens the selected post in a background tab, which web pages can't do on their own.">
+        <language code="en">With the extension, B opens the selected post in a background tab, which web pages can't do on their own.</language>
+        <language code="el">Με την επέκταση, το B ανοίγει το επιλεγμένο post σε καρτέλα στο παρασκήνιο, κάτι που οι ιστοσελίδες δεν μπορούν να κάνουν μόνες τους.</language>
+    </entry>
+
+    <entry id="Save the current page">
+        <language code="en">Save the current page</language>
+        <language code="el">Αποθήκευση της τρέχουσας σελίδας</language>
+    </entry>
+
+    <entry id="Its toolbar button saves the page you are on to Feedora's Saved posts.">
+        <language code="en">Its toolbar button saves the page you are on to Feedora's Saved posts.</language>
+        <language code="el">Το κουμπί της στη γραμμή εργαλείων αποθηκεύει τη σελίδα στην οποία βρίσκεστε στα Αποθηκευμένα posts του Feedora.</language>
+    </entry>
+
+    <entry id="Add the feed of the current page">
+        <language code="en">Add the feed of the current page</language>
+        <language code="el">Προσθήκη του feed της τρέχουσας σελίδας</language>
+    </entry>
+
+    <entry id="Its toolbar button also adds the feed of the page you are on to your feeds.">
+        <language code="en">Its toolbar button also adds the feed of the page you are on to your feeds.</language>
+        <language code="el">Το κουμπί της στη γραμμή εργαλείων προσθέτει επίσης το feed της σελίδας στην οποία βρίσκεστε στα feeds σας.</language>
+    </entry>
+
+    <entry id="The extension works by itself on localhost. If Feedora runs on another address, open Feedora, click the extension's button and choose Enable the companion here.">
+        <language code="en">The extension works by itself on localhost. If Feedora runs on another address, open Feedora, click the extension's button and choose Enable the companion here.</language>
+        <language code="el">Η επέκταση λειτουργεί από μόνη της στο localhost. Αν το Feedora τρέχει σε άλλη διεύθυνση, ανοίξτε το Feedora, κάντε κλικ στο κουμπί της επέκτασης και επιλέξτε Enable the companion here.</language>
+    </entry>
+
+    <entry id="How Feedora looks, and how it works.">
+        <language code="en">How Feedora looks, and how it works.</language>
+        <language code="el">Πώς φαίνεται το Feedora, και πώς λειτουργεί.</language>
+    </entry>
+
+    <entry id="The Display settings are kept in this browser, so each device can have its own.">
+        <language code="en">The Display settings are kept in this browser, so each device can have its own.</language>
+        <language code="el">Οι ρυθμίσεις Εμφάνισης κρατιούνται σε αυτόν τον browser, οπότε κάθε συσκευή μπορεί να έχει τις δικές της.</language>
+    </entry>
+
+    <entry id="The language of the interface: English or Greek.">
+        <language code="en">The language of the interface: English or Greek.</language>
+        <language code="el">Η γλώσσα της εφαρμογής: Αγγλικά ή Ελληνικά.</language>
+    </entry>
+
+    <entry id="Whether dates show the day or the month first.">
+        <language code="en">Whether dates show the day or the month first.</language>
+        <language code="el">Αν οι ημερομηνίες δείχνουν πρώτα την ημέρα ή τον μήνα.</language>
+    </entry>
+
+    <entry id="The settings of the whole application.">
+        <language code="en">The settings of the whole application.</language>
+        <language code="el">Οι ρυθμίσεις ολόκληρης της εφαρμογής.</language>
+    </entry>
+
+    <entry id="Only the admin sees these settings, under App Settings on the Settings page. They apply to every user.">
+        <language code="en">Only the admin sees these settings, under App Settings on the Settings page. They apply to every user.</language>
+        <language code="el">Μόνο ο διαχειριστής βλέπει αυτές τις ρυθμίσεις, στις Ρυθμίσεις Εφαρμογής της σελίδας των Ρυθμίσεων. Ισχύουν για όλους τους χρήστες.</language>
+    </entry>
+
+    <entry id="Whether new people can sign up by themselves. Turn it off to add the users yourself from the Users page.">
+        <language code="en">Whether new people can sign up by themselves. Turn it off to add the users yourself from the Users page.</language>
+        <language code="el">Αν μπορούν νέοι χρήστες να εγγραφούν μόνοι τους. Απενεργοποιήστε το για να προσθέτετε εσείς τους χρήστες από τη σελίδα των Χρηστών.</language>
+    </entry>
+
+    <entry id="An optional YouTube Data API key, for checking live streams and premieres more reliably. Without it, Feedora reads the video pages.">
+        <language code="en">An optional YouTube Data API key, for checking live streams and premieres more reliably. Without it, Feedora reads the video pages.</language>
+        <language code="el">Ένα προαιρετικό κλειδί του YouTube Data API, για πιο αξιόπιστο έλεγχο των ζωντανών μεταδόσεων και των πρεμιερών. Χωρίς αυτό, το Feedora διαβάζει τις σελίδες των βίντεο.</language>
+    </entry>
+
+    <entry id="How often the Live Newsfeed checks for new posts.">
+        <language code="en">How often the Live Newsfeed checks for new posts.</language>
+        <language code="el">Πόσο συχνά ελέγχει η Ζωντανή Ροή Ειδήσεων για νέα posts.</language>
+    </entry>
+
+    <entry id="The default language of the messages.">
+        <language code="en">The default language of the messages.</language>
+        <language code="el">Η προεπιλεγμένη γλώσσα των μηνυμάτων.</language>
+    </entry>
+
+    <entry id="Accounts, roles and statistics.">
+        <language code="en">Accounts, roles and statistics.</language>
+        <language code="el">Λογαριασμοί, ρόλοι και στατιστικά.</language>
+    </entry>
+
+    <entry id="The first user who signs up becomes the admin. Every other user is a regular user, unless the admin changes their role. On the Users page you can see how many folders, feeds, posts, saved posts and favorites you have, and change your username, email or password.">
+        <language code="en">The first user who signs up becomes the admin. Every other user is a regular user, unless the admin changes their role. On the Users page you can see how many folders, feeds, posts, saved posts and favorites you have, and change your username, email or password.</language>
+        <language code="el">Ο πρώτος χρήστης που εγγράφεται γίνεται διαχειριστής. Κάθε άλλος χρήστης είναι απλός χρήστης, εκτός αν ο διαχειριστής αλλάξει τον ρόλο του. Στη σελίδα των Χρηστών μπορείτε να δείτε πόσους φακέλους, feeds, posts, αποθηκευμένα posts και αγαπημένα έχετε, και να αλλάξετε το όνομα χρήστη, το email ή τον κωδικό σας.</language>
+    </entry>
+
+    <entry id="When you log in, check Remember me to stay signed in on this device for 30 days.">
+        <language code="en">When you log in, check Remember me to stay signed in on this device for 30 days.</language>
+        <language code="el">Όταν συνδέεστε, επιλέξτε το Να με θυμάσαι για να παραμείνετε συνδεδεμένοι σε αυτή τη συσκευή για 30 ημέρες.</language>
+    </entry>
+
+    <entry id="Managing users">
+        <language code="en">Managing users</language>
+        <language code="el">Διαχείριση χρηστών</language>
+    </entry>
+
+    <entry id="What the admin can do on the Users page.">
+        <language code="en">What the admin can do on the Users page.</language>
+        <language code="el">Τι μπορεί να κάνει ο διαχειριστής στη σελίδα των Χρηστών.</language>
+    </entry>
+
+    <entry id="Creates an account, without the user having to sign up.">
+        <language code="en">Creates an account, without the user having to sign up.</language>
+        <language code="el">Δημιουργεί έναν λογαριασμό, χωρίς να χρειάζεται να εγγραφεί ο χρήστης.</language>
+    </entry>
+
+    <entry id="Changes the username, the email or the password of a user.">
+        <language code="en">Changes the username, the email or the password of a user.</language>
+        <language code="el">Αλλάζει το όνομα χρήστη, το email ή τον κωδικό ενός χρήστη.</language>
+    </entry>
+
+    <entry id="Makes a user an admin, or a regular user again.">
+        <language code="en">Makes a user an admin, or a regular user again.</language>
+        <language code="el">Κάνει έναν χρήστη διαχειριστή, ή ξανά απλό χρήστη.</language>
+    </entry>
+
+    <entry id="Deletes the user with all of their folders, feeds, posts and logs.">
+        <language code="en">Deletes the user with all of their folders, feeds, posts and logs.</language>
+        <language code="el">Διαγράφει τον χρήστη μαζί με όλους τους φακέλους, τα feeds, τα posts και τα logs του.</language>
+    </entry>
+
+    <entry id="What went wrong while reading your feeds.">
+        <language code="en">What went wrong while reading your feeds.</language>
+        <language code="el">Τι πήγε στραβά κατά την ανάγνωση των feeds σας.</language>
+    </entry>
+
+    <entry id="Feedora records the problems it has fetching your feeds, reading them and extracting their articles. The Logs page lists them, filtered by level: errors, warnings or info. It is the first place to look when a feed stops bringing new posts.">
+        <language code="en">Feedora records the problems it has fetching your feeds, reading them and extracting their articles. The Logs page lists them, filtered by level: errors, warnings or info. It is the first place to look when a feed stops bringing new posts.</language>
+        <language code="el">Το Feedora καταγράφει τα προβλήματα που έχει όταν φέρνει τα feeds σας, όταν τα διαβάζει και όταν εξάγει τα άρθρα τους. Η σελίδα του Αρχείου καταγραφής τα δείχνει, φιλτραρισμένα ανά επίπεδο: σφάλματα, προειδοποιήσεις ή πληροφορίες. Είναι το πρώτο μέρος για να κοιτάξετε όταν ένα feed σταματά να φέρνει νέα posts.</language>
+    </entry>
+
+    <entry id="The logs of a single feed or post can also be opened from that feed or post. Old log entries are deleted automatically after 30 days, and Clear logs deletes them all.">
+        <language code="en">The logs of a single feed or post can also be opened from that feed or post. Old log entries are deleted automatically after 30 days, and Clear logs deletes them all.</language>
+        <language code="el">Τα logs ενός μεμονωμένου feed ή post ανοίγουν επίσης από αυτό το feed ή post. Οι παλιές καταχωρήσεις διαγράφονται αυτόματα μετά από 30 ημέρες, και η Εκκαθάριση logs τις διαγράφει όλες.</language>
+    </entry>
+
+    <entry id="Help">
+        <language code="en">Help</language>
+        <language code="el">Βοήθεια</language>
+    </entry>
+
+    <entry id="Everything Feedora can do, in one place: from adding your first feed to the keyboard shortcuts that make reading quick.">
+        <language code="en">Everything Feedora can do, in one place: from adding your first feed to the keyboard shortcuts that make reading quick.</language>
+        <language code="el">Όλα όσα μπορεί να κάνει το Feedora, σε ένα μέρος: από την προσθήκη του πρώτου σας feed μέχρι τις συντομεύσεις πληκτρολογίου που κάνουν την ανάγνωση γρήγορη.</language>
+    </entry>
+
+    <entry id="topics">
+        <language code="en">topics</language>
+        <language code="el">θέματα</language>
+    </entry>
+
+    <entry id="Search the help">
+        <language code="en">Search the help</language>
+        <language code="el">Αναζήτηση στη βοήθεια</language>
+    </entry>
+
+    <entry id="Clear">
+        <language code="en">Clear</language>
+        <language code="el">Καθαρισμός</language>
+    </entry>
+
+    <entry id="Contents">
+        <language code="en">Contents</language>
+        <language code="el">Περιεχόμενα</language>
+    </entry>
+
+    <entry id="No help topic matches your search.">
+        <language code="en">No help topic matches your search.</language>
+        <language code="el">Κανένα θέμα βοήθειας δεν ταιριάζει με την αναζήτησή σας.</language>
+    </entry>
+
+    <entry id="Still stuck?">
+        <language code="en">Still stuck?</language>
+        <language code="el">Ακόμα κολλημένοι;</language>
+    </entry>
+
+    <entry id="Something missing, broken, or simply not where you expected it?">
+        <language code="en">Something missing, broken, or simply not where you expected it?</language>
+        <language code="el">Κάτι λείπει, δεν λειτουργεί, ή απλώς δεν είναι εκεί που το περιμένατε;</language>
+    </entry>
+
+    <entry id="The Support page has the mail address to write to, the issue tracker to report a bug on, and a way to support the development of Feedora.">
+        <language code="en">The Support page has the mail address to write to, the issue tracker to report a bug on, and a way to support the development of Feedora.</language>
+        <language code="el">Η σελίδα Υποστήριξης έχει τη διεύθυνση email για να γράψετε, το issue tracker για να αναφέρετε ένα σφάλμα, και έναν τρόπο να υποστηρίξετε την ανάπτυξη του Feedora.</language>
+    </entry>
+
+    <entry id="Go to Support">
+        <language code="en">Go to Support</language>
+        <language code="el">Μετάβαση στην Υποστήριξη</language>
+    </entry>
+
 </root>
