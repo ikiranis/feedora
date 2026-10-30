@@ -93,7 +93,8 @@ const handleLogout = async () => {
 <template>
     <div :class="{ 'menu-open': menuOpen }">
         <div class="sidebar-header d-flex align-items-center">
-            <router-link :to="{ name: 'Posts' }" title="Feedora" :class="'brand flex-grow-1 ' + menuItemClasses">
+            <!-- The logo shows the posts of all folders -->
+            <router-link :to="{ name: 'Posts', query: { all: '1' } }" title="Feedora" :class="'brand flex-grow-1 ' + menuItemClasses">
                 <h2 class="d-flex m-0">
                     <span>
                         <img src="/feedora.svg?v=8" alt="Feedora" width="36" height="36"

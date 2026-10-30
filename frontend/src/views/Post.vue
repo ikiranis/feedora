@@ -1519,6 +1519,15 @@ watch(scanStore.finishedCount, () => {
     fetchLastParsedAt();
 });
 
+// The logo clicked while on this page, shows the posts of all folders
+watch(() => route.query.all, (all) => {
+    if (!all) return;
+    router.replace({ query: {} });
+    modalOpen.value = false;
+    selectedIndex.value = -1;
+    selectAll();
+});
+
 // Lifecycle hooks
 onMounted(() => {
     // Clear any existing errors when navigating to posts page
@@ -1530,6 +1539,9 @@ onMounted(() => {
         router.replace({ query: {} });
     } else if (typeof route.query.folder === 'string') {
         selectedFolderId.value = route.query.folder;
+        router.replace({ query: {} });
+    } else if (route.query.all) {
+        // All folders are shown by default
         router.replace({ query: {} });
     }
 
