@@ -200,6 +200,18 @@ const handleLogout = async () => {
                 </span>
                 <span class="mx-2" v-if="!isCollapsed">{{ language.get("Settings") }}</span>
             </router-link>
+            <router-link :to="{ name: 'Support' }" :class="checkCurrentPage('Support') + ' ' + menuItemClasses"
+                :title="language.get('Support')">
+                <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" :width="getIconSize" fill="currentColor"
+                        class="bi bi-life-preserver" viewBox="0 0 16 16">
+                        <path d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14m0 1A8 8 0 1 1 8 0a8 8 0 0 1 0 16"/>
+                        <path d="M8 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8m0 1a5 5 0 1 1 0-10 5 5 0 0 1 0 10"/>
+                        <path d="M9.828 8.81 13.5 9.5l-.173.999-3.68-.708zM6.172 7.19 2.5 6.5l.173-.999 3.68.708zM7.19 6.172 6.5 2.5l.999-.173.708 3.68zM8.81 9.828l.708 3.68-.999.173-.708-3.68z"/>
+                    </svg>
+                </span>
+                <span class="mx-2" v-if="!isCollapsed">{{ language.get("Support") }}</span>
+            </router-link>
         </div>
 
         <div class="sidebar-menu mt-auto">

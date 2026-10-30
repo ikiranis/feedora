@@ -2141,4 +2141,44 @@
         <language code="el">Η συχνότητα πρέπει να είναι από {0} έως {1} λεπτά</language>
     </entry>
 
+    <entry id="Support">
+        <language code="en">Support</language>
+        <language code="el">Υποστήριξη</language>
+    </entry>
+
+    <entry id="Created by apps4net - Yiannis Kiranis">
+        <language code="en">Created by apps4net - Yiannis Kiranis</language>
+        <language code="el">Δημιουργήθηκε από την apps4net - Yiannis Kiranis</language>
+    </entry>
+
+    <entry id="Contact">
+        <language code="en">Contact</language>
+        <language code="el">Επικοινωνία</language>
+    </entry>
+
+    <entry id="Found a bug, or have an idea for Feedora? Send feedback by mail, or open an issue on GitHub.">
+        <language code="en">Found a bug, or have an idea for Feedora? Send feedback by mail, or open an issue on GitHub.</language>
+        <language code="el">Βρήκατε κάποιο σφάλμα ή έχετε μια ιδέα για το Feedora; Στείλτε τα σχόλιά σας με email, ή ανοίξτε ένα issue στο GitHub.</language>
+    </entry>
+
+    <entry id="Open an issue on GitHub">
+        <language code="en">Open an issue on GitHub</language>
+        <language code="el">Άνοιγμα issue στο GitHub</language>
+    </entry>
+
+    <entry id="Donate">
+        <language code="en">Donate</language>
+        <language code="el">Δωρεά</language>
+    </entry>
+
+    <entry id="If Feedora is useful to you, consider supporting its development with a donation.">
+        <language code="en">If Feedora is useful to you, consider supporting its development with a donation.</language>
+        <language code="el">Αν το Feedora σας φαίνεται χρήσιμο, σκεφτείτε να υποστηρίξετε την ανάπτυξή του με μια δωρεά.</language>
+    </entry>
+
+    <entry id="Donate with PayPal">
+        <language code="en">Donate with PayPal</language>
+        <language code="el">Δωρεά μέσω PayPal</language>
+    </entry>
+
 </root>
