@@ -2881,4 +2881,19 @@
         <language code="el">Μετάβαση στην Υποστήριξη</language>
     </entry>
 
+    <entry id="A new version of Feedora is available">
+        <language code="en">A new version of Feedora is available</language>
+        <language code="el">Υπάρχει διαθέσιμη νέα έκδοση του Feedora</language>
+    </entry>
+
+    <entry id="current">
+        <language code="en">current</language>
+        <language code="el">τρέχουσα</language>
+    </entry>
+
+    <entry id="Open the release page?">
+        <language code="en">Open the release page?</language>
+        <language code="el">Άνοιγμα της σελίδας της έκδοσης;</language>
+    </entry>
+
 </root>

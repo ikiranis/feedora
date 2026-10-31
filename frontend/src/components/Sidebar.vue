@@ -4,7 +4,8 @@ import { computed, ComputedRef, onMounted, onUnmounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import LanguageSelect from "@/components/utilities/LanguageSelect.vue";
 import { authStore } from "@/functions/authStore";
-import { getAppVersion } from "@/api/general";
+import { getAppVersion, getLatestRelease, isNewerVersion, Release } from "@/api/general";
+import { confirmDialog } from "@/functions/javaDialogs";
 import { themeStore } from "@/functions/themeStore";
 
 const route = useRoute()
@@ -69,11 +70,34 @@ const getIconSize: ComputedRef<number> = computed(() => {
 })
 
 const appVersion = ref<string | null>(null)
+const newRelease = ref<Release | null>(null) // A release on GitHub newer than the running version
 
 onMounted(async () => {
     mobileQuery.addEventListener('change', updateIsMobile)
     appVersion.value = await getAppVersion()
+
+    if (appVersion.value && appVersion.value !== 'dev') {
+        const release = await getLatestRelease()
+        if (release && isNewerVersion(release.version, appVersion.value)) {
+            newRelease.value = release
+        }
+    }
 })
+
+/**
+ * Tell about the new version, offering to open its release page
+ */
+const showNewVersion = () => {
+    if (!newRelease.value) return
+
+    const message = (language.get('A new version of Feedora is available') || 'A new version of Feedora is available')
+        + `: ${newRelease.value.version} (${language.get('current') || 'current'}: ${appVersion.value}).\n\n`
+        + (language.get('Open the release page?') || 'Open the release page?')
+
+    if (confirmDialog(message)) {
+        window.open(newRelease.value.url, '_blank', 'noopener')
+    }
+}
 
 /**
  * Handle logout
@@ -226,7 +250,13 @@ const handleLogout = async () => {
 
         <div class="sidebar-menu mt-auto">
             <!-- Version of the running app -->
-            <div v-if="appVersion" class="app-version text-center mb-2" :title="'Feedora ' + appVersion">
+            <button v-if="appVersion && newRelease" type="button" class="app-version new-version text-center mb-2"
+                :title="(language.get('A new version of Feedora is available') || 'A new version of Feedora is available') + ': ' + newRelease.version"
+                @click="showNewVersion">
+                {{ isCollapsed ? appVersion : 'Feedora v' + appVersion }}
+                <span class="new-version-dot"></span>
+            </button>
+            <div v-else-if="appVersion" class="app-version text-center mb-2" :title="'Feedora ' + appVersion">
                 {{ isCollapsed ? appVersion : 'Feedora v' + appVersion }}
             </div>
 
@@ -277,6 +307,38 @@ const handleLogout = async () => {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+// The version is emphasised when a newer release exists
+.new-version {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0;
+    color: #ffc107;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
+
+    .new-version-dot {
+        display: inline-block;
+        width: 0.5rem;
+        height: 0.5rem;
+        margin-left: 0.25rem;
+        border-radius: 50%;
+        background-color: #ffc107;
+        vertical-align: middle;
+        animation: new-version-pulse 2s ease-in-out infinite;
+    }
+}
+
+@keyframes new-version-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
 }
 
 .user-section {
