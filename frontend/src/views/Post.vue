@@ -429,6 +429,7 @@ const lastScrollTop = ref(0); // Scroll position at the previous scroll event, t
 // Below the lg breakpoint the top bar and toolbar hide while scrolling down and show again while scrolling up
 const mobileQuery = window.matchMedia('(max-width: 991.98px)');
 let chromeLastScrollTop = 0; // Scroll position at the last top bar and toolbar check
+const CHROME_TOGGLE_PX = 150; // How far to scroll in one direction before the top bar and toolbar hide or show
 const showScrollTopButton = ref(false);
 const searchTerm = ref('');
 const searchTimeout = ref<number | null>(null);
@@ -1180,7 +1181,7 @@ const updateMobileChrome = () => {
     showScrollTopButton.value = scrollTop > container.clientHeight;
 
     const delta = scrollTop - chromeLastScrollTop;
-    if (Math.abs(delta) < 10) return; // Ignore small movements, so the bars don't flicker
+    if (Math.abs(delta) < CHROME_TOGGLE_PX) return; // Ignore small movements, so the bars don't flicker
     chromeLastScrollTop = scrollTop;
 
     if (delta > 0 && scrollTop > container.getBoundingClientRect().top) {
